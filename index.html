@@ -1260,7 +1260,7 @@ const SCMAP={},SCFOR={};for(const[k,n,a]of SCT2){if(k)SCMAP[k]=[n,a];if(a)SCFOR[
 const SCKEYS=Object.keys(SCMAP),scOf=a=>SCFOR[a]?' ('+SCFOR[a]+')':'';
 const TOOLS=[['sel','Selecionar'],['move','Mover'],['block','Bloco'],['comp','Componente'],['topo','Terreno'],['tpt','Ponto cotado'],['pad','Plataforma'],['tbl','Curva de nível'],['wall','Parede'],['floor','Piso'],['column','Pilar'],['door','Porta'],['window','Janela'],['stair','Escada'],['roof','Cobertura'],['beam','Viga'],['fence','Cerca/Muro'],['curtain','Parede-cortina'],['cs','Criar similar'],['cut','Corte'],['dim','Cota'],['txt','Texto'],['ln','Linha'],['tag','Identificador'],['trim','Aparar'],['split','Repartir'],['rot','Rotacionar'],['anchor','Ancorar']].map(([k,l])=>[k,l+scOf('tool:'+k)]);
 const MENUS={Arquivo:[['Novo projeto',()=>openP(newProject())],['Projetos salvos…',dlgProjects],['Duplicar projeto',()=>{const c=JSON.parse(JSON.stringify(P));c.id=uid();c.name+=' (cópia)';openP(c)}],['Exportar / importar (.mcad)…',dlgFile],['Exportar para Minecraft…',dlgMc]],
- Editar:[['Desfazer (Ctrl+Z)',undo],['Refazer (Ctrl+Y)',redo],['Excluir seleção (Del)',del]],Ajuda:[['Atalhos de teclado…',dlgKeys]],Modelagem:[['Biblioteca de componentes…',dlgComp],['Importar levantamento topográfico…',dlgTopoImp],['Biblioteca de blocos…',dlgBlocks],['Materiais…',dlgMats],['Tipos de parede…',dlgTypes],['Tipos de cobertura…',dlgRoofTypes],['Tipos de escada…',dlgStairTypes]],Visualizar:[['Texturas…',dlgPack],['Navegação 3D…',dlgNav],['Planta',()=>setView('plan')],['Vista 3D',()=>setView('3d')],['Tabelas quantitativas',()=>setView('table')],['Enquadrar projeto',()=>{fit();render()}]]};
+ Editar:[['Desfazer (Ctrl+Z)',undo],['Refazer (Ctrl+Y)',redo],['Excluir seleção (Del)',del]],Ajuda:[['Atalhos de teclado…',dlgKeys]],Modelagem:[['Biblioteca de componentes…',dlgComp],['Importar levantamento topográfico…',dlgTopoImp],['Biblioteca de blocos…',dlgBlocks],['Materiais…',dlgMats],['Tipos de parede…',dlgTypes],['Tipos de cobertura…',dlgRoofTypes],['Tipos de escada…',dlgStairTypes]],Visualizar:[['Texturas…',dlgPack],['Navegação 3D…',dlgNav]]};
 $('#menus').innerHTML=Object.keys(MENUS).map(n=>`<button data-a="menu:${n}">${n}</button>`).join('');
 function dlgProjects(){const d=$('#dlg');d.innerHTML='<h3>Projetos salvos no navegador</h3>'+(idx().map(i=>`<div class="row"><span>${esc(i.name)}</span><button data-a="open:${i.id}">Abrir</button><button data-a="dup:${i.id}">Duplicar</button><button data-a="rm:${i.id}">Excluir</button></div>`).join('')||'<p class="m">Nenhum projeto salvo.</p>')+'<button data-a="close">Fechar</button>';if(!d.open)d.showModal()}
 /* ---- projeto em arquivo .mcad: projeto + componentes + materiais + tipos + texturas ---- */
@@ -1379,7 +1379,9 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
  const el=tedEl(),i=TED.sel[0];if(!el||!el.tp[i])return;const v=+t.value;
  if(t.dataset.td==='z')tedZ(v);else mutate(()=>{el.tp[i][t.dataset.td==='x'?0:1]=Math.round(v*1e4)/1e4})});
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.ce&&CEDIT){if(t.dataset.ce==='n')CEDIT.name=t.value;else CEDIT.cat=t.value}
- if(t.dataset&&t.dataset.ge&&GED)GED.name=t.value});
+ if(t.dataset&&t.dataset.ge&&GED)GED.name=t.value;
+ if(t.dataset&&t.dataset.shi){SHI=Math.max(0,Math.min(1.5,(+t.value||0)/100));LS.s('mc:shi',String(SHI));
+  const b=$('#shiv');if(b)b.textContent=Math.round(SHI*100)+'%';if(view==='plan')draw2d()}});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset.a)act(t.dataset.a,t.value);else if(t.dataset.mk){const k=t.dataset.mk,v=tv(t);mutate(()=>{for(const id of selSet()){const e=P.els.find(x=>x.id===id);if(e&&(SCH[e.cat]||[]).some(f2=>f2[0]===k))e[k]=coerce(k,v)}})}
  else if(t.dataset.tt)ttEdit(t);else if(t.dataset.tl)tlEdit(t);else if(t.dataset.tf)tfEdit(t);
  else if(t.dataset.ti&&TIMP){const k=t.dataset.ti;TIMP[k]=['cx','cy','cz','sc'].includes(k)?+t.value:t.value;
@@ -2016,6 +2018,8 @@ function cwAct(k,a){const e=P.els.find(x=>x.id===sel);if(!e||e.cat!=='curtain')r
    1) padrões próprios de 16×16 desenhados em código a partir da cor de cada bloco (madeira, tijolo, pedra, vidro, metal, grão);
    2) quem tiver o jogo pode carregar o próprio pacote de recursos (.zip ou .jar): a leitura é local, no navegador, e nada é enviado. */
 let TXON=LS.g('mc:tex')!=='0',PACK={},PACKN='';
+/* intensidade das sombras projetadas na planta: 1 = padrão, 0 = planta sem sombras */
+let SHI=LS.g('mc:shi')==null?1:Math.max(0,Math.min(1.5,+LS.g('mc:shi')||0));
 const TXC=new Map(),T3=new Map();
 const rnd=s2=>{let a=0;for(const c of s2)a=(a*31+c.charCodeAt(0))>>>0;return()=>((a=(a*1664525+1013904223)>>>0)/4294967296)};
 const shade=(hex,f)=>{const n=parseInt(hex.slice(1),16),c=[(n>>16)&255,(n>>8)&255,n&255].map(v=>Math.max(0,Math.min(255,Math.round(v*f))));return'rgb('+c.join(',')+')'};
@@ -2092,6 +2096,8 @@ function dlgNav(){const d=$('#dlg');
 function dlgPack(){const d=$('#dlg');
  d.innerHTML='<h3>Texturas</h3><p class="m">O MineCAD desenha padrões próprios a partir da cor de cada bloco. As texturas originais do jogo são da Mojang e não acompanham o software — se você tem o jogo, carregue aqui o seu pacote de recursos (.zip) ou o .jar da versão: o arquivo é lido no próprio navegador e nada é enviado.</p>'
  +`<div class="row"><span>Texturas</span>${dd([['1','Ligadas'],['0','Desligadas (cor sólida)']],TXON?'1':'0','data-tx="on"')}</div>`
+ +`<div class="row"><span>Sombras em planta</span><input type="range" min="0" max="150" step="5" value="${Math.round(SHI*100)}" data-shi="1" style="flex:1;min-width:140px;background:transparent;border:0;padding:0;height:22px;accent-color:var(--acc)"><b id="shiv" style="min-width:46px;text-align:right">${Math.round(SHI*100)}%</b></div>`
+ +'<p class="m">As sombras projetadas dão a profundidade dos blocos na planta sem alterar o tom da textura. Em 0% a planta sai sem sombra alguma.</p>'
  +'<div class="row"><input type="file" id="pkf" accept=".zip,.jar"><button data-a="pkgo">Carregar</button></div>'
  +`<p class="m" id="pkm">${PACKN?esc(PACKN)+': '+Object.keys(PACK).length+' blocos carregados (guardados no navegador para as próximas sessões).':'Nenhum pacote carregado.'}</p>`
  +(PACKOLD?'<p class="m" style="color:#ff8a3d">Este pacote foi lido por uma versão anterior do MineCAD, que não separava as duas metades da porta nem colorizava o topo da grama. Carregue o arquivo outra vez acima para aplicar as melhorias.</p>':'')
@@ -3005,17 +3011,21 @@ function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight
  const hid=hidSet();
  /* o terreno é desenhado antes dos blocos: ele é o chão sobre o qual o projeto se apoia */
  for(const t of topoEls())if(!hid.has(t.id))drawTopo(t,sx,sz,S);
+ /* escada que sobe de um pavimento inferior: basta um degrau entrar na faixa de vista para o
+    lance inteiro aparecer na planta, sem ser cortado no piso de baixo */
+ const STF=new Set();
+ for(const v of B.vox.values())if(!v.tp&&B.cats[v.o]==='stair'&&!hid.has(v.o)&&v.y>=bot&&v.y<cy)STF.add(v.o);
  const TOPS=new Map();
  for(const v of B.vox.values()){if(v.tp)continue;/* o terreno tem representação topográfica própria na planta */
-  const ct=B.cats[v.o],sp=ct==='roof'&&B.bases[v.o]===lv;
-  if(hid.has(v.o)||!sp&&(v.y<bot||v.y>=cy))continue;const kk=v.x+','+v.z,o=TOPS.get(kk)||{v:null,bg:null};
+  const ct=B.cats[v.o],sp=ct==='roof'&&B.bases[v.o]===lv,fs=ct==='stair'&&STF.has(v.o);
+  if(hid.has(v.o)||!sp&&(v.y>=cy||v.y<bot&&!fs))continue;const kk=v.x+','+v.z,o=TOPS.get(kk)||{v:null,bg:null};
   if(!o.v||v.y>o.v.y)o.v=v,o.sp=sp||ct==='stair';
   if(!thinV(v)&&(!o.bg||v.y>o.bg.y))o.bg=v;TOPS.set(kk,o)}
  for(const{v,sp,bg}of TOPS.values()){
   /* bloco fino (porta, cerca, muro, painel): o bloco cheio de baixo aparece como fundo, com o
      próprio tom da textura — a profundidade do vão vem de uma sombra interna, não de escurecer tudo */
   if(bg&&bg!==v&&bg.y<v.y&&thinV(v)){const bx=sx(bg.x),bz=sz(bg.z);fillCell(g,bg,bx,bz,S,'top');
-   if(S>=5){const SP=shSprite(S),al=Math.min(.5,.2+(v.y-bg.y-1)*.08),a0=g.globalAlpha;
+   if(S>=5&&SHI>0){const SP=shSprite(S),al=Math.min(.5,.2+(v.y-bg.y-1)*.08)*SHI,a0=g.globalAlpha;
     g.globalAlpha=a0*al;for(const k of['n','s','w','e'])g.drawImage(SP[k],bx,bz,S,S);g.globalAlpha=a0}
    if(S>9){g.strokeStyle='rgba(0,0,0,.3)';g.strokeRect(bx+.5,bz+.5,S-1,S-1)}}
   g.fillStyle=vc(v);
@@ -3044,7 +3054,7 @@ function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight
   }
  /* sombras projetadas: cada coluna recebe uma faixa suave do lado em que o vizinho é mais alto.
     O bloco não muda de cor; o que dá a profundidade é a sombra na borda. */
- if(S>=5){const HM2=new Map();
+ if(S>=5&&SHI>0){const HM2=new Map();
   for(const{v}of TOPS.values()){const k=v.x+','+v.z,o=HM2.get(k);if(o===undefined||v.y>o)HM2.set(k,v.y)}
   for(const t of topoEls())if(!hid.has(t.id)&&(t.vw||'hyp')==='blk'&&B)
    for(const u of B.vox.values())if(u.o===t.id&&u.tt&&!HM2.has(u.x+','+u.z))HM2.set(u.x+','+u.z,u.y);
@@ -3053,11 +3063,11 @@ function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight
    if(X<-S||Z<-S||X>w||Z>h)continue;
    for(const d of SHD4){const n=HM2.get((x+d[1])+','+(z+d[2]));
     if(n===undefined||n<=y)continue;
-    g.globalAlpha=Math.min(.46,.13+(n-y)*.08);g.drawImage(SP[d[0]],X,Z,S,S)}}
+    g.globalAlpha=Math.min(.46,.13+(n-y)*.08)*SHI;g.drawImage(SP[d[0]],X,Z,S,S)}}
   g.restore()}
  /* linha de corte: aresta pontilhada entre o último bloco visível da escada e o trecho que ficou acima do corte */
  {const VS=new Map(),HS=new Map();
-  for(const v of B.vox.values()){if(B.cats[v.o]!=='stair')continue;const m=v.y>=cy?HS:(v.y>=bot?VS:null);if(!m)continue;let q=m.get(v.o);if(!q)m.set(v.o,q=new Set());q.add(v.x+','+v.z)}
+  for(const v of B.vox.values()){if(B.cats[v.o]!=='stair')continue;const m=v.y>=cy?HS:(v.y>=bot||STF.has(v.o)?VS:null);if(!m)continue;let q=m.get(v.o);if(!q)m.set(v.o,q=new Set());q.add(v.x+','+v.z)}
   g.setLineDash([5,4]);g.lineWidth=2;g.strokeStyle='rgba(0,0,0,.75)';g.beginPath();
   for(const[o,vis]of VS){const hid=HS.get(o);if(!hid)continue;
    for(const k of vis){const[x,z]=k.split(',').map(Number);
@@ -3122,8 +3132,12 @@ function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight
  if(cur&&tool==='block'){const x=Math.floor(cur[0]),z=Math.floor(cur[1]);g.globalAlpha=.55;g.fillStyle=MATS[blockOf(P,DEF.block.mat)][1];g.fillRect(sx(x),sz(z),S,S);g.globalAlpha=1;g.strokeStyle=gv('--acc');g.lineWidth=2;g.strokeRect(sx(x),sz(z),S,S);g.lineWidth=1;
   g.fillStyle=gv('--cink');g.fillText('Y '+Math.round(lvl().elev+(+DEF.block.off||0)),sx(x)+S+6,sz(z)+S/2)}
  if(cur&&tool!=='sel'){g.strokeStyle=gv('--acc');g.beginPath();g.arc(sx(cur[0]),sz(cur[1]),4,0,7);g.stroke()}}
+/* dois cliques rápidos no botão do meio enquadram o projeto, na planta e no 3D */
+let MBT=0;
+const midDbl=e=>{if(e.button!==1)return false;const t=performance.now();
+ if(t-MBT<420){MBT=0;fit();render();return true}MBT=t;return false};
 c2.oncontextmenu=e=>e.preventDefault();
-c2.onpointerdown=e=>{if(e.button===1)e.preventDefault();c2.setPointerCapture(e.pointerId);{const p=w2(e);cur=snapP(p);if(SK&&e.button===0){skDown(p);ui();draw2d();return}
+c2.onpointerdown=e=>{if(e.button===1){e.preventDefault();if(midDbl(e))return}c2.setPointerCapture(e.pointerId);{const p=w2(e);cur=snapP(p);if(SK&&e.button===0){skDown(p);ui();draw2d();return}
  if(TED&&e.button===0){const i=tedPick(p);
   if(i>=0){if(e.ctrlKey||e.shiftKey){if(!TED.sel.includes(i))TED.sel.push(i)}else if(!TED.sel.includes(i))TED.sel=[i];
    histPush();TED.drag={i};ui();draw2d();return}
@@ -3425,7 +3439,7 @@ function g3up(c){g3init();if(!GH)return;C3=c;
  const a=GL.geometry.attributes.position,n=Math.min(L.length,128);
  for(let i=0;i<n;i++)a.setXYZ(i,L[i][0],k[1]+.02,L[i][1]);
  a.needsUpdate=true;GL.geometry.setDrawRange(0,n);GL.visible=n>1}
-v3.onpointerdown=e=>{if(e.button===1)e.preventDefault();v3.setPointerCapture(e.pointerId);
+v3.onpointerdown=e=>{if(e.button===1){e.preventDefault();if(midDbl(e))return}v3.setPointerCapture(e.pointerId);
  if(TED&&e.button===0){const i=td3Pick(e);
   if(i>=0){const t=tedEl();
    if(e.ctrlKey||e.shiftKey){if(!TED.sel.includes(i))TED.sel.push(i)}else if(!TED.sel.includes(i))TED.sel=[i];
