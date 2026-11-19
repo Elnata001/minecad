@@ -1,5 +1,21 @@
 # Histórico
 
+## mCAD 27 — v27.2.1
+**Textura nítida na planta.** As texturas têm 16 píxeis de lado e, ampliadas para 120 píxeis
+por bloco, o navegador as interpolava: o bloco virava borrão. A vista 3D já pedia nitidez ao
+desenhar; a planta não. Agora pede — e continua interpolando quando a vista está afastada, onde
+o pixel a pixel faria o desenho cintilar.
+
+**Rótulo nas duas barras de ferramentas.** As ferramentas de edição mostram o nome ao passar o
+cursor, como as de modelagem já faziam; na barra da direita o rótulo abre para a esquerda.
+
+**Botão não fica mais preso ao rolar.** Havia um mecanismo que passava o botão sob o cursor
+para posição fixa, para ele crescer por cima dos vizinhos — mas a regra de estilo que o fazia
+crescer não existe mais. Sobrava o efeito colateral: preso na tela, o botão ficava parado
+enquanto a lista rolava por baixo, como se seguisse o cursor. O mecanismo saiu.
+
+**A aba de importação agora se chama só mCAD Connect.**
+
 ## mCAD 27 — v27.2.0
 **O mCAD Connect, o mod que liga o jogo ao programa.** Mod de cliente para o Minecraft 26.3,
 em Fabric, com um botão **mCAD** à direita do painel do inventário e um menu montado com os

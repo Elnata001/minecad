@@ -1539,7 +1539,7 @@ function wImpGo(){if(!WPRE){toast('Analise o recorte antes de criar o terreno.')
 function dlgTopoImp(){TIMP=TIMP||{sep:'auto',dec:'auto',cx:0,cy:1,cz:2,sc:1,rows:null,hdr:false,name:''};
  const d=$('#dlg'),T=TIMP,cols=T.rows&&T.rows[0]?T.rows[0].map((v,i)=>[i,'Coluna '+(i+1)+(T.hdr?' — '+v:'')]):[[0,'Coluna 1'],[1,'Coluna 2'],[2,'Coluna 3']];
  const TB2='<h3>Importar terreno</h3>'
-  +`<div class="row ctabs"><button class="${TIMPT==='csv'?'on':''}" data-a="titab:csv">Levantamento (CSV)</button><button class="${TIMPT==='world'?'on':''}" data-a="titab:world">Recorte do mundo</button><button class="${TIMPT==='game'?'on':''}" data-a="titab:game">Do jogo (mCAD Connect)</button></div>`;
+  +`<div class="row ctabs"><button class="${TIMPT==='csv'?'on':''}" data-a="titab:csv">Levantamento (CSV)</button><button class="${TIMPT==='world'?'on':''}" data-a="titab:world">Recorte do mundo</button><button class="${TIMPT==='game'?'on':''}" data-a="titab:game">mCAD Connect</button></div>`;
  if(TIMPT==='world'){d.innerHTML=TB2+wPanel();if(!d.open)d.showModal();wPrev();return}
  if(TIMPT==='game'){d.innerHTML=TB2+ccPanel();if(!d.open)d.showModal();return}
  d.innerHTML=TB2
@@ -2581,8 +2581,10 @@ function fbPlace(){const fb=$('#fb');if(fb.style.display==='none')return;const v
   if(ax!==undefined){x=ax-bw/2;y=ay-bh-12}}
  fb.style.left=Math.max(4,Math.min(x,W-bw-4))+'px';fb.style.top=Math.max(4,Math.min(y,Hh-bh-4))+'px'}
 /* a barra de ferramentas rola sozinha: o botão em foco sai do contêiner (position:fixed) para esticar sem ser cortado */
-{const T=$('#tools');T.addEventListener('mouseover',e=>{const b=e.target.closest('.tl');if(!b||b.classList.contains('hv'))return;const r=b.parentElement.getBoundingClientRect();b.style.position='fixed';b.style.left=r.left+'px';b.style.top=r.top+'px';b.classList.add('hv')});
- T.addEventListener('mouseout',e=>{const b=e.target.closest('.tl');if(!b||b.contains(e.relatedTarget))return;b.classList.remove('hv');b.style.position='';b.style.left=b.style.top=''})}
+/* O nome da ferramenta é o rótulo flutuante #tlab, montado em tlab(). Havia aqui um segundo
+   mecanismo que passava o botão sob o cursor para position:fixed, para ele poder crescer por
+   cima dos vizinhos — mas a regra de estilo que o fazia crescer não existe mais. Sobrava só o
+   efeito colateral: preso na tela, o botão ficava parado enquanto a lista rolava por baixo. */
 /* ---- Parede-cortina: caminho em planta + malha paramétrica de montantes (verticais), travessas (horizontais) e painéis.
    Cada célula da malha recebe um painel: o material padrão, um material próprio, vazio ou vão de porta. Tudo deriva dos parâmetros,
    então mudar a malha ou as dimensões refaz painéis, perfis, vistas e quantitativos. ---- */
@@ -2709,6 +2711,11 @@ async function packLoad(){try{const d=await idbGet('pack');if(!d)return;PACKF=d.
 /* preenche uma célula com a textura (ou com a cor, se estiverem desligadas) */
 const PAT=new Map(),PATID=new WeakMap();let PATN=0;
 function fillCell(g2,v,X,Z,S,face,rx,ry,rw,rh){const c=TXON&&txOf(v,face),gl='gw'.includes(MATS[v.m][2]||'x'),RX=X+(rx||0),RY=Z+(ry||0),RW=rw===undefined?S:rw,RH=rh===undefined?S:rh;
+ /* A textura tem 16 píxeis de lado. Ampliada, ela precisa de vizinho mais próximo, ou o
+    navegador interpola e o bloco vira borrão — era o que acontecia na planta, enquanto o 3D
+    já pedia nitidez ao desenhar. Reduzida, a interpolação é bem-vinda: sem ela o desenho
+    cintila quando se afasta. */
+ const nn=S>=16;if(g2.imageSmoothingEnabled===nn)g2.imageSmoothingEnabled=!nn;
  if(c&&gl){const al=g2.globalAlpha;g2.globalAlpha=al*.7;g2.fillStyle=vc(v);g2.fillRect(RX,RY,RW,RH);g2.globalAlpha=al}
  if(c){let id=PATID.get(g2);if(!id)PATID.set(g2,id=++PATN);const k=id+'|'+(face||'s')+'|'+v.m+'|'+vc(v);let p=PAT.get(k);
   if(p===undefined){try{p=g2.createPattern(c,'repeat')}catch(e){p=null}PAT.set(k,p)}
@@ -2945,9 +2952,12 @@ function multiPanel(els){const cats=[...new Set(els.map(e=>e.cat))];let keys=nul
  return `<h4>${els.length} elementos</h4>${body||'<p class="m">Sem parâmetros em comum entre estas categorias.</p>'}<div class="chips">${Object.entries(cnt).map(([k,n])=>`<span class="chip">${k}: ${n}</span>`).join('')}</div>`}
 const histPush=()=>{H.push(JSON.stringify(P));if(H.length>100)H.shift();RH.length=0};
 /* no modo de grupo a barra de edição mostra só Ancorar; fora dele, Ancorar não aparece */
-const etoolsHTML=()=>(GED?['anchor']:EDIT.filter(k=>k!=='anchor')).map(k=>{const l=TOOLS.find(t=>t[0]===k)[1];return`<div class="tw"><button class="tl rl ${tool===k?'on':''}" data-a="tool:${k}" title="${l}">${IC[k]}<span>${l}</span></button></div>`}).join('');
-{const T=$('#etools');T.addEventListener('mouseover',e=>{const b=e.target.closest('.tl');if(!b||b.classList.contains('hv'))return;const r=b.parentElement.getBoundingClientRect();b.style.position='fixed';b.style.left='auto';b.style.right=(document.documentElement.clientWidth-r.right)+'px';b.style.top=r.top+'px';b.classList.add('hv')});
- T.addEventListener('mouseout',e=>{const b=e.target.closest('.tl');if(!b||b.contains(e.relatedTarget))return;b.classList.remove('hv');b.style.position='';b.style.left=b.style.right=b.style.top=''})}
+const etoolsHTML=()=>(GED?['anchor']:EDIT.filter(k=>k!=='anchor')).map(k=>{const l=TOOLS.find(t=>t[0]===k)[1];return`<div class="tw"><button class="tl rl ${tool===k?'on':''}" data-a="tool:${k}" data-lab="${l}" aria-label="${l}">${IC[k]}</button></div>`}).join('');
+/* As ferramentas de edição ganham o mesmo rótulo das de modelagem, aberto para a esquerda
+   porque esta barra fica encostada na borda direita. */
+{const T=$('#etools');
+ T.addEventListener('pointerover',e=>{const b=e.target.closest&&e.target.closest('.tl');tlab(b||null)});
+ T.addEventListener('pointerleave',()=>tlab(null));}
 const SKNOH=['floor','roof','topo'];
 const handlesOf=(e,all)=>e.pts?(!all&&SKNOH.includes(e.cat)?[]:e.pts):(e.x2!==undefined&&e.cat!=='door'?[[e.x1,e.z1],[e.x2,e.z2]]:[]);
 function setHandle(e,i,q){if(e.pts)e.pts[i]=q.slice();else if(i===0){e.x1=q[0];e.z1=q[1]}else{e.x2=q[0];e.z2=q[1]}}
@@ -3547,7 +3557,7 @@ document.addEventListener('pointerdown',ev=>{const i=ev.target.closest&&ev.targe
  if(i){ev.preventDefault();ev.stopPropagation();cmRun(i.dataset.cm)}else if(CMX&&!CMX.contains(ev.target))cmClose()},true);
 /* grupo de ferramentas: as derivadas aparecem numa camada própria ao lado do botão principal,
    fora da barra (que recorta na horizontal e é redesenhada a cada movimento do mouse) */
-let TGRP='',TLAB=null,TOV=null;
+let TGRP='',TLAB=null,TOV=null,TLABB=null;
 function grpOpen(){if(!TOV){TOV=document.createElement('div');TOV.id='tgrp';document.body.appendChild(TOV)}
  const tb=$('#tools'),m=TGRP&&tb&&tb.querySelector(`.tl[data-g="${TGRP}"]`);
  if(!m||!SUBT[TGRP]){TOV.classList.remove('on');TOV.innerHTML='';return}
@@ -3556,12 +3566,19 @@ function grpOpen(){if(!TOV){TOV=document.createElement('div');TOV.id='tgrp';docu
  TOV.style.left=(r.right+6)+'px';TOV.style.top=r.top+'px';TOV.classList.add('on')}
 function tlab(b2){if(!TLAB){TLAB=document.createElement('div');TLAB.id='tlab';document.body.appendChild(TLAB)}
  const lb=b2&&(b2.dataset.lab||b2.title||'');
+ TLABB=lb?b2:null;
  if(!b2||!lb){TLAB.classList.remove('on');return}
  const r=b2.getBoundingClientRect();TLAB.textContent=lb;TLAB.classList.add('on');
+ TLAB.style.top=(r.top+r.height/2-14)+'px';
+ /* na barra de edição, que fica encostada na borda direita, o rótulo abre para a esquerda */
+ const et=$('#etools');
+ if(et&&et.contains(b2)){TLAB.style.left='auto';
+  TLAB.style.right=(document.documentElement.clientWidth-r.left+8)+'px';return}
+ TLAB.style.right='auto';
  /* o rótulo fica sempre depois do último botão do grupo aberto, nunca sobre as ferramentas */
  let rx=r.right;
  if(TOV&&TOV.classList.contains('on')&&((b2.dataset.g&&b2.dataset.g===TGRP)||TOV.contains(b2)))rx=Math.max(rx,(parseFloat(TOV.style.left)||0)+TOV.offsetWidth);
- TLAB.style.left=(rx+8)+'px';TLAB.style.top=(r.top+r.height/2-14)+'px'}
+ TLAB.style.left=(rx+8)+'px'}
 (function(){const tb=$('#tools');if(!tb)return;
  /* a roda do mouse rola a barra de ferramentas mesmo com o cursor sobre um botão */
  tb.addEventListener('wheel',e=>{if(tb.scrollHeight<=tb.clientHeight+1)return;
