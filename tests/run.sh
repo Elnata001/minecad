@@ -25,7 +25,9 @@ for f in "$ROOT"/tests/pw*.js; do
   if [ -n "${MINECAD_ONLY:-}" ]; then
     case " $MINECAD_ONLY " in *" ${n%.js} "*) ;; *) continue;; esac
   fi
-  grep -qx "$n" "$ROOT/tests/skip.txt" && { echo "— $n (ignorada: suíte antiga, API mudou)"; continue; }
+  if motivo=$(grep -E "^$n([[:space:]]|$)" "$ROOT/tests/skip.txt"); then
+    echo "— $n (ignorada:${motivo#$n})"; continue
+  fi
   out=$(timeout 180 node "$f" 2>&1); rc=$?
   ran=$((ran+1))
   if [ $rc -ne 0 ] || echo "$out" | grep -qE "^ERRO |pageerror|FALHOU"; then

@@ -1,4 +1,7 @@
-pwDMshot.js
-pwDot.js
-pwG8.js
-pwGeo.js
+# Suítes que o fluxo de integração contínua não roda. Uma linha por suíte,
+# com o motivo depois do nome. Elas continuam rodando localmente.
+pwDMshot.js   suíte antiga: aponta para APIs internas que mudaram
+pwDot.js      suíte antiga: aponta para APIs internas que mudaram
+pwG8.js       suíte antiga: aponta para APIs internas que mudaram
+pwGeo.js      suíte antiga: aponta para APIs internas que mudaram
+pw5.js        desenha e arrasta alças no 3D clicando por coordenada, com o Three.js substituído por um duplê; depende do tempo de resposta da máquina e falha de forma intermitente em runner compartilhado

@@ -9,7 +9,7 @@
     "prestart": "node scripts/copy-app.js",
     "start": "electron .",
     "predist": "node scripts/copy-app.js",
-    "dist": "electron-builder --win",
+    "dist": "electron-builder --win --publish never",
     "prerelease": "node scripts/copy-app.js",
     "release": "electron-builder --win --publish always"
   },
