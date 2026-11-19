@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "mcadconnect",
+  "version": "${version}",
+  "name": "mCAD Connect",
+  "description": "Liga o Minecraft ao mCAD 27: captura a área do terreno no jogo para importar no projeto e cola no mundo o que o mCAD exportou, sem comandos.",
+  "authors": ["Elnata"],
+  "contact": {
+    "homepage": "https://elnata001.github.io/minecad/",
+    "sources": "https://github.com/Elnata001/minecad"
+  },
+  "license": "MIT",
+  "icon": "assets/mcadconnect/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.elnata.mcadconnect.client.McadConnectClient"]
+  },
+  "mixins": [
+    { "config": "mcadconnect.mixins.json", "environment": "client" }
+  ],
+  "depends": {
+    "fabricloader": ">=0.20.0",
+    "fabric-api": "*",
+    "minecraft": "~26.3",
+    "java": ">=25"
+  }
+}

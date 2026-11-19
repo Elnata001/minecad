@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "dev.elnata.mcadconnect.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ContainerScreenAccessor"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}

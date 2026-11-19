@@ -1,0 +1,53 @@
+name: mod mCAD Connect
+
+on:
+  push:
+    branches: [main]
+    paths: ['mcad-connect/**', '.github/workflows/mod.yml']
+  pull_request:
+    paths: ['mcad-connect/**', '.github/workflows/mod.yml']
+  workflow_dispatch:
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcad-connect
+    steps:
+      - uses: actions/checkout@v4
+
+      # O Minecraft 26.3 roda em Java 25, então o mod compila com o JDK 25.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # O repositório não guarda o gradle-wrapper.jar; o fluxo gera o wrapper e o
+      # publica como artefato, para quem for compilar na própria máquina.
+      - name: Gerar o wrapper
+        run: gradle wrapper --gradle-version 8.14.3
+
+      - name: Compilar
+        run: ./gradlew build --stacktrace
+
+      - name: Guardar o .jar
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcad-connect-jar
+          path: |
+            mcad-connect/build/libs/*.jar
+            !mcad-connect/build/libs/*-sources.jar
+
+      - name: Guardar o wrapper
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-wrapper
+          path: |
+            mcad-connect/gradlew
+            mcad-connect/gradlew.bat
+            mcad-connect/gradle/wrapper/**

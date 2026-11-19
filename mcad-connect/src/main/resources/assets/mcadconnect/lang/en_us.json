@@ -1,0 +1,8 @@
+{
+  "mcadconnect.button.open": "mCAD",
+  "mcadconnect.title": "mCAD Connect",
+  "mcadconnect.tab.capture": "Capture terrain",
+  "mcadconnect.tab.paste": "Paste project",
+  "mcadconnect.folder": "Folder: %s",
+  "mcadconnect.close": "Close"
+}
