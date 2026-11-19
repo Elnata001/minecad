@@ -1,5 +1,26 @@
 # Histórico
 
+## mCAD 27 — v27.2.0
+**O mCAD Connect, o mod que liga o jogo ao programa.** Mod de cliente para o Minecraft 26.3,
+em Fabric, com um botão **mCAD** à direita do painel do inventário e um menu montado com os
+componentes do próprio jogo. De um lado ele captura o terreno onde o jogador está — a altura e
+o bloco de superfície de cada coluna carregada, em área de 64, 128 ou 256 blocos — e grava numa
+pasta de troca. Do outro, cola no mundo o `.schem` que o mCAD exportou, sem varinha, sem seleção
+e sem comando: escolher o projeto e clicar basta.
+
+**A ponte é uma pasta, não uma porta de rede.** `Documentos/mCAD/Connect`, com `capturas` de um
+lado e `projetos` do outro. Não há servidor local, firewall nem permissão a conceder, e a coisa
+funciona com o mCAD fechado: a captura espera ali até a próxima vez que ele abrir.
+
+**No mCAD, os dois sentidos ganharam caminho direto.** A janela de importar terreno tem uma aba
+nova, *Do jogo (mCAD Connect)*, que lista as capturas e entrega a escolhida ao mesmo caminho do
+recorte do mundo — prévia no cursor inclusive. E a exportação para o Minecraft ganhou **Enviar
+para o Minecraft**, que grava o `.schem` direto na pasta que o mod lê, em vez de pedir onde
+salvar.
+
+Colar vale por enquanto em mundo de um jogador, onde o cliente tem o servidor integrado ao
+lado; num servidor o mod avisa em vez de fingir que colou.
+
 ## mCAD 27 — v27.1.1
 **O terreno virou um elemento de verdade.** Os pontos cotados, as curvas de nível e as
 plataformas sempre pertenceram a um elemento de terreno, mas mover ou girar o elemento
