@@ -1,8 +1,10 @@
 {
   "mcadconnect.button.open": "mCAD",
   "mcadconnect.title": "mCAD Connect",
-  "mcadconnect.tab.capture": "Capture terrain",
-  "mcadconnect.tab.paste": "Paste project",
+  "mcadconnect.size": "Area: %s × %s blocks",
+  "mcadconnect.capture": "Capture terrain around you",
   "mcadconnect.folder": "Folder: %s",
-  "mcadconnect.close": "Close"
+  "mcadconnect.ok": "Captured to %s — %s columns, heights %s to %s.",
+  "mcadconnect.partial": "%s columns were left out: not loaded.",
+  "mcadconnect.erro": "Capture failed: %s"
 }

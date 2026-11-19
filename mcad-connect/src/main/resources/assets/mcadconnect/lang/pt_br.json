@@ -1,8 +1,10 @@
 {
   "mcadconnect.button.open": "mCAD",
   "mcadconnect.title": "mCAD Connect",
-  "mcadconnect.tab.capture": "Capturar terreno",
-  "mcadconnect.tab.paste": "Colar projeto",
+  "mcadconnect.size": "Área: %s × %s blocos",
+  "mcadconnect.capture": "Capturar terreno em volta",
   "mcadconnect.folder": "Pasta: %s",
-  "mcadconnect.close": "Fechar"
+  "mcadconnect.ok": "Capturado em %s — %s colunas, cotas %s a %s.",
+  "mcadconnect.partial": "%s colunas ficaram de fora: não estavam carregadas.",
+  "mcadconnect.erro": "Não deu para capturar: %s"
 }

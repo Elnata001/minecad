@@ -131,6 +131,39 @@ ipcMain.handle('escolher-salvar',async(ev,{nome,texto})=>{const r=await dialog.s
 /* Qualquer arquivo que o programa gere — schematic em .zip, comandos, .mcad — passa por aqui.
    No navegador isso seria um download; num aplicativo de desktop o certo é a caixa de diálogo
    nativa, que também é o que faltava para o schematic e o .zip saírem. */
+/* ---- mCAD Connect ----
+   A pasta que o mod do Minecraft e o aplicativo compartilham. É a ponte entre os dois:
+   o mod grava as capturas em "capturas", o mCAD grava os projetos em "projetos". */
+const CONNECT=()=>path.join(app.getPath('documents'),'mCAD','Connect');
+const CAPEXT=/\.(mcadcap|json)$/i;
+
+ipcMain.handle('connect-listar',async()=>{
+ const dir=path.join(CONNECT(),'capturas');
+ try{await fsp.mkdir(dir,{recursive:true})}catch(e){}
+ let itens=[];
+ try{const nomes=await fsp.readdir(dir);
+  for(const nome of nomes){
+   if(!CAPEXT.test(nome))continue;
+   try{const st=await fsp.stat(path.join(dir,nome));
+    if(!st.isFile())continue;
+    itens.push({nome,tam:st.size,ms:st.mtimeMs,
+     quando:new Date(st.mtimeMs).toLocaleString('pt-BR')})}catch(e){}}
+  itens.sort((a,b)=>b.ms-a.ms);   /* a captura mais recente primeiro */
+ }catch(e){}
+ return{pasta:dir,itens}});
+
+ipcMain.handle('connect-ler',async(ev,{nome})=>{
+ /* o nome vem da lista acima, mas confere assim mesmo: só arquivo, dentro da pasta */
+ const base=path.basename(String(nome||''));
+ if(base!==nome||!CAPEXT.test(base))throw new Error('nome de captura inválido');
+ return fsp.readFile(path.join(CONNECT(),'capturas',base),'utf8')});
+
+ipcMain.handle('connect-abrir-pasta',async()=>{
+ const dir=CONNECT();
+ try{await fsp.mkdir(path.join(dir,'capturas'),{recursive:true});
+  await fsp.mkdir(path.join(dir,'projetos'),{recursive:true})}catch(e){}
+ shell.openPath(dir);return dir});
+
 const FILTROS={zip:[{name:'Arquivo compactado',extensions:['zip']}],
  schem:[{name:'Esquema do WorldEdit',extensions:['schem']}],
  txt:[{name:'Texto',extensions:['txt']}],

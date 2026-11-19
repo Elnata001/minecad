@@ -14,6 +14,10 @@ contextBridge.exposeInMainWorld('mcDesktop',{
  /* gravar qualquer arquivo gerado pelo programa (schematic, .zip, comandos, .mcad):
     abre a caixa de diálogo nativa em vez do download do navegador */
  salvarBinario:(nome,dados,bin)=>ipcRenderer.invoke('salvar-binario',{nome,dados,bin}),
+ /* pasta compartilhada com o mod mCAD Connect */
+ connectListar:()=>ipcRenderer.invoke('connect-listar'),
+ connectLer:nome=>ipcRenderer.invoke('connect-ler',{nome}),
+ connectAbrirPasta:()=>ipcRenderer.invoke('connect-abrir-pasta'),
  associar:()=>ipcRenderer.invoke('associar'),
  sobre:()=>ipcRenderer.invoke('sobre'),
  pendente:()=>ipcRenderer.invoke('pendente'),
