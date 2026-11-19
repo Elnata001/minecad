@@ -142,7 +142,7 @@ const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&'
 const MATS={oak_planks:['Tábuas de carvalho','#b8945f'],spruce_planks:['Tábuas de pinheiro','#7a5a35'],stone_bricks:['Tijolos de pedra','#7d7d7d'],bricks:['Tijolos','#96553f'],cobblestone:['Pedregulho','#6f6f6f'],stone:['Pedra','#8a8a8a'],white_concrete:['Concreto branco','#d9dde0'],glass:['Vidro','#9fd3e8','g'],glass_pane:['Painel de vidro','#bfe6f2','w'],oak_door:['Porta de carvalho','#8b6a3a','d'],iron_door:['Porta de ferro','#c9ccd0','d'],oak_stairs:['Escada de carvalho','#b8945f','s'],spruce_stairs:['Escada de pinheiro','#7a5a35','s'],stone_stairs:['Escada de pedra','#8a8a8a','s'],cobblestone_stairs:['Escada de pedregulho','#6f6f6f','s'],stone_brick_stairs:['Escada de tijolos de pedra','#7d7d7d','s'],brick_stairs:['Escada de tijolos','#96553f','s']};
 const BCAT={oak_planks:'Madeira',spruce_planks:'Madeira',oak_door:'Madeira',oak_stairs:'Madeira',spruce_stairs:'Madeira',stone:'Pedra',cobblestone:'Pedra',stone_stairs:'Pedra',cobblestone_stairs:'Pedra',stone_bricks:'Tijolos',bricks:'Tijolos',stone_brick_stairs:'Tijolos',brick_stairs:'Tijolos',white_concrete:'Concreto',glass:'Vidro',glass_pane:'Vidro',iron_door:'Metais'};
 /* parâmetros padrão por ferramenta (editáveis antes de desenhar) */
-const DEF={wall:{ty:'',mat:'stone_bricks',t:1,off:0,top:null,h:4,ext:-1,cap:true},floor:{mat:'oak_planks',t:1,off:0,base:''},column:{mat:'oak_planks',cs:'rect',sx:1,sz:1,off:0,top:null,h:4},door:{mat:'oak_door',dir:0,sill:0},window:{mat:'glass',t:1,off:1,h:2,ext:-1},stair:{ty:'',w:1,sd:'left',ev:0,off:0,top:null},roof:{ty:'',sp:1,rg:'in',off:0,base:''},beam:{mat:'oak_planks',bw:1,bh:1,off:0,dy:0},fence:{mat:'oak_fence',h:1,off:0},block:{mat:'stone',fc:'north',hf:'bottom',ax:'y',off:0,base:''},comp:{def:'',rot:0,off:0,hoff:0,host:null,base:''},curtain:{mat:'stone',pm:'glass',t:1,pw:1,gw:3,gh:3,al:'start',vp:true,hp:true,h:6,off:0,top:null,ext:-1,cells:{},mx:[],my:[]},
+const DEF={wall:{ty:'',mat:'stone_bricks',t:1,off:0,top:null,h:4,ext:-1,cap:true},floor:{mat:'oak_planks',t:1,off:0,base:''},column:{mat:'oak_planks',cs:'rect',sx:1,sz:1,off:0,top:null,h:4},door:{mat:'oak_door',dir:0,sill:0},trap:{mat:'oak_trapdoor',fc:'north',hf:'top',op:false,off:0,base:''},window:{mat:'glass',t:1,off:1,h:2,ext:-1},stair:{ty:'',w:1,sd:'left',ev:0,off:0,top:null},roof:{ty:'',sp:1,rg:'in',off:0,base:''},beam:{mat:'oak_planks',bw:1,bh:1,off:0,dy:0},fence:{mat:'oak_fence',h:1,off:0},block:{mat:'stone',fc:'north',hf:'bottom',ax:'y',off:0,base:''},comp:{def:'',rot:0,off:0,hoff:0,host:null,base:''},curtain:{mat:'stone',pm:'glass',t:1,pw:1,gw:3,gh:3,al:'start',vp:true,hp:true,h:6,off:0,top:null,ext:-1,cells:{},mx:[],my:[]},
  topo:{ty:'',base:'',off:0,vw:'hyp',vw3:'blocks',pv:true,sc:true,so:false,sb:true,bk:true},
  tpt:{z:0},pad:{z:0},tbl:{z:0}};
 const lvOf=(p,id)=>p.levels.find(l=>l.id===id);
@@ -166,6 +166,7 @@ const minsOf=vox=>{const m=new Map();
 const isComp=m=>typeof m==='string'&&m.indexOf('comp:')===0,compId=m=>isComp(m)?m.slice(5):null;
 /* ferramentas derivadas: a principal e as suas variantes dividem o mesmo botão na barra */
 const SUBT={topo:[['tpt','Ponto cotado'],['pad','Plataforma'],['tbl','Curva de nível']],
+ door:[['trap','Alçapão']],
  wall:[['curtain','Parede-cortina'],['wallc','Parede personalizada']],floor:[['floorc','Piso personalizado']],
  column:[['columnc','Pilar personalizado']],beam:[['beamc','Viga personalizada']],fence:[['fencec','Cerca personalizada']]};
 const SUBOF={};for(const k in SUBT)for(const[t]of SUBT[k])SUBOF[t]=k;
@@ -199,7 +200,7 @@ function draftCells(q,y){if(!q||!DEF[tool]||!CATS[tool]||!CATS[tool].vox)return 
  if(key===DKEY)return DCACHE;
  DKEY=key;DCACHE=draftMake(q,y);return DCACHE}
 function draftMake(q,y){
- const cat=tool;if(cat==='comp'||cat==='door'||cat==='window')return null;
+ const cat=tool;if(cat==='comp'||cat==='door'||cat==='window'||cat==='trap')return null;
  const w=Object.assign({id:'__d',cat,base:lv},JSON.parse(JSON.stringify(DEF[cat])));
  if(y!==undefined&&y!==null&&w.off!==undefined)w.off=Math.round(y-(lvl().elev||0));
  if(DMETH[cat]&&cat!=='window'){const pr=drawProps(RP.concat([q]),cat,false);if(!pr)return null;Object.assign(w,pr)}
@@ -239,7 +240,7 @@ function tileComp(p,w,cells,did,rep2){const d=defOf(did);if(!d||!d.cells||!d.cel
   if(mode==='max'){for(let i=0;i<k;i++)a.push(start+len-(i+1)*size);return a}
   for(let i=0;i<k;i++)a.push(start+i*size);return a};
  const lay=rot=>{const q=(rot/90)%2,rc=d.cells.map(c=>{const[x,z]=rotXZ(c.x,c.z,rot);
-   return{x,y:c.y,z,m:c.m,fc:c.fc?rotFace(c.fc,rot):undefined,hf:c.hf,ax:c.ax&&q?(c.ax==='x'?'z':c.ax==='z'?'x':c.ax):c.ax}});
+   return{x,y:c.y,z,m:c.m,fc:c.fc?rotFace(c.fc,rot):undefined,hf:c.hf,ax:c.ax&&q?(c.ax==='x'?'z':c.ax==='z'?'x':c.ax):c.ax,td:c.td?{...c.td,fc:rotFace(c.td.fc,rot)}:undefined}});
   const mnx=Math.min(...rc.map(c=>c.x)),mny=Math.min(...rc.map(c=>c.y)),mnz=Math.min(...rc.map(c=>c.z)),
    W=Math.max(...rc.map(c=>c.x))-mnx+1,H=Math.max(...rc.map(c=>c.y))-mny+1,D=Math.max(...rc.map(c=>c.z))-mnz+1,
    nc=rc.map(c=>({...c,x:c.x-mnx,y:c.y-mny,z:c.z-mnz})),out=[],used=new Set();let n=0,over=false;
@@ -248,7 +249,7 @@ function tileComp(p,w,cells,did,rep2){const d=defOf(did);if(!d||!d.cells||!d.cel
    n++;
    for(const c of nc){const X=bx+c.x,Y=by+c.y,Z=bz+c.z,k2=X+','+Y+','+Z;
     if(set.has(k2))used.add(k2);else over=true;
-    out.push([X,Y,Z,c.fc?{facing:c.fc,half:c.hf==='top'?'top':'bottom'}:undefined,c.m,c.ax,c.hf==='top'||c.hf==='bottom'?c.hf:undefined])}}
+    out.push([X,Y,Z,c.fc?{facing:c.fc,half:c.hf==='top'?'top':'bottom'}:undefined,c.m,c.ax,c.hf==='top'||c.hf==='bottom'?c.hf:undefined,undefined,c.td])}}
   return{out,n,used:used.size,over,rot,dim:W+'×'+H+'×'+D}};
  let nat=0;
  if(w.x2!==undefined&&w.z2!==undefined){const dx=w.x2-w.x1,dz=w.z2-w.z1;nat=Math.abs(dx)>=Math.abs(dz)?(dx<0?180:0):(dz<0?270:90)}
@@ -274,7 +275,8 @@ function voxComp(p,e,tops,mins){const d=defOf(e.def);if(!d||!d.cells.length)retu
   if(t2!==undefined)y0=t2+1+Math.round(+e.hoff||0)}
  return d.cells.map(c=>{const[cx,cz]=rotXZ(c.x,c.z,r);
   return[x0+cx,y0+c.y,z0+cz,c.fc?{facing:rotFace(c.fc,r),half:c.hf==='top'?'top':'bottom'}:undefined,c.m,
-   c.ax&&q%2?(c.ax==='x'?'z':c.ax==='z'?'x':c.ax):c.ax,c.hf==='top'||c.hf==='bottom'?c.hf:undefined]})}
+   c.ax&&q%2?(c.ax==='x'?'z':c.ax==='z'?'x':c.ax):c.ax,c.hf==='top'||c.hf==='bottom'?c.hf:undefined,undefined,
+   c.td?{...c.td,fc:rotFace(c.td.fc,r)}:undefined]})}
 /* ===== GEOMETRIA DE CAMINHOS =====
    Um caminho é a trajetória (parede, viga, cerca) ou o contorno (piso, cobertura, parede-cortina)
    de um elemento. Qualquer método de desenho — linha, retângulo, polígono, círculo, arco ou curva —
@@ -368,7 +370,7 @@ const contourOf=e=>{const k=elCont(e);return k.pts};
 /* registro de categorias: nova categoria = nova entrada (rótulo + função de voxelização) */
 /* o terreno não gera blocos durante a modelagem: CATS.topo não tem gerador, e a conversão
    em blocos acontece só na exportação */
-const CATS={topo:{l:'Terreno'},tpt:{l:'Ponto cotado'},pad:{l:'Plataforma'},tbl:{l:'Curva de nível'},wall:{l:'Parede',vox:voxWall},floor:{l:'Piso',vox:voxFloor},column:{l:'Pilar',vox:voxColumn},door:{l:'Porta'},window:{l:'Janela',vox:voxWall},stair:{l:'Escada',vox:voxStair},roof:{l:'Cobertura',vox:voxRoof},beam:{l:'Viga',vox:voxBeamPath},fence:{l:'Cerca/Muro',vox:(p,e)=>voxBeamPath(p,{...e,bw:1,bh:e.h,dy:0})},curtain:{l:'Parede-cortina',vox:voxCurtain},block:{l:'Bloco',vox:voxBlock},comp:{l:'Componente',vox:voxComp}};
+const CATS={topo:{l:'Terreno'},tpt:{l:'Ponto cotado'},pad:{l:'Plataforma'},tbl:{l:'Curva de nível'},wall:{l:'Parede',vox:voxWall},floor:{l:'Piso',vox:voxFloor},column:{l:'Pilar',vox:voxColumn},door:{l:'Porta'},trap:{l:'Alçapão'},window:{l:'Janela',vox:voxWall},stair:{l:'Escada',vox:voxStair},roof:{l:'Cobertura',vox:voxRoof},beam:{l:'Viga',vox:voxBeamPath},fence:{l:'Cerca/Muro',vox:(p,e)=>voxBeamPath(p,{...e,bw:1,bh:e.h,dy:0})},curtain:{l:'Parede-cortina',vox:voxCurtain},block:{l:'Bloco',vox:voxBlock},comp:{l:'Componente',vox:voxComp}};
 var Y3=null;/* cota absoluta do clique no 3D */
 function mk(p,cat,ex,base){p.c=p.c||{};p.c[cat]=Math.max(p.c[cat]||0,p.els.filter(e=>e.cat===cat).length)+1;const o=Object.assign({id:uid(),cat,name:CATS[cat].l+' '+p.c[cat]},DEF[cat],ex);if(!o.base)o.base=base;
  if(Y3!==null&&o.off!==undefined&&ex.off===undefined){const b0=lvOf(p,o.base)||p.levels[0];o.off=Math.round(Y3-b0.elev)+(cat==='floor'?1:0)}
@@ -384,7 +386,8 @@ function cellsIn(Q){const xs=Q.map(q=>q[0]),zs=Q.map(q=>q[1]),out=[];for(let x=M
 function voxFloor(p,f){const b=lvOf(p,f.base)||p.levels[0],yt=Math.round(b.elev+f.off),out=[],sb=(MATS[blockOf(p,f.mat)]||[])[2]==='b';for(const[x,z]of cellsIn(contourOf(f)))if(sb)out.push([x,yt-1,z,undefined,undefined,undefined,'top']);else for(let y=yt-f.t;y<yt;y++)out.push([x,y,z]);return out}
 /* bloco avulso: uma célula com os estados do próprio bloco (escada, laje, tronco) */
 function voxBlock(p,b){const l=lvOf(p,b.base)||p.levels[0],y=Math.round(l.elev+(+b.off||0)),x=Math.round(b.x1-.5),z=Math.round(b.z1-.5),k=(MATS[blockOf(p,b.mat)]||[])[2],hf=b.hf==='top'?'top':'bottom';
- return[[x,y,z,k==='s'?{facing:b.fc||'north',half:hf}:undefined,undefined,b.ax||'y',k==='b'?hf:undefined]]}
+ /* alçapão solto de projetos anteriores: mesmo sem elemento próprio ele deixa de ser cubo */
+ return[[x,y,z,k==='s'?{facing:b.fc||'north',half:hf}:undefined,undefined,b.ax||'y',k==='b'?hf:undefined,undefined,k==='t'?trapSt(b):undefined]]}
 /* o pilar calcula a seção escolhida e só depois a distribui em blocos */
 function voxColumn(p,c){const[y0,y1]=wallTop(p,c),sx2=Math.max(1,Math.round(c.sx)||1),sz2=Math.max(1,Math.round(c.sz)||1),
  x0=Math.round(c.x1-.5-(sx2-1)/2+1e-6),z0=Math.round(c.z1-.5-(sz2-1)/2+1e-6),k=c.cs||'rect',out=[],sec=[],
@@ -555,6 +558,19 @@ function openCells(p,e,vox,add){const h=p.els.find(w=>w.id===e.host);if(!h||h.ca
  /* a porta fica só na célula da face escolhida; numa parede mais grossa o restante do vão fica aberto */
  const D=doorAxes(h,e),k=c=>c[0]*D.pd[0]+c[2]*D.pd[1],mx=Math.max(...hit.map(k)),lo=Math.min(...hit.map(c=>c[1]));
  add(hit.filter(c=>k(c)===mx).map(c=>[c[0],c[1],c[2],undefined,undefined,undefined,undefined,{facing:D.facing,hinge:D.hinge,pd:D.pd,hv:D.hv,half:c[1]===lo?'lower':'upper'}]),e.mat,e.id,'d');return hit.length}
+/* ===== ALÇAPÃO =====
+   O alçapão não é um bloco cheio: é uma folha de 3/16 que gira em torno de uma aresta horizontal.
+   Fechada, fica deitada no topo (abre para baixo) ou na base da célula (abre para cima);
+   aberta, fica de pé encostada no lado da dobradiça. Ao ser inserido ele recorta a célula do
+   piso — a espessura inteira dele — e entra no lugar, deixando o vão aberto por baixo. */
+function trapCells(p,e,vox,add){
+ const l=lvOf(p,e.base)||p.levels[0],y=Math.round((l.elev||0)+(+e.off||0))-1,
+  x=Math.round(e.x1-.5),z=Math.round(e.z1-.5),h0=vox.get(x+','+y+','+z),ho=h0&&!h0.tp?h0.o:null;let rem=0;
+ if(ho){const hs=p.els.find(w=>w.id===ho),n=hs&&hs.cat==='floor'?Math.max(1,Math.round(hs.t)||1):1;
+  for(let i=0,yy=y;i<n;i++,yy--){const kk=x+','+yy+','+z,v=vox.get(kk);if(!v||v.o!==ho)break;vox.delete(kk);rem++}}
+ add([[x,y,z,undefined,undefined,undefined,undefined,undefined,trapSt(e)]],e.mat,e.id);
+ return rem}
+function trapSt(e){return{fc:ORD4.includes(e.fc)?e.fc:'north',hf:e.hf==='bottom'?'bottom':'top',op:!!e.op}}
 function newProject(demo){const a=uid(),b=uid(),p={v:1,id:uid(),name:demo?'Casa de exemplo':'Novo projeto',levels:[{id:a,name:'Nível 1 — Térreo',elev:0,h:4},{id:b,name:'Nível 2 — Cobertura',elev:4,h:4}],els:[],n:0,mats:[],views:[],ann:[],sheets:[],types:{wall:defTypes(),roof:defRoofTypes(),stair:defStairTypes(),topo:defTopoTypes()}};
  if(demo){const q=[[.5,.5],[11.5,.5],[11.5,8.5],[.5,8.5]];q.forEach((s,i)=>{const w=mkWall(p,s,q[(i+1)%4],a,b);w.ty=p.types.wall[1].id;p.els.push(w)})}return p}
 /* ===== ANEXAR TOPO =====
@@ -645,9 +661,9 @@ function voxWall(p,w){return w.pts&&w.pts.length>1?pathBand(p,w):voxSeg(p,w)}
 function voxBeamPath(p,w){return pathVox(p,w,voxBeam1)}
 /* resultado executável: mapa único de blocos; células compartilhadas são contadas uma vez */
 function build(p){AOKC=null;syncT(p);const vox=new Map(),qty={},per={},cats={},bases={},rem={},bb={},doors=new Set();let shared=0;
- const add=(c,m,o,f)=>{for(const[x,y,z,st,mm,ax,sl,dw]of c){const k=x+','+y+','+z;
+ const add=(c,m,o,f)=>{for(const[x,y,z,st,mm,ax,sl,dw,td]of c){const k=x+','+y+','+z;
    /* construir sobre o terreno não conta como célula disputada: o terreno é o chão */
-   if(vox.has(k)&&f!=='q'&&!vox.get(k).tp)shared++;{const r=resolveMat(p,mm||m);vox.set(k,{x,y,z,m:r.b,col:r.c,o,d:f==='d',st,dw,ax:MATS[r.b][2]==='l'?ax:undefined,sl:MATS[r.b][2]==='b'?(sl||'top'):undefined})}}};
+   if(vox.has(k)&&f!=='q'&&!vox.get(k).tp)shared++;{const r=resolveMat(p,mm||m);vox.set(k,{x,y,z,m:r.b,col:r.c,o,d:f==='d',st,dw,td,ax:MATS[r.b][2]==='l'?ax:undefined,sl:MATS[r.b][2]==='b'?(sl||'top'):undefined})}}};
  const tile={};
  /* o terreno vai primeiro: é o chão, e o que for construído por cima prevalece na célula.
     São os mesmos blocos usados na vista 3D, nos quantitativos e na exportação. */
@@ -661,6 +677,8 @@ function build(p){AOKC=null;syncT(p);const vox=new Map(),qty={},per={},cats={},b
   const cid=compOfEl(p,w);let cl=CATS[w.cat].vox(p,w2);if(cid)cl=tileComp(p,w2,cl,cid,tile);add(cl,w.mat,w.id)}
  for(const w of p.els)if(w.cat==='window'&&w.x1!==undefined)add(voxWall(p,w),w.mat,w.id,'q');/* janela recorta paredes */
  for(const w of p.els)if(w.cat==='door'&&w.host)rem[w.id]=openCells(p,w,vox,add);
+ /* o alçapão vem depois de tudo: ele recorta a célula onde entra e ocupa o lugar dela */
+ for(const w of p.els)if(w.cat==='trap')rem[w.id]=trapCells(p,w,vox,add);
  /* componentes por último: o apoio vem do hospedeiro já construído */
  if(p.els.some(w=>w.cat==='comp')){const tops=new Map(),mins=minsOf(vox);
   for(const v of vox.values()){const a=v.o+'|'+v.x+','+v.z;if(!(tops.get(a)>=v.y))tops.set(a,v.y);if(!(tops.get(v.o)>=v.y))tops.set(v.o,v.y)}
@@ -1258,7 +1276,7 @@ const setView=v=>{view=v;render()},snapV=v=>Math.floor(v)+.5;
 const SCT2=[["","Corte","tool:cut"],["","Tabelas:Tabela/Quantidades","view:table"],["","Telhado","tool:roof"],["","Guarda-corpo","tool:fence"],["","Escada","tool:stair"],["3D","Vista 3D","view:3d"],["BK","Inserir bloco","tool:block"],["BM","Esqueleto estrutural: viga","tool:beam"],["CL","Coluna","tool:column"],["DE","Excluir","del"],["DI","Cota alinhada","tool:dim"],["DL","Linha de detalhe","tool:ln"],["DR","Porta","tool:door"],["FL","Piso","tool:floor"],["KS","Atalhos de teclado","ks"],["LL","Nível","addlv"],["S","Modificar (Selecionar)","tool:sel"],["MT","Materiais","mats"],["MV","Mover","tool:move"],["PP","Propriedades","pptog"],["RO","Rotacionar","tool:rot"],["SL","Dividir elemento","tool:split"],["TG","Identificar por categoria","tool:tag"],["TR","Aparar/Estender para o canto","tool:trim"],["TX","Texto","tool:txt"],["VP","Propriedades","pptog"],["WA","Parede","tool:wall"],["WN","Janela","tool:window"],["ZA","Zoom em todos para ajustar","fit"],["ZE","Zoom para ajustar","fit"],["ZF","Zoom para ajustar","fit"],["ZX","Zoom para ajustar","fit"],["32","Modo 2D (Mouse 3D)",""],["3F","Modo de voo (Mouse 3D)",""],["3O","Modo de objeto (Mouse 3D)",""],["3W","Modo de navegação (Mouse 3D)",""],["AA","Área",""],["AB","Limite de área",""],["AC","Recortar (Cancelar recorte) a vista",""],["AD","Anexar grupo de detalhes",""],["AJ","Unir:Alternar a ordem da união",""],["AL","Alinhar",""],["AP","Adicionar no grupo",""],["AR","Matriz",""],["AT","Identificar área",""],["AV","Viewports:Ativar vista",""],["BR","Esqueleto estrutural: contraventamento",""],["BS","Sistema de viga estrutural",""],["CC","Copiar",""],["CE","Cancelar o modo de edição",""],["CG","Cancelar",""],["CM","Inserir um componente","tool:comp"],["CN","Conduíte",""],["COD","Sobrepor gráficos na vista:Sobrepor por cate",""],["CP","Acoplar",""],["CS","Criar similar","tool:cs"],["CT","Bandeja de cabos",""],["CU","Cortar",""],["CV","Exibir (Ocultar) a região de recorte",""],["DA","Acessório de duto",""],["DC","Verificar os sistemas  de dutos",""],["DF","Conexão de duto",""],["DT","Duto",""],["DV","Viewports:Desativar vista",""],["EC","Verificar circuitos",""],["EE","Equipamento elétrico",""],["EG","Editar grupo",""],["EH","Ocultar na vista:Ocultar elementos",""],["EI","Imagem",""],["EL","Elevação de ponto",""],["EOD","Sobrepor gráficos na vista:Sobrepor por elem",""],["EOH","Sobreposição de gráficos por elemento na vis",""],["ER","Solicitações de edição",""],["ES","Configurações MEP:Configurações elétricas",""],["ET","Aparar/Estender elemento único",""],["EU","Desocultar elemento",""],["EW","Fiação em arco",""],["EX","Aparar/Estender múltiplos elementos",""],["FA","Selecionar elementos por face",""],["FD","Duto flexível",""],["FE","Concluir o modo de edição",""],["FG","Concluir",""],["FN9","Navegador do sistema",""],["FP","Tubulação flexível",""],["FR","Localizar/ Substituir",""],["FT","Fundação estrutural: parede",""],["GD","Opções de exibição de gráficos",""],["GP","Grupo de modelos:Criar grupo",""],["GR","Eixo",""],["HA","Aplicar Ocultar/Isolar para vista",""],["HC","Ocultar categoria",""],["HH","Ocultar elemento",""],["HL","Linha oculta",""],["HR","Reinicializar ocultar/isolar temporário",""],["IC","Isolar categoria",""],["IE","Isolar elemento",""],["JO","Unir",""],["JT","Unir/Desunir telhado",""],["LF","Luminária",""],["LI","Linha do modelo",""],["LS","Configurações adicionais:Estilos de linha",""],["LW","Manipulação de estilos de linha",""],["MA","Igualar propriedades de tipo",""],["ME","Medir:Medir entre duas referências",""],["MI","Espelhar: desenhar eixo",""],["MM","Espelhar: selecionar eixo",""],["MP","Mover para o projeto",""],["MS","Configurações MEP:Configurações mecânicas",""],["NF","Conexão do conduite",""],["OF","Deslocamento",""],["OS","Estilos de objeto",""],["PA","Acessório da tubulação",""],["PC","Verificar os sistemas  de tubos",""],["PF","Conexão da tubulação",""],["PI","Tubo",""],["PL","Definir",""],["PN","Fixar",""],["PS","Tabelas de  painéis",""],["PT1","Pintura",""],["PT2","Pintura:Remover a pintura",""],["PX","Conexão de hidráulica",""],["R3","Colocar",""],["RA","Restaurar todos os excluídos",""],["RB","Restaurar membro excluído",""],["RC","Acoplar:Remover as juntas entre perfis",""],["RE","Escala",""],["RG","Renderização na nuvem:Galeria de renderizaçõ",""],["RH","Alternar o modo revelar elementos ocultos",""],["RL","Recarregar o mais recente",""],["RM","Ambiente",""],["RP","Plano de referência",""],["RR","Renderizar",""],["RS","Separador de ambiente",""],["RT","Identificar ambiente",""],["RW","Recarregar o mais recente",""],["SA","Selecionar todas as instâncias: em todo o pr",""],["SB","Piso:Piso: estrutural",""],["SC","Centros",""],["SD1","Sombreado com arestas",""],["SD2","Cores consistentes",""],["SE","Pontos finais",""],["SF","Dividir face",""],["SI","Intersecções",""],["SK","Sprinkler",""],["SM","Pontos centrais",""],["SN","Mais próximo",""],["SO","Snap desativado",""],["SP","Perpendicular",""],["SQ","Quadrantes",""],["SR","Snap para objetos remotos",""],["SS","Desativar sobreposição",""],["ST","Tangentes",""],["SU","Configurações adicionais:Configurações do so",""],["SV","Selecionar todas as instâncias: visíveis na ",""],["SW","Eixo do plano de trabalho",""],["SX","Pontos",""],["SZ","Fechar",""],["TF","Conexão da bandeja de cabos",""],["TL","Linhas finas",""],["UC","Cortar:Não-cortar geometria",""],["UG","Desagrupar",""],["UJ","Unir:Desunir geometria",""],["UN","Unidades do projeto",""],["UP","Desafixar",""],["VG","Visibilidade/ Gráficos",""],["VH","Ocultar na vista:Ocultar categoria",""],["VOH","Sobreposição de gráficos por categoria na vi",""],["VU","Desocultar categoria",""],["VV","Visibilidade/ Gráficos",""],["WF","Estrutura de arame",""],["WT","Vistas lado a lado",""],["ZC","Pan/Zoom anterior",""],["ZO","Afastar zoom(2x)",""],["ZP","Pan/Zoom anterior",""],["ZR","Zoom na região",""],["ZS","Zoom no tamanho da folha",""],["ZV","Afastar zoom(2x)",""],["ZZ","Zoom na região",""]];
 const SCMAP={},SCFOR={};for(const[k,n,a]of SCT2){if(k)SCMAP[k]=[n,a];if(a)SCFOR[a]=k}
 const SCKEYS=Object.keys(SCMAP),scOf=a=>SCFOR[a]?' ('+SCFOR[a]+')':'';
-const TOOLS=[['sel','Selecionar'],['move','Mover'],['block','Bloco'],['comp','Componente'],['topo','Terreno'],['tpt','Ponto cotado'],['pad','Plataforma'],['tbl','Curva de nível'],['wall','Parede'],['floor','Piso'],['column','Pilar'],['door','Porta'],['window','Janela'],['stair','Escada'],['roof','Cobertura'],['beam','Viga'],['fence','Cerca/Muro'],['curtain','Parede-cortina'],['cs','Criar similar'],['cut','Corte'],['dim','Cota'],['txt','Texto'],['ln','Linha'],['tag','Identificador'],['trim','Aparar'],['split','Repartir'],['rot','Rotacionar'],['anchor','Ancorar']].map(([k,l])=>[k,l+scOf('tool:'+k)]);
+const TOOLS=[['sel','Selecionar'],['move','Mover'],['block','Bloco'],['comp','Componente'],['topo','Terreno'],['tpt','Ponto cotado'],['pad','Plataforma'],['tbl','Curva de nível'],['wall','Parede'],['floor','Piso'],['column','Pilar'],['door','Porta'],['trap','Alçapão'],['window','Janela'],['stair','Escada'],['roof','Cobertura'],['beam','Viga'],['fence','Cerca/Muro'],['curtain','Parede-cortina'],['cs','Criar similar'],['cut','Corte'],['dim','Cota'],['txt','Texto'],['ln','Linha'],['tag','Identificador'],['trim','Aparar'],['split','Repartir'],['rot','Rotacionar'],['anchor','Ancorar']].map(([k,l])=>[k,l+scOf('tool:'+k)]);
 const MENUS={Arquivo:[['Novo projeto',()=>openP(newProject())],['Projetos salvos…',dlgProjects],['Duplicar projeto',()=>{const c=JSON.parse(JSON.stringify(P));c.id=uid();c.name+=' (cópia)';openP(c)}],['Exportar / importar (.mcad)…',dlgFile],['Exportar para Minecraft…',dlgMc]],
  Editar:[['Desfazer (Ctrl+Z)',undo],['Refazer (Ctrl+Y)',redo],['Excluir seleção (Del)',del]],Ajuda:[['Atalhos de teclado…',dlgKeys]],Modelagem:[['Biblioteca de componentes…',dlgComp],['Importar levantamento topográfico…',dlgTopoImp],['Biblioteca de blocos…',dlgBlocks],['Materiais…',dlgMats],['Tipos de parede…',dlgTypes],['Tipos de cobertura…',dlgRoofTypes],['Tipos de escada…',dlgStairTypes]],Visualizar:[['Texturas…',dlgPack],['Navegação 3D…',dlgNav]]};
 $('#menus').innerHTML=Object.keys(MENUS).map(n=>`<button data-a="menu:${n}">${n}</button>`).join('');
@@ -1421,6 +1439,8 @@ function dlgKeys(){const d=$('#dlg'),on=SCT2.filter(r=>r[2]&&r[0]),no=SCT2.filte
  if(!d.open)d.showModal()}
 function flipExt(){const w=tool==='sel'&&P.els.find(e=>e.id===sel);
 if(w&&w.cat==='door'){mutate(()=>{w.dir=(((w.dir||0)+1)%4)});return}
+ if(w&&w.cat==='trap'){mutate(()=>{w.fc=CW4[w.fc]||'north'});return}
+ if(tool==='trap'){DEF.trap.fc=CW4[DEF.trap.fc]||'north';render();return}
  if(w&&w.cat==='block'){mutate(()=>{const D=['north','east','south','west'];w.fc=D[(D.indexOf(w.fc||'north')+1)%4]});return}
  if(tool==='block'){const D=['north','east','south','west'];DEF.block.fc=D[(D.indexOf(DEF.block.fc||'north')+1)%4];render();return}
  if(w&&w.cat==='stair'){mutate(()=>{const D=['left','center','right'];w.sd=D[(D.indexOf(w.sd||'left')+1)%3]});return}
@@ -1457,8 +1477,8 @@ const tv=t=>t.type==='checkbox'?t.checked:t.value;
 const coerce=(k,v)=>['vw','vw3','qz','fill'].includes(k)?v
  :['sc','sb','so','bk','pv'].includes(k)?!!v
  :['eq','ref','by'].includes(k)?Math.round((+v||0)*100)/100
- :k==='cap'||k==='up'?!!v:k==='sp'?Math.max(1,Math.min(4,Math.round((+v||1)*2)/2)):['mat','name','base','tp','ax','ty','shape','rg','turn','fc','hf','def'].includes(k)?v:k==='top'?(v||null):['t','sx','sz','w','bw','bh'].includes(k)?Math.max(1,Math.min(16,Math.round(+v)||1)):k==='h'?Math.max(1,Math.round(+v)||1):['x1','z1','x2','z2'].includes(k)?Math.round(+v||0)+.5:Math.round(+v||0);
-const kindOK=(c,k)=>c==='block'?k!=='d':c==='door'?k==='d':c==='window'?k==='w'||k==='g':c==='stair'||c==='roof'?k==='s':c==='fence'?k==='f'||k==='m':c==='ridge'?!k||k==='g'||k==='l'||k==='b':c==='panel'?!k||k==='g'||k==='w'||k==='l'||k==='b':!k||k==='g'||k==='l'||(c==='floor'&&k==='b');
+ :k==='cap'||k==='up'||k==='op'?!!v:k==='sp'?Math.max(1,Math.min(4,Math.round((+v||1)*2)/2)):['mat','name','base','tp','ax','ty','shape','rg','turn','fc','hf','def'].includes(k)?v:k==='top'?(v||null):['t','sx','sz','w','bw','bh'].includes(k)?Math.max(1,Math.min(16,Math.round(+v)||1)):k==='h'?Math.max(1,Math.round(+v)||1):['x1','z1','x2','z2'].includes(k)?Math.round(+v||0)+.5:Math.round(+v||0);
+const kindOK=(c,k)=>c==='block'?k!=='d'&&k!=='t':c==='door'?k==='d':c==='trap'?k==='t':c==='window'?k==='w'||k==='g':c==='stair'||c==='roof'?k==='s':c==='fence'?k==='f'||k==='m':c==='ridge'?!k||k==='g'||k==='l'||k==='b':c==='panel'?!k||k==='g'||k==='w'||k==='l'||k==='b':!k||k==='g'||k==='l'||(c==='floor'&&k==='b');
 /* esquema de parâmetros por categoria; 4º item = só para elementos já criados */
 
 const SCH={topo:[['ty','Tipo de terreno','G'],['base','Nível de referência','L',1],['off','Deslocamento','n'],
@@ -1476,7 +1496,8 @@ fence:[['mat','Material','m'],['h','Altura (blocos)','i'],['r','Raio (blocos)','
  stair:[['ty','Tipo de escada','E'],['w','Largura (blocos)','i'],['sd','Lado do traçado','S',0,[['left','Esquerda'],['center','Centro'],['right','Direita']],0,o=>(+o.w||1)>1],['ev','Patamar a cada N degraus (0 = nenhum)','n'],['base','Restrição inferior','L',1],['off','Deslocamento inferior','n'],['top','Restrição superior','T']],
  comp:[['def','Componente','C'],['rot','Rotação','S',0,[[0,'0°'],[90,'90°'],[180,'180°'],[270,'270°']]],['base','Nível','L',1],['off','Deslocamento vertical','n',0,0,0,o=>!o.host],['hoff','Deslocamento do hospedeiro','n',0,0,0,o=>!!o.host],['x1','Posição X','n',1],['z1','Posição Y','n',1]],
  block:[['mat','Material','m'],['fc','Direção (Espaço gira)','S',0,[['north','Norte'],['east','Leste'],['south','Sul'],['west','Oeste']],0,o=>bKind(o.mat)==='s'],['hf','Metade','S',0,[['bottom','Inferior'],['top','Superior']],0,o=>['s','b'].includes(bKind(o.mat))],['ax','Eixo do tronco','S',0,[['y','Vertical (Y)'],['x','Leste–Oeste (X)'],['z','Norte–Sul (Z)']],0,o=>bKind(o.mat)==='l'],['base','Nível','L',1],['off','Altura (blocos acima do nível)','n'],['x1','Posição X','n',1],['z1','Posição Y','n',1]],
- door:[['mat','Material','m'],['dir','Direção (Espaço alterna)','S',0,[[0,'Para fora · maçaneta para baixo'],[1,'Para dentro · maçaneta para baixo'],[2,'Para dentro · maçaneta para cima'],[3,'Para fora · maçaneta para cima']]],['sill','Altura de instalação','n'],['pos','Posição na parede','n',1]],window:[['mat','Material','m'],['t','Espessura (blocos)','i'],['h','Altura','n'],['base','Nível','L',1],['off','Peitoril','n'],['x1','Início X','n',1],['z1','Início Y','n',1],['x2','Fim X','n',1],['z2','Fim Y','n',1]]};
+ door:[['mat','Material','m'],['dir','Direção (Espaço alterna)','S',0,[[0,'Para fora · maçaneta para baixo'],[1,'Para dentro · maçaneta para baixo'],[2,'Para dentro · maçaneta para cima'],[3,'Para fora · maçaneta para cima']]],['sill','Altura de instalação','n'],['pos','Posição na parede','n',1]],
+ trap:[['mat','Material','m'],['fc','Dobradiça (Espaço gira)','S',0,[['north','Norte (Y−)'],['east','Leste (X+)'],['south','Sul (Y+)'],['west','Oeste (X−)']]],['hf','Abertura da folha','S',0,[['top','Para baixo (no topo)'],['bottom','Para cima (na base)']]],['op','Folha aberta','b'],['base','Nível','L',1],['off','Deslocamento','n'],['x1','X','n',1],['z1','Y','n',1]],window:[['mat','Material','m'],['t','Espessura (blocos)','i'],['h','Altura','n'],['base','Nível','L',1],['off','Peitoril','n'],['x1','Início X','n',1],['z1','Início Y','n',1],['x2','Fim X','n',1],['z2','Fim Y','n',1]]};
 function fields(cat,o,attr,draft,only,skip){return SCH[cat].filter(f=>!(draft&&f[3])&&!(f[0]==='h'&&o.top)&&(!only||f[0]===only)&&(draft||!f[5])&&(!f[6]||f[6](o))&&!(skip&&skip.includes(f[0]))).map(([k,l,t,,op])=>{const a=`${attr}="${k}"`,v=o[k],lv2=P.levels.map(x=>[x.id,x.name]);let h;
  if(t==='m')h=`${dd(matOpts(cat),v,`${a}`)}`;
  else if(t==='T')h=`${dd([['','Altura não conectada'],...lv2],v||'',`${a}`)}`;
@@ -1498,7 +1519,7 @@ function cmField(c){const op=compOpts(c),cur2=cmGet(c);
 /* resumo do lance em desenho, ao lado dos botões */
 function stairHint(){const d=stairDraft(RP.concat(cur&&RP.length%2?[cur]:[]));if(!d)return'';
  return '<span class="chip">'+d.partes+' parte(s)</span><span class="chip">'+(d.need?(d.falta?'faltam '+d.falta+' bloco(s)':'desnível vencido'):d.N+' degraus · sobe '+fmt(d.H))+'</span>'}
-function toolPanel(){const c=tool,hint={wall:'Espaço alterna o lado externo.',floor:'',comp:'Espaço gira 90°.',block:'Espaço gira escadas.',column:'',door:'Clique em uma parede.',window:'Dois cliques na mesma célula fazem uma janela de 1 bloco.',stair:'Cada parte: dois cliques. Espaço troca o lado.',roof:'',fence:'O material define se é cerca ou muro.',beam:'',
+function toolPanel(){const c=tool,hint={wall:'Espaço alterna o lado externo.',floor:'',comp:'Espaço gira 90°.',block:'Espaço gira escadas.',column:'',door:'Clique em uma parede.',trap:'Clique na célula onde o alçapão entra: ele recorta o piso e ocupa o lugar dele. Espaço gira a dobradiça.',window:'Dois cliques na mesma célula fazem uma janela de 1 bloco.',stair:'Cada parte: dois cliques. Espaço troca o lado.',roof:'',fence:'O material define se é cerca ou muro.',beam:'',
  topo:'Desenhe o perímetro do terreno; depois insira os pontos cotados.',
  tpt:'Clique para inserir um ponto de elevação. No 3D a cota vem da face apontada.',
  pad:'Desenhe a região plana e informe a cota da plataforma.',
@@ -1540,6 +1561,13 @@ function info(w){const r=[],ok=w.cat==='wall'||w.cat==='column',[y0,y1]=ok?wallT
    ['Rotação',(((+w.rot||0)%360+360)%360)+'°'],['Instâncias deste componente',P.els.filter(x=>x.cat==='comp'&&x.def===w.def).length])}
  else if(w.cat==='block'){const l=lvOf(P,w.base)||P.levels[0],y=Math.round(l.elev+(+w.off||0)),v=[...B.vox.values()].find(c=>c.o===w.id);
   r.push(['Coordenadas','X '+Math.floor(w.x1)+' · Y '+y+' · Z '+Math.floor(w.z1)],['Bloco do jogo',blockOf(P,w.mat)],['Estado',v&&mcSt(v)||'—'])}
+ else if(w.cat==='trap'){const l=lvOf(P,w.base)||P.levels[0],y=Math.round((l.elev||0)+(+w.off||0))-1,
+  v=[...B.vox.values()].find(c=>c.o===w.id),N={north:'Norte',south:'Sul',east:'Leste',west:'Oeste'},td=trapSt(w);
+  r.push(['Coordenadas','X '+Math.floor(w.x1)+' · Y '+y+' · Z '+Math.floor(w.z1)],
+   ['Dimensão fixa','1 bloco · folha de 3/16'],['Dobradiça',N[td.fc]],
+   ['Abertura',td.hf==='top'?'Para baixo (folha no topo do bloco)':'Para cima (folha na base do bloco)'],
+   ['Folha',td.op?'Aberta':'Fechada'],['Blocos recortados do piso',B.rem[w.id]||0],
+   ['Bloco do jogo',blockOf(P,w.mat)],['Estado',v&&mcSt(v)||'—'])}
  else{const h=P.els.find(x=>x.id===w.host),N={north:'Norte',south:'Sul',east:'Leste',west:'Oeste'},D=h&&doorAxes(h,w);r.push(['Parede anfitriã',h?esc(h.name):'—'],['Dimensão fixa','1×2 blocos'],['Face',D?(D.sd>0?'Para fora':'Para dentro')+' ('+N[DIRN(D.pd)]+')':'—'],['Maçaneta',D?N[DIRN(D.hv)]:'—'],['Blocos removidos da parede',B.rem[w.id]||0])}
  const tl=B.tile&&B.tile[w.id];
  if(tl)r.push(['Componente',esc(tl.name)+' ('+tl.dim+' = comp.×alt.×esp.'+(tl.rot?', girado '+tl.rot+'°':'')+')'],['Cópias deste componente',tl.n],
@@ -1856,7 +1884,7 @@ async function shExport(k){const S=SHo(),msg=t=>{const e=$('#shmsg');if(e)e.text
   msg('Arquivo oferecido para download.')}catch(e){msg(e&&e.code==='declined'?'Exportação cancelada.':'Não foi possível exportar ('+((e&&e.code)||'erro')+').')}}
 /* ---- ícones, dropdown reutilizável, navegador do projeto e barra flutuante ---- */
 const svg=p=>`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
-const IC=Object.fromEntries(Object.entries({sel:'<path d="M6 3l12 9-5.5 1.3L15 20l-2.7 1-2.5-6.7L6 17z"/>',wall:'<rect x="3" y="5" width="18" height="14"/><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4"/>',floor:'<path d="M3 14l9-5 9 5-9 5z"/><path d="M3 10l9-5 9 5"/>',column:'<rect x="7" y="3" width="10" height="3"/><rect x="9.5" y="6" width="5" height="12"/><rect x="6" y="18" width="12" height="3"/>',door:'<rect x="6" y="3" width="12" height="18"/><circle cx="15" cy="12" r=".9"/>',window:'<rect x="4" y="4" width="16" height="16"/><path d="M12 4v16M4 12h16"/>',stair:'<path d="M3 20h5v-5h5v-5h5V5h3"/>',roof:'<path d="M3 13l9-8 9 8M6 11v9h12v-9"/>',beam:'<path d="M4 6h16M4 18h16M12 6v12"/>',fence:'<path d="M5 20V6M12 20V6M19 20V6M3 10h18M3 15h18"/>',curtain:'<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',cut:'<path d="M3 12h18" stroke-dasharray="4 3"/><path d="M12 11V5m0 0L9 8m3-3l3 3"/>',dim:'<path d="M4 7v10M20 7v10M4 12h16M7 10l-3 2 3 2M17 10l3 2-3 2"/>',txt:'<path d="M5 6h14M12 6v13M9 19h6"/>',ln:'<path d="M4 20L20 4"/><circle cx="4" cy="20" r="1.5"/><circle cx="20" cy="4" r="1.5"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',comp:'<path d="M6 21v-7M18 21v-7M5 14h14M6 14V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6"/><path d="M8 6V4"/>',block:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"<path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',move:'<path d="M12 3v18M3 12h18M12 3l-3 3m3-3l3 3M12 21l-3-3m3 3l3-3M3 12l3-3m-3 3l3 3M21 12l-3-3m3 3l-3 3"/>',pencil:'<path d="M4 20l1-4L16 5l3 3L8 19z"/>',dots:'<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>',
+const IC=Object.fromEntries(Object.entries({sel:'<path d="M6 3l12 9-5.5 1.3L15 20l-2.7 1-2.5-6.7L6 17z"/>',wall:'<rect x="3" y="5" width="18" height="14"/><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4"/>',floor:'<path d="M3 14l9-5 9 5-9 5z"/><path d="M3 10l9-5 9 5"/>',column:'<rect x="7" y="3" width="10" height="3"/><rect x="9.5" y="6" width="5" height="12"/><rect x="6" y="18" width="12" height="3"/>',door:'<rect x="6" y="3" width="12" height="18"/><circle cx="15" cy="12" r=".9"/>',trap:'<path d="M3 17h18"/><path d="M4.5 17L13 9.6"/><path d="M18 17a6.6 6.6 0 0 0-3.6-5.6"/><path d="M15.6 10.2l-1.7 1.1 1.9.8"/>',window:'<rect x="4" y="4" width="16" height="16"/><path d="M12 4v16M4 12h16"/>',stair:'<path d="M3 20h5v-5h5v-5h5V5h3"/>',roof:'<path d="M3 13l9-8 9 8M6 11v9h12v-9"/>',beam:'<path d="M4 6h16M4 18h16M12 6v12"/>',fence:'<path d="M5 20V6M12 20V6M19 20V6M3 10h18M3 15h18"/>',curtain:'<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',cut:'<path d="M3 12h18" stroke-dasharray="4 3"/><path d="M12 11V5m0 0L9 8m3-3l3 3"/>',dim:'<path d="M4 7v10M20 7v10M4 12h16M7 10l-3 2 3 2M17 10l3 2-3 2"/>',txt:'<path d="M5 6h14M12 6v13M9 19h6"/>',ln:'<path d="M4 20L20 4"/><circle cx="4" cy="20" r="1.5"/><circle cx="20" cy="4" r="1.5"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',comp:'<path d="M6 21v-7M18 21v-7M5 14h14M6 14V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6"/><path d="M8 6V4"/>',block:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"<path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',move:'<path d="M12 3v18M3 12h18M12 3l-3 3m3-3l3 3M12 21l-3-3m3 3l3-3M3 12l3-3m-3 3l3 3M21 12l-3-3m3 3l-3 3"/>',pencil:'<path d="M4 20l1-4L16 5l3 3L8 19z"/>',dots:'<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>',
  att:'<path d="M2 9l10-6 10 6"/><path d="M7 21v-8M17 21v-8"/><path d="M12 19v-7"/><path d="M9 15l3-3 3 3"/>',
  unatt:'<path d="M2 9l10-6 10 6"/><path d="M7 21v-8M17 21v-8"/><path d="M12 12v7"/><path d="M9 16l3 3 3-3"/>',
  topo:'<path d="M3 17l5-6 4 4 3-4 6 6z"/><path d="M3 20h18"/>',
@@ -2147,7 +2175,7 @@ async function loadPack(){const inp=$('#pkf'),msg=t=>{const m=$('#pkm');if(m)m.t
  catch(e){msg('Não foi possível ler o arquivo ('+(e&&e.message||'erro')+').')}}
 /* ---- Fase 5: compatibilidade com o Minecraft Java, biblioteca de blocos e exportação ---- */
 const MCV=[['1.16.5',2586],['1.17.1',2730],['1.18.2',2975],['1.19.4',3337],['1.20.1',3465],['1.20.4',3700],['1.21.1',3955]],BSINCE={};   // BSINCE: versão mínima por bloco (todos os blocos atuais existem desde ≤1.16.5)
-const BGEO={'':['Cubo inteiro','—'],g:['Cubo inteiro','—'],w:['Painel','north, south, east, west, waterlogged'],d:['Porta (2 blocos, 1 item)','facing, half, hinge, open, powered'],s:['Escada','facing, half, shape (reta), waterlogged'],b:['Laje','type (bottom/top/double), waterlogged'],f:['Cerca','north, south, east, west, waterlogged (conexões na exportação)'],m:['Muro','north, south, east, west (none/low/tall), up, waterlogged'],t:['Alçapão','facing, half, open, powered, waterlogged (ainda sem elemento)'],l:['Tronco','axis (x, y, z)']};
+const BGEO={'':['Cubo inteiro','—'],g:['Cubo inteiro','—'],w:['Painel','north, south, east, west, waterlogged'],d:['Porta (2 blocos, 1 item)','facing, half, hinge, open, powered'],s:['Escada','facing, half, shape (reta), waterlogged'],b:['Laje','type (bottom/top/double), waterlogged'],f:['Cerca','north, south, east, west, waterlogged (conexões na exportação)'],m:['Muro','north, south, east, west (none/low/tall), up, waterlogged'],t:['Alçapão','facing, half, open, powered, waterlogged'],l:['Tronco','axis (x, y, z)']};
 let BKC='',DLGM='';
 const avail=i=>!BSINCE[i]||vcmp(BSINCE[i],mcs().ver)<=0;
 (function(){const A=(id,n,c,k,cat,s)=>{MATS[id]=[n,c,k];BCAT[id]=cat;if(s)BSINCE[id]=s};
@@ -2166,7 +2194,7 @@ const avail=i=>!BSINCE[i]||vcmp(BSINCE[i],mcs().ver)<=0;
 /* estados de bloco para a exportação */
 const NBR=[['north',0,-1],['east',1,0],['south',0,1],['west',-1,0]];
 const w0mat=()=>(DEF[tool]&&DEF[tool].mat)||'stone';
-const thinV=v=>!!(v.d&&v.dw)||'fmw'.includes(MATS[v.m][2]||'x');
+const thinV=v=>!!(v.d&&v.dw)||!!v.td||'fmw'.includes(MATS[v.m][2]||'x');
 /* conexões de cerca, muro e painel: vizinho do mesmo tipo ou bloco inteiro ao lado */
 function conn4(v){const k=MATS[v.m][2]||'',o={};
  for(const[d,dx,dz]of NBR){const n=B.vox.get((v.x+dx)+','+v.y+','+(v.z+dz)),nk=n?(MATS[n.m][2]||''):null;
@@ -2176,6 +2204,7 @@ function conn4(v){const k=MATS[v.m][2]||'',o={};
 const wallPost=(v,on)=>on.length!==2||!((on.includes('north')&&on.includes('south'))||(on.includes('east')&&on.includes('west')))||!!B.vox.get(v.x+','+(v.y+1)+','+v.z);
 function mcSt(v){const k=MATS[v.m][2];if(v.st)return`[facing=${v.st.facing},half=${v.st.half},shape=${v.st.shape||'straight'},waterlogged=false]`;if(k==='b')return`[type=${v.sl||'top'},waterlogged=false]`;if(k==='l'&&v.ax&&v.ax!=='y')return`[axis=${v.ax}]`;
  if(k==='d'&&v.dw)return`[facing=${v.dw.facing},half=${v.dw.half},hinge=${v.dw.hinge},open=false,powered=false]`;
+ if(k==='t')return`[facing=${(v.td||{}).fc||'north'},half=${(v.td||{}).hf||'top'},open=${!!(v.td&&v.td.op)},powered=false,waterlogged=false]`;
  if(k==='f'||k==='m'||k==='w'){const cn=conn4(v),on=ORD4.filter(d=>cn[d]),p=NBR.map(([d])=>k==='m'?`${d}=${cn[d]?'low':'none'}`:`${d}=${!!cn[d]}`);
   return`[${p.join(',')}${k==='m'?',up='+wallPost(v,on):''},waterlogged=false]`}return''}
 const mcs=()=>(P.mc=P.mc||{ver:'1.20.4',lv:'',ox:0,oy:0,oz:0});
@@ -2315,7 +2344,8 @@ function rotApply(deg){const e=P.els.find(x=>x.id===sel),pv=ROT.pv;if(!e||!pv)re
  const r=deg*Math.PI/180,c=Math.cos(r),s=Math.sin(r),R=q=>{const dx=q[0]-pv[0],dz=q[1]-pv[1];return[Math.floor(pv[0]+dx*c-dz*s+1e-9)+.5,Math.floor(pv[1]+dx*s+dz*c+1e-9)+.5]};
  mutate(()=>{if(e.tfz){delete e.tfz;toast('O perfil fixo do topo foi descartado na rotação.','ok')}
   if(e.pk==='rect'&&deg%90){const g=pathPts(elPa(e));if(g){e.pts=g.pts;e.pk='pgon';e.closed=true}}
-  if(e.pts)e.pts=e.pts.map(R);else{[e.x1,e.z1]=R([e.x1,e.z1]);if(e.x2!==undefined)[e.x2,e.z2]=R([e.x2,e.z2])}if(e.cat==='column'&&Math.abs(deg/90)%2===1)[e.sx,e.sz]=[e.sz,e.sx]});
+  if(e.pts)e.pts=e.pts.map(R);else{[e.x1,e.z1]=R([e.x1,e.z1]);if(e.x2!==undefined)[e.x2,e.z2]=R([e.x2,e.z2])}if(e.cat==='column'&&Math.abs(deg/90)%2===1)[e.sx,e.sz]=[e.sz,e.sx];
+  if(e.cat==='trap'&&deg%90===0){let n=((Math.round(deg/90)%4)+4)%4;while(n--)e.fc=CW4[e.fc]||'north'}});
  MSGS.e='Rotacionado '+deg+'°.'+(deg%90?' Ângulo fora de múltiplos de 90°: a geometria é aproximada em blocos.':'')}
 function rotGhost(sx,sz,S){const pv=ROT.pv,a=rotAngle(cur),r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r),seen=new Set();g.globalAlpha=.45;g.fillStyle='#ff8a3d';
  for(const v of B.vox.values())if(v.o===sel){const k=v.x+','+v.z;if(seen.has(k))continue;seen.add(k);const dx=v.x+.5-pv[0],dz=v.z+.5-pv[1];g.fillRect(sx(Math.floor(pv[0]+dx*c-dz*s+1e-9)),sz(Math.floor(pv[1]+dx*s+dz*c+1e-9)),S,S)}
@@ -2518,7 +2548,7 @@ function stairClose(){const Q=RP.slice(0,RP.length-(RP.length%2)).map(q=>q.slice
  const n=Q.length/2;
  toast('Escada concluída com '+n+' parte(s) em um único elemento.'+(inc?' A parte sem ponto final foi descartada.':'')
   +(d&&d.need&&d.falta?' Faltam '+d.falta+' bloco(s) para vencer o desnível.':''),'ok')}
-const TP={comp:'Componentes',block:'Blocos avulsos',wall:'Paredes',floor:'Pisos',column:'Pilares',beam:'Vigas',curtain:'Paredes-cortina',fence:'Cercas e muros',stair:'Escadas',door:'Portas',window:'Janelas',roof:'Coberturas'},NUMC=['qtd','comp','alt','esp','area','vol','blk','x','y','z','pil'];
+const TP={comp:'Componentes',block:'Blocos avulsos',wall:'Paredes',floor:'Pisos',column:'Pilares',beam:'Vigas',curtain:'Paredes-cortina',fence:'Cercas e muros',stair:'Escadas',door:'Portas',trap:'Alçapões',window:'Janelas',roof:'Coberturas'},NUMC=['qtd','comp','alt','esp','area','vol','blk','x','y','z','pil'];
 const ECOL={nome:['Nome'],cat:['Categoria'],tipo:['Tipo'],mat:['Material'],niv:['Nível'],qtd:['Qtd.'],comp:['Comprimento'],alt:['Altura'],esp:['Espessura / largura'],area:['Área'],vol:['Volume geométrico'],blk:['Blocos (executável)'],x:['X'],y:['Cota'],z:['Y']},BCOL={bloco:['Bloco'],id:['ID do bloco'],cnt:['Contagem'],blk:['Quantidade'],pil:['Pilhas de 64']};
 const TB={cat:'blocks',lv:'',mt:'',grp:'',cols:{x:false,y:false,z:false},sort:'',dir:1,rows:[],keys:[],tot:{}};
 function geo(e){const L=(a,b,c,d)=>e.pts?pathLen(e):Math.hypot(c-a,d-b);
@@ -2652,7 +2682,7 @@ function libLoad(){try{LIB=JSON.parse(LS.g('mc:lib')||'null')}catch(e){LIB=null}
  if(!Array.isArray(LIB)||!LIB.length){LIB=seedLib();libSave()}}
 function libAdopt(p){let n=0;for(const d of (p&&p.comps)||[])if(d&&d.id&&Array.isArray(d.cells)&&!LIB.some(x=>x.id===d.id)){LIB.push(d);n++}if(n)libSave()}
 /* âncora: bloco mais baixo e mais próximo do centro dos blocos realmente inseridos */
-const vCell=v=>({x:v.x,y:v.y,z:v.z,m:v.m,fc:v.st?v.st.facing:undefined,hf:v.st?v.st.half:v.sl,ax:v.ax});
+const vCell=v=>({x:v.x,y:v.y,z:v.z,m:v.m,fc:v.st?v.st.facing:undefined,hf:v.st?v.st.half:v.sl,ax:v.ax,td:v.td?{fc:v.td.fc,hf:v.td.hf,op:!!v.td.op}:undefined});
 /* definição a partir de células já discretizadas; devolve também a origem (bloco mais central da
    fiada de baixo) e a cota mínima, que é o que posiciona a instância no lugar exato */
 function defOfCells(cs,name,id,cat){if(!cs.length)return null;
@@ -2920,7 +2950,7 @@ var AOKC=null;
 /* destaque dos elementos: um só verde em dois pesos — leve no que está sob o cursor, firme no que está selecionado */
 const HICOL='#36d07a',HIHOV=.22,HISEL=.42,HIHOV3=.2,HISEL3=.36,HIHOVL=.6,HISELL=.95;
 /* o topo segue o que passa por cima: cobertura, piso, viga, escada, pilar… — parede, cerca, porta e janela não servem */
-const ANOH=['wall','fence','door','window'];
+const ANOH=['wall','fence','door','window','trap'];
 /* a parede pode se anexar a este elemento? categoria compatível, sem dependência circular e passando por cima dela */
 function attOk(w,h){if(!w||!h||!B||h.id===w.id||ANOH.includes(h.cat))return false;
  if(h.att===w.id)return false;
@@ -2935,7 +2965,7 @@ function attOk(w,h){if(!w||!h||!B||h.id===w.id||ANOH.includes(h.cat))return fals
 function attOkC(w,h){if(!AOKC||AOKC.w!==w.id)AOKC={w:w.id,m:new Map()};
  let r=AOKC.m.get(h.id);if(r===undefined)AOKC.m.set(h.id,r=attOk(w,h));return r}
 /* ferramentas que agem sobre um elemento já existente: nelas o que está sob o cursor é clicável */
-const HOVT=['sel','move','trim','split','rot','tag','door','window','anchor'];
+const HOVT=['sel','move','trim','split','rot','tag','door','window','trap','anchor'];
 /* o clique responderia neste elemento? só então ele ganha o destaque verde */
 function hovOk(id){if(!id||SK||!B)return false;
  const e=P.els.find(x=>x.id===id);if(!e||hidSet().has(id))return false;
@@ -2948,6 +2978,7 @@ function hovOk(id){if(!id||SK||!B)return false;
  if(tool==='split')return LINEK.includes(e.cat)||!!e.pts;
  if(tool==='move'||tool==='rot')return !P.els.some(x=>x.id===sel)||selHas(id);
  if(tool==='door'||tool==='window')return e.cat==='wall'&&!e.pts;
+ if(tool==='trap')return e.cat==='floor'||e.cat==='roof';
  return true}
 /* o id guardado é revalidado na hora de pintar: trocar de ferramenta já apaga o destaque */
 const hovId=()=>EHOV&&hovOk(EHOV)?EHOV:null;
@@ -2968,7 +2999,7 @@ function attPick(id){const w=P.els.find(e=>e.id===ATTP);
  const h=id?P.els.find(e=>e.id===id):null;
  if(!h||h.id===w.id){toast('Clique em um elemento que passe por cima de '+w.name+'.');render();return}
  if(h.att===w.id){toast('Isso criaria uma dependência circular entre os dois elementos.');render();return}
- if(ANOH.includes(h.cat)){toast('Parede, cerca, porta e janela não servem de topo: escolha uma cobertura, piso, viga ou escada que passe por cima.');render();return}
+ if(ANOH.includes(h.cat)){toast('Parede, cerca, porta, janela e alçapão não servem de topo: escolha uma cobertura, piso, viga ou escada que passe por cima.');render();return}
  if(!attOk(w,h)){toast(h.name+' não passa por cima de '+w.name+'.');render();return}
  ATTP=null;EHOV=null;MSGS.e='';
  mutate(()=>{w.att=h.id;delete w.tfz});
@@ -3039,6 +3070,28 @@ function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight
    if(on){g.strokeStyle='#2b7fff';g.lineWidth=2.5;g.beginPath();if(pd[0]){const ex=pd[0]>0?x0+S:x0;g.moveTo(ex,z0);g.lineTo(ex,z0+S)}else{const ez=pd[1]>0?z0+S:z0;g.moveTo(x0,ez);g.lineTo(x0+S,ez)}g.stroke()}
    g.strokeStyle=g.fillStyle=on?'#2b7fff':'rgba(0,0,0,.45)';g.lineWidth=1.5;g.beginPath();g.moveTo(mx-hv[0]*S*.22,mz-hv[1]*S*.22);g.lineTo(mx+hv[0]*S*.22,mz+hv[1]*S*.22);g.stroke();
    g.beginPath();g.arc(mx+hv[0]*S*.26,mz+hv[1]*S*.26,Math.max(2,S*.07),0,7);g.fill();g.lineWidth=1}
+  else if(v.td){/* alçapão: folha de 3/16 que gira numa aresta. Fechada cobre a célula; aberta fica de pé
+     junto à dobradiça e o vão aparece. A aresta grossa é a dobradiça; o traço fino mostra o giro. */
+   const td=v.td,d=DIR4[td.fc]||DIR4.north,X=sx(v.x),Z=sz(v.z),th=Math.max(2,S*.1875),up=td.hf==='bottom';
+   if(td.op){if(d[0])fillCell(g,v,X,Z,S,'top',d[0]>0?S-th:0,0,th,S);else fillCell(g,v,X,Z,S,'top',0,d[1]>0?S-th:0,S,th)}
+   else fillCell(g,v,X,Z,S,'top');
+   const cx=X+S/2,cz=Z+S/2,hx=cx+d[0]*S/2,hz=cz+d[1]*S/2,fx=cx-d[0]*S*.5,fz=cz-d[1]*S*.5;
+   g.save();
+   /* contorno do vão: cheio quando a folha fica no topo (piso), tracejado quando fica na base (forro) */
+   g.lineWidth=1;g.strokeStyle='rgba(0,0,0,.45)';if(up)g.setLineDash([4,3]);g.strokeRect(X+.5,Z+.5,S-1,S-1);g.setLineDash([]);
+   if(S>7){g.lineWidth=Math.max(2,S*.12);g.strokeStyle='rgba(0,0,0,.6)';g.beginPath();
+    if(d[0]){const XX=d[0]>0?X+S:X;g.moveTo(XX,Z+1);g.lineTo(XX,Z+S-1)}else{const ZZ=d[1]>0?Z+S:Z;g.moveTo(X+1,ZZ);g.lineTo(X+S-1,ZZ)}g.stroke()}
+   if(S>11){g.lineWidth=1.2;g.strokeStyle='rgba(0,0,0,.5)';
+    if(!td.op){/* giro da folha: do meio da aresta livre até os cantos da dobradiça */
+     g.setLineDash([4,3]);g.beginPath();
+     const px=-d[1],pz=d[0];
+     g.moveTo(fx+px*S*.5,fz+pz*S*.5);g.lineTo(hx-d[0]*1.5,hz-d[1]*1.5);g.lineTo(fx-px*S*.5,fz-pz*S*.5);g.stroke();g.setLineDash([])}
+    /* seta no sentido do giro, da aresta livre para a dobradiça */
+    const ax2=fx+d[0]*S*.16,az2=fz+d[1]*S*.16,bx2=cx+d[0]*S*.2,bz2=cz+d[1]*S*.2,px=-d[1],pz=d[0],a=S*.11;
+    g.beginPath();g.moveTo(ax2,az2);g.lineTo(bx2,bz2);g.stroke();
+    g.beginPath();g.moveTo(bx2,bz2);g.lineTo(bx2-d[0]*a+px*a*.7,bz2-d[1]*a+pz*a*.7);g.lineTo(bx2-d[0]*a-px*a*.7,bz2-d[1]*a-pz*a*.7);g.closePath();
+    g.fillStyle=up?'transparent':'rgba(0,0,0,.55)';if(!up)g.fill();g.stroke()}
+   g.restore()}
   else if('fmw'.includes(MATS[v.m][2])&&MATS[v.m][2]){const k=MATS[v.m][2],cn=conn4(v),x0=sx(v.x),z0=sz(v.z),
    W=(k==='f'?.25:k==='m'?.5:.125)*S,A=(k==='f'?.125:k==='m'?.375:.125)*S,cx=x0+S/2,cz=z0+S/2;
    for(const[d,dx,dz]of NBR)if(cn[d]){const L=S/2;
@@ -3131,6 +3184,11 @@ function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight
   g.fillStyle=gv('--cink');g.fillText(d.name+' · '+r+'°',sx(X)+S+6,sz(Z)+S/2)}}
  if(cur&&tool==='block'){const x=Math.floor(cur[0]),z=Math.floor(cur[1]);g.globalAlpha=.55;g.fillStyle=MATS[blockOf(P,DEF.block.mat)][1];g.fillRect(sx(x),sz(z),S,S);g.globalAlpha=1;g.strokeStyle=gv('--acc');g.lineWidth=2;g.strokeRect(sx(x),sz(z),S,S);g.lineWidth=1;
   g.fillStyle=gv('--cink');g.fillText('Y '+Math.round(lvl().elev+(+DEF.block.off||0)),sx(x)+S+6,sz(z)+S/2)}
+ if(cur&&tool==='trap'){const x=Math.floor(cur[0]),z=Math.floor(cur[1]),X=sx(x),Z=sz(z),d=DIR4[DEF.trap.fc]||DIR4.north;
+  g.globalAlpha=.5;g.fillStyle=MATS[blockOf(P,DEF.trap.mat)][1];g.fillRect(X,Z,S,S);g.globalAlpha=1;
+  g.strokeStyle=gv('--acc');g.lineWidth=2;g.strokeRect(X,Z,S,S);g.beginPath();
+  if(d[0]){const XX=d[0]>0?X+S:X;g.moveTo(XX,Z);g.lineTo(XX,Z+S)}else{const ZZ=d[1]>0?Z+S:Z;g.moveTo(X,ZZ);g.lineTo(X+S,ZZ)}
+  g.stroke();g.lineWidth=1;g.fillStyle=gv('--cink');g.fillText('Y '+(Math.round(lvl().elev+(+DEF.trap.off||0))-1),X+S+6,Z+S/2)}
  if(cur&&tool!=='sel'){g.strokeStyle=gv('--acc');g.beginPath();g.arc(sx(cur[0]),sz(cur[1]),4,0,7);g.stroke()}}
 /* dois cliques rápidos no botão do meio enquadram o projeto, na planta e no 3D */
 let MBT=0;
@@ -3185,7 +3243,7 @@ function toolClick(q,p,e){
  else if(tool==='comp'){const d=defOf(DEF.comp.def)||LIB[0];if(!d){dlgComp();return}
   mutate(()=>{const w=mk(P,'comp',{x1:q[0],z1:q[1],def:d.id,rot:((+DEF.comp.rot||0)%360+360)%360},lv);
    w.name=d.name+' '+(P.els.filter(e=>e.cat==='comp'&&e.def===d.id).length+1);w.host=hostAt(q);P.els.push(w);sel=w.id})}
- else if(tool==='column'||tool==='block')mutate(()=>{const w=mk(P,tool,{x1:q[0],z1:q[1]},lv);P.els.push(w);sel=w.id});
+ else if(tool==='column'||tool==='block'||tool==='trap')mutate(()=>{const w=mk(P,tool,{x1:q[0],z1:q[1]},lv);P.els.push(w);sel=w.id});
  else{const h=P.els.find(x=>x.id===pickAt(p));if(h&&h.cat==='wall'&&h.pts){toast('Portas e janelas ainda não entram em paredes desenhadas por caminho. Use uma parede em linha.');return}
   if(h&&h.cat==='wall'){const L=Math.hypot(h.x2-h.x1,h.z2-h.z1),s=((p[0]-h.x1)*(h.x2-h.x1)+(p[1]-h.z1)*(h.z2-h.z1))/L,c=tool;mutate(()=>{const pos=Math.round(s),w=mk(P,c,{host:h.id,pos},h.base);
   if(c==='door'){const nb=P.els.find(x=>x.cat==='door'&&x.host===h.id&&Math.abs(x.pos-pos)===1);
@@ -3236,6 +3294,10 @@ function build3(){if(!R)return;ovClear();IT3=[];EDC.clear();meshes.forEach(x=>{s
   else if(v.sl)put(v,gx('sl'+v.sl,()=>BX(1,.5,1,0,v.sl==='bottom'?-.25:.25,0)));
   else if(v.d&&v.dw){const up=v.dw.half==='upper',rt=v.dw.hinge==='right';
    put(v,gx('door',()=>BX(.1875,1,1,.40625,0,0)),ang[DIRN(v.dw.pd)],'d'+(up?'t':'')+(rt?'r':''))}
+  else if(v.td){/* fechado, a folha fica deitada no topo ou na base; aberto, de pé no lado da dobradiça */
+   const td=v.td,bt=td.hf==='bottom';
+   if(td.op)put(v,gx('tdop',()=>BX(.1875,1,1,.40625,0,0)),ang[td.fc]||0);
+   else put(v,gx(bt?'tdb':'tdt',()=>BX(1,.1875,1,0,bt?-.40625:.40625,0)))}
   else if(k==='f'||k==='m'||k==='w'){const cn=conn4(v),on=ORD4.filter(d=>cn[d]);
    if(k==='f'){put(v,gx('fp',()=>BX(.25,1,.25)));
     for(const d of on){put(v,gx('fa1',()=>BX(.125,.1875,.5625,0,.34375,-.21875)),angN[d]);put(v,gx('fa2',()=>BX(.125,.1875,.5625,0,-.03125,-.21875)),angN[d])}}
