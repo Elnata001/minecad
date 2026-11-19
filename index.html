@@ -1255,6 +1255,33 @@ function wLayers(hist){let top='grass_block',n=0;
 const wTop=hist=>{let b='',n=0;for(const[k,v]of hist)if(v>n){b=k;n=v}return b};
 /* ---------- aba do recorte do mundo ---------- */
 let WIMP=null,WSEL=null,WPRE=null,WBSY='';
+/* lista de mundos do aplicativo desktop: null enquanto não foi procurada */
+let WMUN=null,WMSEL='',WREG=null,WRSEL='',WVIZ=false;
+async function wMundos(){if(!window.mcDesktop)return;
+ try{const r=await window.mcDesktop.mundos();WMUN=r.mundos||[];
+  if(WMUN.length){WMSEL=WMUN[0].pasta;await wRegioes()}}
+ catch(e){WMUN=[]}
+ if($('#dlg')&&$('#dlg').open&&TIMPT==='world')dlgTopoImp()}
+async function wRegioes(){WREG=null;WRSEL='';
+ try{WREG=await window.mcDesktop.regioes(WMSEL);if(WREG.length)WRSEL=WREG[0].caminho}catch(e){WREG=[]}
+ if($('#dlg')&&$('#dlg').open&&TIMPT==='world')dlgTopoImp()}
+/* lê a região escolhida — e as oito vizinhas, se pedidas — pela ponte do aplicativo */
+async function wCarregar(){const D=window.mcDesktop;if(!D)return;
+ if(!WREG||!WREG.length)await wRegioes();
+ if(!WREG||!WREG.length){toast('Este mundo não tem regiões gravadas.');return}
+ if(!WRSEL||!WREG.some(r=>r.caminho===WRSEL))WRSEL=WREG[0].caminho;
+ const alvo=WREG.find(r=>r.caminho===WRSEL);if(!alvo)return;
+ const lista=WVIZ?WREG.filter(r=>Math.abs(r.rx-alvo.rx)<=1&&Math.abs(r.rz-alvo.rz)<=1):[alvo];
+ WBSY='Lendo '+lista.length+' região(ões) do mundo…';dlgTopoImp();await new Promise(r=>setTimeout(r));
+ try{let W=null;
+  for(const r of lista){const w=await wReadMca(await D.lerArquivo(r.caminho),r.arquivo);
+   if(!W)W=w;else{for(const e of w.ix)W.ix.set(e[0],e[1]);W.n+=w.n;
+    W.x0=Math.min(W.x0,w.x0);W.z0=Math.min(W.z0,w.z0);W.x1=Math.max(W.x1,w.x1);W.z1=Math.max(W.z1,w.z1)}}
+  const mu=WMUN.find(m=>m.pasta===WMSEL);
+  W.name=(mu?mu.nome:'mundo')+(lista.length>1?' ('+lista.length+' regiões)':' · '+alvo.arquivo);
+  WIMP=W;wDefSel()}
+ catch(e){toast('Não foi possível ler a região: '+e.message)}
+ WBSY='';dlgTopoImp()}
 const WOPT={nat:true,water:'floor',tol:1,org:'zero'},WMAX=320;
 function wDefSel(){if(!WIMP){WSEL=null;WPRE=null;return}
  const cx=Math.round((WIMP.x0+WIMP.x1)/2),cz=Math.round((WIMP.z0+WIMP.z1)/2),
@@ -1263,7 +1290,19 @@ function wDefSel(){if(!WIMP){WSEL=null;WPRE=null;return}
  WSEL.x1=Math.min(WIMP.x1,WSEL.x0+w-1);WSEL.z1=Math.min(WIMP.z1,WSEL.z0+h-1);WPRE=null}
 const wArea=()=>WSEL?(WSEL.x1-WSEL.x0+1)*(WSEL.z1-WSEL.z0+1):0;
 function wPanel(){
- let h='<p class="m">Um recorte do mundo vira uma superfície editável, não um amontoado de blocos. Aceita a região do mundo (<b>.mca</b>, na pasta <i>region</i> do save), a estrutura do bloco de estrutura (<b>.nbt</b>) e o esquema do WorldEdit (<b>.schem</b>). Dá para escolher várias regiões de uma vez, e o recorte pode atravessá-las. Os arquivos são lidos no próprio navegador.</p>'
+ let h='';
+ if(window.mcDesktop){/* no aplicativo a pasta saves é lida direto: escolhe-se o mundo numa lista */
+  h+='<p class="m">Escolha um mundo instalado nesta máquina e a região que cobre o trecho que você quer. Cada região são 512×512 blocos.</p>';
+  if(WMUN===null)h+='<p class="m">Procurando os mundos do Minecraft…</p>';
+  else if(!WMUN.length)h+='<p class="m">Nenhum mundo encontrado na pasta <i>saves</i> do Minecraft. Você ainda pode carregar o arquivo à mão, abaixo.</p>';
+  else{const mu=WMUN.find(m=>m.pasta===WMSEL)||WMUN[0];
+   h+=`<div class="row"><label>Mundo${dd(WMUN.map(m=>[m.pasta,m.nome+' ('+m.regioes+' regiões)']),mu.pasta,'data-wm="mundo"')}</label>`
+    +(WREG&&WREG.length?`<label>Região${dd(WREG.map(r=>[r.caminho,r.arquivo+' — X '+(r.rx*512)+'…'+(r.rx*512+511)+' · Z '+(r.rz*512)+'…'+(r.rz*512+511)]),WRSEL||WREG[0].caminho,'data-wm="regiao"')}</label>`
+      :'<span class="m">lendo as regiões…</span>')
+    +'</div>'
+    +`<div class="row"><label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-wm="viz" ${WVIZ?'checked':''}> Incluir as regiões vizinhas</label>`
+    +`<button data-a="wiload" ${WREG&&WREG.length?'':'disabled'}>Carregar do mundo</button></div>`}}
+ h+='<p class="m">Um recorte do mundo vira uma superfície editável, não um amontoado de blocos. Aceita a região do mundo (<b>.mca</b>, na pasta <i>region</i> do save), a estrutura do bloco de estrutura (<b>.nbt</b>) e o esquema do WorldEdit (<b>.schem</b>). Dá para escolher várias regiões de uma vez, e o recorte pode atravessá-las. Os arquivos são lidos no próprio navegador.</p>'
   +'<div class="row"><input type="file" id="wif" multiple accept=".mca,.mcr,.nbt,.schem,.schematic"><button data-a="wiread">Ler arquivo</button></div>';
  if(WBSY)return h+`<p class="m">${esc(WBSY)}</p>`;
  if(!WIMP)return h+'<p class="m">Nenhum arquivo lido ainda.</p>';
@@ -1656,7 +1695,7 @@ function act(s,val){const[k,a]=s.split(/:(.*)/);
  else if(k==='vis')vpOpen();else if(k==='einfo')dlgElInfo(a);
  else if(k==='tfeat')dlgTopoFeat(a);else if(k==='tfdel')tfDel(a);
  else if(k==='tiread')tImpRead();else if(k==='tigo')tImpGo();
- else if(k==='titab'){TIMPT=a;dlgTopoImp()}else if(k==='wiread')wImpRead();else if(k==='wiscan')wImpScan();else if(k==='wigo')wImpGo();
+ else if(k==='titab'){TIMPT=a;dlgTopoImp();if(a==='world'&&window.mcDesktop&&WMUN===null)wMundos()}else if(k==='wiload')wCarregar();else if(k==='wiread')wImpRead();else if(k==='wiscan')wImpScan();else if(k==='wigo')wImpGo();
  else if(k==='tedit')tedStart();else if(k==='tdone')tedEnd();else if(k==='tddel')tedDel();
  else if(k==='gnew')gNew();
  else if(k==='gdone')gDone();else if(k==='gcancel')gCancel();
@@ -1700,6 +1739,9 @@ document.addEventListener('change',e=>{const t=e.target;if(t.dataset.a)act(t.dat
  else if(t.dataset.tt)ttEdit(t);else if(t.dataset.tl)tlEdit(t);else if(t.dataset.tf)tfEdit(t);
  else if(t.dataset.ti&&TIMP){const k=t.dataset.ti;TIMP[k]=['cx','cy','cz','sc'].includes(k)?+t.value:t.value;
   if(TIMP.rows&&(k==='sep'||k==='dec'))tImpRead();else dlgTopoImp()}
+ else if(t.dataset.wm){const k=t.dataset.wm;
+  if(k==='mundo'){WMSEL=t.value;wRegioes()}else if(k==='regiao'){WRSEL=t.value;dlgTopoImp()}
+  else{WVIZ=tv(t);dlgTopoImp()}}
  else if(t.dataset.wi){const k=t.dataset.wi;
   if(k==='nat')WOPT.nat=t.value==='1';else if(k==='tol')WOPT.tol=+t.value||.5;
   else if(k==='water'||k==='org')WOPT[k]=t.value;
@@ -3867,4 +3909,20 @@ function render(){syncT(P);ui();calcDims();const p=view==='plan';$('#dims').styl
 new ResizeObserver(()=>{if(view==='plan')draw2d();else if(view==='3d')draw3d();else if(view==='sec')drawSec();else if(view==='sheet')drawSheet()}).observe($('#vp'));
 /* a biblioteca de blocos é registrada depois do primeiro build: recalcula o modelo com ela carregada */
 UIREADY=true;libLoad();libAdopt(P);B=build(P);fit();applyTheme();if(window.indexedDB)packLoad();
+/* ===== APLICATIVO DESKTOP =====
+   Dentro do Electron, o menu nativo e o clique duplo num .mcad chegam por esta ponte.
+   No navegador o objeto não existe e o bloco inteiro fica inerte. */
+(function(){const D=window.mcDesktop;if(!D)return;
+ const ler=t=>{try{const o=JSON.parse(t),q=o&&(o.p||(o.levels&&o.els?o:null));
+   if(!q||!Array.isArray(q.levels)||!Array.isArray(q.els))throw 0;return o}
+  catch(e){toast('Arquivo inválido: não parece um projeto do MineCAD.');return null}};
+ const abrir=o=>{MCIMP=o;mcadOpen()};
+ D.ao('abrir-projeto',async()=>{const r=await D.escolherAbrir();if(!r)return;const o=ler(r.texto);if(o)abrir(o)});
+ D.ao('abrir-arquivo',d=>{const o=d&&ler(d.texto);if(o)abrir(o)});
+ D.ao('salvar-projeto',async()=>{const c=await D.escolherSalvar(fname(P.name),JSON.stringify(mcadBundle(false)));
+  if(c)toast('Projeto salvo em '+c,'ok')});
+ D.ao('desfazer',()=>undo());D.ao('refazer',()=>redo());
+ /* projeto aberto por clique duplo antes de a janela existir */
+ D.pendente().then(r=>{const o=r&&ler(r.texto);if(o)abrir(o)}).catch(()=>{});
+})();
 </script></body></html>

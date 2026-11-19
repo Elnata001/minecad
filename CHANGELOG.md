@@ -1,5 +1,14 @@
 # Histórico
 
+## v102 — ponte com o aplicativo desktop
+Dentro do Electron o MineCAD passa a conversar com o sistema: o menu nativo abre e salva
+`.mcad` por diálogo do Windows, o clique duplo num projeto abre o programa já com ele, e
+Desfazer/Refazer respondem pelo menu. No navegador nada disso existe e o bloco fica inerte.
+
+A importação de terreno ganha o caminho curto: o aplicativo lê a pasta `saves` do Minecraft
+e a aba *Recorte do mundo* passa a oferecer a lista de mundos instalados e as regiões de
+cada um, com a opção de incluir as oito vizinhas — sem procurar arquivo nenhum no disco.
+
 ## v101 — importar um recorte do mundo do Minecraft
 Novo modo de entrada em *Modelagem → Importar terreno…*, ao lado do levantamento em CSV.
 Lê região do mundo (`.mca`, várias de uma vez, com o recorte podendo atravessá-las),
