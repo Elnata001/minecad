@@ -38,8 +38,17 @@ function criarJanela(){
 function menu(){
  const t=[
   {label:'Arquivo',submenu:[
+   {label:'Tela inicial',accelerator:'CmdOrCtrl+Shift+N',click:()=>enviar('tela-inicial')},
    {label:'Abrir projeto…',accelerator:'CmdOrCtrl+O',click:()=>enviar('abrir-projeto')},
-   {label:'Salvar projeto…',accelerator:'CmdOrCtrl+S',click:()=>enviar('salvar-projeto')},
+   {label:'Salvar',accelerator:'CmdOrCtrl+S',click:()=>enviar('salvar-projeto')},
+   {label:'Salvar como…',accelerator:'CmdOrCtrl+Shift+S',click:()=>enviar('salvar-como')},
+   {type:'separator'},
+   {label:'Associar os arquivos .mcad a este programa',click:async()=>{
+     const ok=await associarMcad();
+     dialog.showMessageBox(win,{type:ok?'info':'warning',title:'Arquivos .mcad',
+      message:ok?'Pronto.':'Não foi possível registrar a associação.',
+      detail:ok?'O clique duplo num arquivo .mcad passa a abrir o MineCAD. Se o Windows ainda abrir outro programa, clique com o botão direito no arquivo, escolha “Abrir com” › “Escolher outro aplicativo” e marque o MineCAD como padrão.'
+              :'Tente novamente com o programa aberto normalmente, sem privilégios especiais.'})}},
    {type:'separator'},
    {label:'Sair',role:'quit'}]},
   {label:'Editar',submenu:[
@@ -63,6 +72,30 @@ function menu(){
  ];
  Menu.setApplicationMenu(Menu.buildFromTemplate(t))}
 const enviar=(canal,dado)=>{if(win&&!win.isDestroyed())win.webContents.send(canal,dado)};
+
+/* ---- associação dos arquivos .mcad ----
+   O instalador registra a extensão, mas o Windows só passa a abrir o programa no clique
+   duplo quando existe um ProgID apontando para o executável. Isso é gravado em HKCU, que
+   é por usuário e não pede privilégio, e é refeito quando o caminho do programa muda. */
+function associarMcad(){
+ if(process.platform!=='win32'||!app.isPackaged)return Promise.resolve(false);
+ const exe=process.execPath,{execFile}=require('child_process');
+ const chaves=[
+  ['HKCU\\Software\\Classes\\.mcad','/ve','/d','MineCAD.Projeto'],
+  ['HKCU\\Software\\Classes\\.mcad\\OpenWithProgids','/v','MineCAD.Projeto','/t','REG_NONE'],
+  ['HKCU\\Software\\Classes\\MineCAD.Projeto','/ve','/d','Projeto do MineCAD'],
+  ['HKCU\\Software\\Classes\\MineCAD.Projeto\\DefaultIcon','/ve','/d',exe+',0'],
+  ['HKCU\\Software\\Classes\\MineCAD.Projeto\\shell\\open','/ve','/d','Abrir no MineCAD'],
+  ['HKCU\\Software\\Classes\\MineCAD.Projeto\\shell\\open\\command','/ve','/d','"'+exe+'" "%1"']
+ ];
+ return new Promise(res=>{let i=0;
+  const passo=()=>{if(i>=chaves.length){
+    try{fs.writeFileSync(ASSOC,JSON.stringify({exe}))}catch(e){}
+    return res(true)}
+   execFile('reg',['add'].concat(chaves[i++]).concat(['/f']),{windowsHide:true},err=>err?res(false):passo())};
+  passo()})}
+const ASSOC=path.join(app.getPath('userData'),'assoc.json');
+const assocPendente=()=>{try{return JSON.parse(fs.readFileSync(ASSOC,'utf8')).exe!==process.execPath}catch(e){return true}};
 
 /* ---- pasta de mundos do Minecraft ---- */
 const pastaSaves=()=>{
@@ -97,6 +130,8 @@ ipcMain.handle('escolher-abrir',async()=>{const r=await dialog.showOpenDialog(wi
   filters:[{name:'Projeto do MineCAD',extensions:['mcad','json']}],properties:['openFile']});
  if(r.canceled||!r.filePaths[0])return null;
  return{caminho:r.filePaths[0],texto:await fsp.readFile(r.filePaths[0],'utf8')}});
+ipcMain.handle('salvar-em',async(ev,{caminho,texto})=>{
+ try{await fsp.writeFile(caminho,texto,'utf8');return true}catch(e){return false}});
 ipcMain.handle('escolher-salvar',async(ev,{nome,texto})=>{const r=await dialog.showSaveDialog(win,{title:'Salvar projeto',
   defaultPath:(nome||'projeto')+'.mcad',filters:[{name:'Projeto do MineCAD',extensions:['mcad']}]});
  if(r.canceled||!r.filePath)return null;
@@ -110,6 +145,7 @@ else{
  app.whenReady().then(async()=>{
   abrirAoIniciar=mcadDeArgv(process.argv);
   menu();criarJanela();
+  if(app.isPackaged&&assocPendente())associarMcad().catch(()=>{});
   if(app.isPackaged){try{const{autoUpdater}=require('electron-updater');
     autoUpdater.autoDownload=true;autoUpdater.checkForUpdatesAndNotify()}catch(e){}}
  });
@@ -119,3 +155,4 @@ else{
 async function abrirArquivo(caminho){try{enviar('abrir-arquivo',{caminho,texto:await fsp.readFile(caminho,'utf8')})}catch(e){}}
 ipcMain.handle('pendente',async()=>{if(!abrirAoIniciar)return null;const c=abrirAoIniciar;abrirAoIniciar=null;
  try{return{caminho:c,texto:await fsp.readFile(c,'utf8')}}catch(e){return null}});
+/* o .mcad é o documento: o aplicativo guarda o caminho e o Ctrl+S sobrescreve ali */

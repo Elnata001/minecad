@@ -1,7 +1,7 @@
 {
   "name": "minecad",
   "productName": "MineCAD",
-  "version": "102.0.0",
+  "version": "103.0.0",
   "description": "BIM simplificado para projetar arquitetura de Minecraft",
   "author": "Elnata001",
   "main": "main.js",

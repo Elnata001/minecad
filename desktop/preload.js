@@ -10,8 +10,9 @@ contextBridge.exposeInMainWorld('mcDesktop',{
  /* projetos .mcad */
  escolherAbrir:()=>ipcRenderer.invoke('escolher-abrir'),
  escolherSalvar:(nome,texto)=>ipcRenderer.invoke('escolher-salvar',{nome,texto}),
+ salvarEm:(caminho,texto)=>ipcRenderer.invoke('salvar-em',{caminho,texto}),
  pendente:()=>ipcRenderer.invoke('pendente'),
  /* comandos vindos do menu nativo */
- ao:(canal,fn)=>{const ok=['abrir-projeto','salvar-projeto','desfazer','refazer','abrir-arquivo'];
+ ao:(canal,fn)=>{const ok=['abrir-projeto','salvar-projeto','salvar-como','tela-inicial','desfazer','refazer','abrir-arquivo'];
   if(ok.includes(canal))ipcRenderer.on(canal,(ev,dado)=>fn(dado))}
 });

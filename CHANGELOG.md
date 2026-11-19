@@ -1,5 +1,23 @@
 # Histórico
 
+## v103 — jeito de aplicativo
+**Ctrl+S grava.** No aplicativo ele sobrescreve o `.mcad` do projeto e só pergunta onde salvar
+quando ainda não existe arquivo; Ctrl+Shift+S é o "salvar como". O caminho fica amarrado ao
+projeto e volta quando ele é reaberto. Se o arquivo não puder ser gravado, volta a perguntar em
+vez de falhar calado. No navegador, onde não há arquivo, o atalho continua abrindo a exportação.
+
+**O arquivo é o documento.** Reabrir um `.mcad` que já é o projeto atual deixou de criar uma
+cópia "(importado)" — isso agora só acontece na importação pelo navegador, que é quando o
+arquivo de fato vem de fora.
+
+**Clique duplo abre o projeto.** O instalador registrava a extensão, mas faltava o ProgID
+apontando para o executável. O programa grava essas chaves em `HKCU` na primeira execução e as
+refaz se o caminho mudar; há também um item de menu para refazer a associação à mão.
+
+**Tela inicial.** O programa abre numa tela com os projetos salvos, cada um com uma miniatura
+desenhada a partir da própria pegada em planta, mais Novo projeto e Abrir projeto. Volta-se a
+ela por Arquivo › Tela inicial ou Ctrl+Shift+N.
+
 ## v102 — ponte com o aplicativo desktop
 Dentro do Electron o MineCAD passa a conversar com o sistema: o menu nativo abre e salva
 `.mcad` por diálogo do Windows, o clique duplo num projeto abre o programa já com ele, e

@@ -15,7 +15,9 @@ const {chromium}=require('playwright'),fs=require('fs');
      :[{arquivo:'r.0.0.mca',caminho:'C:/saves/criativo/region/r.0.0.mca',rx:0,rz:0,bytes:1000}],
    lerArquivo:async c=>window.__REG,
    escolherAbrir:async()=>({caminho:'C:/p.mcad',texto:window.__mcad}),
-   escolherSalvar:async(n,t)=>{window.__salvo={n,t};return 'C:/'+n+'.mcad'},
+   escolherSalvar:async(n,t)=>{window.__dialogos=(window.__dialogos||0)+1;window.__salvo={n,t};window.__disco={...(window.__disco||{}),['C:/'+n+'.mcad']:t};return 'C:/'+n+'.mcad'},
+   salvarEm:async(c,t)=>{window.__gravou=(window.__gravou||[]);window.__gravou.push(c);
+     if(c==='C:/so-leitura.mcad')return false;window.__disco={...(window.__disco||{}),[c]:t};return true},
    pendente:async()=>null,
    ao:(c,f)=>{(ouv[c]=ouv[c]||[]).push(f);window.__disparar=(k,d)=>(ouv[k]||[]).forEach(g=>g(d))}}});
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(1000);
@@ -55,5 +57,41 @@ const {chromium}=require('playwright'),fs=require('fs');
   window.__disparar('desfazer');await new Promise(r=>setTimeout(r,200));
   o.push('   menu Desfazer respondeu sem erro: true');
   return o.join('\n')}));
+
+ // 4. Ctrl+S: a primeira vez pergunta, as seguintes sobrescrevem
+ console.log(await pg.evaluate(async()=>{const o=[];
+  openP(newProject());P.name='Projeto do teste';P.els=[];
+  window.__dialogos=0;window.__gravou=[];
+  await projSave(false);
+  o.push('4) sem arquivo ainda → perguntou onde salvar: '+(window.__dialogos===1)+' · caminho guardado: '+MCPATH);
+  await projSave(false);
+  o.push('   segunda vez → gravou direto em '+(window.__gravou[0]||'(nada)')+' · perguntou de novo: '+(window.__dialogos>1));
+  await projSave(true);
+  o.push('   Ctrl+Shift+S → perguntou onde salvar: '+(window.__dialogos===2));
+  // caminho que não aceita gravação volta a perguntar
+  MCPATH='C:/so-leitura.mcad';window.__dialogos=0;
+  await projSave(false);
+  o.push('   arquivo que recusa gravação → voltou a perguntar: '+(window.__dialogos===1)+' · novo caminho: '+MCPATH);
+  // o caminho sobrevive à troca de projeto e volta ao reabrir
+  const id=P.id,caminho=MCPATH;openP(newProject());
+  o.push('   ao trocar de projeto o caminho zera: '+(MCPATH===''));
+  openP(load(id));
+  o.push('   ao voltar ao projeto o caminho retorna: '+(MCPATH===caminho));
+  return o.join('\n')}));
+
+ // 5. abrir o mesmo .mcad não duplica o projeto
+ console.log(await pg.evaluate(async()=>{const o=[];
+  const txt=window.__disco['C:/projeto-do-teste.mcad']||JSON.stringify(mcadBundle(false));
+  const antes=idx().length;
+  await welFile(txt,'C:/projeto-do-teste.mcad');
+  o.push('5) abrir o arquivo do próprio projeto: '+P.name+' · projetos no índice: '+antes+' → '+idx().length);
+  o.push('   caminho ficou ligado ao projeto: '+(MCPATH==='C:/projeto-do-teste.mcad'));
+  await welFile(txt,'C:/projeto-do-teste.mcad');
+  o.push('   abrindo de novo continua um só: '+idx().length+' projeto(s)');
+  // importação pelo navegador (sem caminho) segue criando cópia
+  await welFile(txt,'');
+  o.push('   importação sem caminho cria cópia: '+P.name);
+  return o.join('\n')}));
+
  console.log(errs.length?errs.join('\n'):'SEM ERROS');
  await b.close()})();

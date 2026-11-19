@@ -20,6 +20,19 @@ label{display:flex;justify-content:space-between;align-items:center;gap:6px;marg
 table{width:100%;border-collapse:collapse}td{padding:2px 0;border-bottom:1px solid var(--line)}td.r{text-align:right}.m{color:var(--mut);font-size:12px}
 #dims{position:absolute;inset:0;pointer-events:none}#dims button{position:absolute;transform:translate(0,-130%);pointer-events:auto;font-size:11px;padding:2px 6px}
 #dims input{position:absolute;transform:translate(-50%,-125%);width:46px;text-align:center;padding:1px 2px;font-size:11px;pointer-events:auto;border-color:#e0457b}
+#wel[hidden]{display:none}
+#wel{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;overflow:auto}
+#wel .wb{font-size:30px;font-weight:700;letter-spacing:.4px}#wel .wb span{color:var(--acc)}
+#wel .ws{color:var(--mut);margin:-12px 0 2px;text-align:center}
+#wel .wa{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#wel .wa button{padding:8px 16px;font-size:14px}
+#wel h4{margin:10px 0 0;color:var(--mut);font-weight:600;font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+#wel .wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:12px;width:100%;max-width:880px}
+#wel .wc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;cursor:pointer;text-align:left}
+#wel .wc:hover{border-color:var(--acc)}
+#wel .wc canvas{width:100%;height:108px;background:var(--cv);border:1px solid var(--line);border-radius:5px;display:block}
+#wel .wc b{display:block;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#wel .wc i{display:block;color:var(--mut);font-size:12px;font-style:normal}
 #dd{position:fixed;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px;min-width:200px;box-shadow:0 4px 14px #0003}#dd button{display:block;width:100%;text-align:left;border:0}
 #dd[hidden]{display:none}dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:520px;width:92%}dialog textarea{width:100%;font:11px monospace}
 label input[type=checkbox]{width:auto}
@@ -133,7 +146,7 @@ dialog{position:relative}dialog h3{padding-right:38px}
 </style></head><body>
 <div id="app"><header id="top"><b class="brand">⛏ Mine<span>CAD</span></b><nav id="menus"></nav><span class="m" id="pname"></span><div id="qt"></div></header>
 <section id="pp"><div class="pph"></div><div class="pps"></div></section><div id="tools"></div><div id="etools"></div><aside id="nav"></aside><main id="vp"><canvas id="c2"></canvas><canvas id="c3"></canvas><canvas id="c4"></canvas><div id="v3"></div><div id="dims"></div><div id="tbl"></div><div id="fb"><div class="fbs"></div><div class="fbmw"></div></div><div id="cfb"></div></main><aside id="props"></aside><footer id="st"></footer></div>
-<div id="dd" hidden></div><dialog id="dlg"></dialog>
+<div id="dd" hidden></div><dialog id="dlg"></dialog><div id="wel" hidden></div><input type="file" id="wfile" accept=".mcad,.json,application/json" hidden>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";var UIREADY=false;
@@ -1600,7 +1613,8 @@ function del(){if(selA){mutate(()=>{P.ann=P.ann.filter(a=>a.id!==selA);selA=null
  if(orf.length){askYes('Elementos com topo anexado',orf.length+' elemento(s) têm o topo anexado a um elemento que será excluído. O que fazer com eles?',
   'Manter a geometria atual','Voltar ao topo original',()=>go(true),()=>go(false));return}
  go(false)}
-function openP(p){P=migrate(p);libAdopt(P);H.length=RH.length=0;sel=null;pts=null;lv=P.levels[0].id;B=build(P);save();fit();render()}
+function openP(p){P=migrate(p);libAdopt(P);H.length=RH.length=0;sel=null;pts=null;lv=P.levels[0].id;
+ MCPATH=LS.g('mc:file:'+P.id)||'';welClose();B=build(P);save();fit();render()}
 function fit(){let a=1e9,b=-1e9,c=1e9,d=-1e9,e=1e9,f=-1e9;for(const v of B.vox.values()){a=Math.min(a,v.x);b=Math.max(b,v.x+1);c=Math.min(c,v.y);d=Math.max(d,v.y+1);e=Math.min(e,v.z);f=Math.max(f,v.z+1)}
  if(b<a)return;const w=c2.clientWidth||600,h=c2.clientHeight||400;cam.x=(a+b)/2;cam.z=(e+f)/2;cam.s=Math.max(3,Math.min(60,Math.min(w/(b-a+4),h/(f-e+4))));
  if(o)o.t.set((a+b)/2,(c+d)/2,(e+f)/2),o.r=Math.max(b-a,f-e,d-c)*1.8+8}
@@ -1611,12 +1625,61 @@ const SCT2=[["","Corte","tool:cut"],["","Tabelas:Tabela/Quantidades","view:table
 const SCMAP={},SCFOR={};for(const[k,n,a]of SCT2){if(k)SCMAP[k]=[n,a];if(a)SCFOR[a]=k}
 const SCKEYS=Object.keys(SCMAP),scOf=a=>SCFOR[a]?' ('+SCFOR[a]+')':'';
 const TOOLS=[['sel','Selecionar'],['move','Mover'],['block','Bloco'],['comp','Componente'],['topo','Terreno'],['tpt','Ponto cotado'],['pad','Plataforma'],['tbl','Curva de nível'],['wall','Parede'],['floor','Piso'],['column','Pilar'],['door','Porta'],['trap','Alçapão'],['window','Janela'],['stair','Escada'],['roof','Cobertura'],['beam','Viga'],['fence','Cerca/Muro'],['curtain','Parede-cortina'],['cs','Criar similar'],['cut','Corte'],['dim','Cota'],['txt','Texto'],['ln','Linha'],['tag','Identificador'],['trim','Aparar'],['split','Repartir'],['rot','Rotacionar'],['anchor','Ancorar']].map(([k,l])=>[k,l+scOf('tool:'+k)]);
-const MENUS={Arquivo:[['Novo projeto',()=>openP(newProject())],['Projetos salvos…',dlgProjects],['Duplicar projeto',()=>{const c=JSON.parse(JSON.stringify(P));c.id=uid();c.name+=' (cópia)';openP(c)}],['Exportar / importar (.mcad)…',dlgFile],['Exportar para Minecraft…',dlgMc]],
+const MENUS={Arquivo:[['Novo projeto',()=>openP(newProject())],['Tela inicial…',welOpen],['Projetos salvos…',dlgProjects],['Duplicar projeto',()=>{const c=JSON.parse(JSON.stringify(P));c.id=uid();c.name+=' (cópia)';openP(c)}],['Exportar / importar (.mcad)…',dlgFile],['Exportar para Minecraft…',dlgMc]],
  Editar:[['Desfazer (Ctrl+Z)',undo],['Refazer (Ctrl+Y)',redo],['Excluir seleção (Del)',del]],Ajuda:[['Atalhos de teclado…',dlgKeys]],Modelagem:[['Biblioteca de componentes…',dlgComp],['Importar terreno…',dlgTopoImp],['Biblioteca de blocos…',dlgBlocks],['Materiais…',dlgMats],['Tipos de parede…',dlgTypes],['Tipos de cobertura…',dlgRoofTypes],['Tipos de escada…',dlgStairTypes]],Visualizar:[['Texturas…',dlgPack],['Navegação 3D…',dlgNav]]};
 $('#menus').innerHTML=Object.keys(MENUS).map(n=>`<button data-a="menu:${n}">${n}</button>`).join('');
 function dlgProjects(){const d=$('#dlg');d.innerHTML='<h3>Projetos salvos no navegador</h3>'+(idx().map(i=>`<div class="row"><span>${esc(i.name)}</span><button data-a="open:${i.id}">Abrir</button><button data-a="dup:${i.id}">Duplicar</button><button data-a="rm:${i.id}">Excluir</button></div>`).join('')||'<p class="m">Nenhum projeto salvo.</p>')+'<button data-a="close">Fechar</button>';if(!d.open)d.showModal()}
+/* ===== TELA INICIAL =====
+   O programa não cai direto no projeto: abre numa tela com os projetos salvos, cada um com
+   uma miniatura da própria pegada em planta, e os caminhos de novo e de abrir. */
+function welThumb(cv,p){const g=cv.getContext('2d'),w=cv.width,h=cv.height;g.clearRect(0,0,w,h);
+ let BB=null;try{BB=build(p)}catch(e){return}
+ const T=new Map();let a=1e9,b=-1e9,c=1e9,d=-1e9;
+ for(const v of BB.vox.values()){const k=v.x+','+v.z,o=T.get(k);
+  if(o===undefined||v.y>o.y)T.set(k,v);
+  if(v.x<a)a=v.x;if(v.x>b)b=v.x;if(v.z<c)c=v.z;if(v.z>d)d=v.z}
+ if(!T.size)return;
+ const S=Math.min((w-10)/(b-a+1),(h-10)/(d-c+1)),ox=(w-(b-a+1)*S)/2,oz=(h-(d-c+1)*S)/2;
+ for(const v of T.values()){g.fillStyle=v.col||(MATS[v.m]||['','#8a8f86'])[1];
+  g.fillRect(ox+(v.x-a)*S,oz+(v.z-c)*S,Math.max(1,S),Math.max(1,S))}}
+function welOpen(){const e=$('#wel');if(!e)return;
+ const L=idx(),n=Math.min(L.length,12);
+ e.innerHTML='<div class="wb">⛏ Mine<span>CAD</span></div>'
+  +'<p class="ws">BIM simplificado para projetar arquitetura de Minecraft</p>'
+  +'<div class="wa"><button data-a="wnew">Novo projeto</button><button data-a="wopen">Abrir projeto…</button>'
+  +(L.length>n?'<button data-a="wmore">Ver todos…</button>':'')+'</div>'
+  +(L.length?'<h4>Projetos salvos</h4><div class="wg">'+L.slice(0,n).map(i=>
+    `<div class="wc" data-a="wpick:${i.id}"><canvas width="248" height="136" data-th="${i.id}"></canvas>`
+    +`<b>${esc(i.name||'Sem título')}</b><i data-inf="${i.id}">—</i></div>`).join('')+'</div>'
+   :'<p class="ws">Nenhum projeto salvo ainda — comece um novo.</p>');
+ e.hidden=false;
+ for(const i of L.slice(0,n)){const q=load(i.id);if(!q)continue;
+  const cv=e.querySelector('canvas[data-th="'+i.id+'"]');if(cv)welThumb(cv,q);
+  const t=e.querySelector('[data-inf="'+i.id+'"]');
+  if(t)t.textContent=q.levels.length+(q.levels.length>1?' níveis · ':' nível · ')+q.els.length+(q.els.length===1?' elemento':' elementos')}}
+const welClose=()=>{const e=$('#wel');if(e)e.hidden=true};
+/* abre um .mcad vindo da tela inicial ou do menu nativo */
+async function welFile(texto,caminho){try{const o=JSON.parse(texto),q=o&&(o.p||(o.levels&&o.els?o:null));
+  if(!q||!Array.isArray(q.levels)||!Array.isArray(q.els))throw 0;
+  MCIMP=o;await mcadOpen(!!caminho);
+  if(caminho)marcarSalvo(caminho)}
+ catch(e){toast('Arquivo inválido: não parece um projeto do MineCAD.')}}
 /* ---- projeto em arquivo .mcad: projeto + componentes + materiais + tipos + texturas ---- */
 let MCIMP=null;
+/* caminho do .mcad deste projeto nesta máquina, quando há aplicativo instalado.
+   Fica fora do projeto porque é uma informação do computador, não do desenho. */
+let MCPATH='';
+const marcarSalvo=c=>{MCPATH=c;LS.s('mc:file:'+P.id,c);
+ toast('Salvo em '+c.split(/[\\/]/).pop(),'ok')};
+/* Ctrl+S: no aplicativo sobrescreve o arquivo do projeto, e só pergunta onde salvar
+   quando ainda não existe um. No navegador não há arquivo, então abre a exportação. */
+async function projSave(como){const D=window.mcDesktop;
+ if(!D){dlgFile();return}
+ const txt=JSON.stringify(mcadBundle(false));
+ if(!como&&MCPATH){if(await D.salvarEm(MCPATH,txt)){marcarSalvo(MCPATH);return}
+  toast('Não foi possível gravar em '+MCPATH+'. Escolha outro lugar.')}
+ const novo=await D.escolherSalvar(fname(P.name),txt);
+ if(novo)marcarSalvo(novo)}
 function mcadBundle(tex){const b={mcad:1,v:1,ts:Date.now(),app:'MineCAD',p:P,lib:LIB};
  if(tex&&PACKN&&Object.keys(PACK).length){const t={};
   for(const id in PACK){const q=PACK[id];t[id]={s:q.s.toDataURL(),t:q.t?q.t.toDataURL():0,b:q.b?q.b.toDataURL():0}}
@@ -1645,8 +1708,10 @@ async function mcadPick(){const inp=$('#fxf'),m=$('#fxm2'),msg=t=>{if(m)m.innerH
   msg(`<b>${esc(p.name||'Projeto')}</b> · ${p.levels.length} nível(is) · ${p.els.length} elemento(s) · ${((p.types||{}).wall||[]).length} tipo(s) de parede · ${(p.mats||[]).length} material(is) · ${lib.length} componente(s)${o.pack?' · texturas de “'+esc(o.pack.name||'pacote')+'”':''}`
    +'<div class="row"><button data-a="fximp">Abrir este projeto</button></div>')}
  catch(e){msg('Arquivo inválido: não parece um projeto do MineCAD.')}}
-async function mcadOpen(){const o=MCIMP;if(!o)return;const p=o.p||o;
- if(idx().some(x=>x.id===p.id)){p.id=uid();p.name=(p.name||'Projeto')+' (importado)'}
+async function mcadOpen(mesmo){const o=MCIMP;if(!o)return;const p=o.p||o;
+ /* no aplicativo o arquivo é o documento: reabrir o mesmo .mcad atualiza o projeto em vez
+    de criar uma cópia. Na importação pelo navegador a cópia continua sendo o certo. */
+ if(!mesmo&&idx().some(x=>x.id===p.id)){p.id=uid();p.name=(p.name||'Projeto')+' (importado)'}
  for(const d of o.lib||[])if(d&&d.id&&Array.isArray(d.cells)&&!LIB.some(x=>x.id===d.id))LIB.push(d);
  libSave();
  if(o.pack&&o.pack.tex){try{const P2={};
@@ -1711,7 +1776,8 @@ function act(s,val){const[k,a]=s.split(/:(.*)/);
   if(d2){d2.cells=d2.cells.map(c=>{const[x2,z2]=rotXZ(c.x,c.z,90);return Object.assign({},c,{x:x2,z:z2,fc:c.fc?rotFace(c.fc,90):undefined,ax:c.ax==='x'?'z':c.ax==='z'?'x':c.ax})});libSave();changed();dlgComp()}}
  else if(k==='cexp')cExp(a);else if(k==='cdl')cDl(a);else if(k==='cimp')cImp();else if(k==='cimpgo')cImpGo();else if(k==='cimpok')cImpOk(a);
  else if(k==='cdone')cDone();else if(k==='ccancel')askYes('Descartar componente','O que você modelou aqui será perdido. O seu projeto volta exatamente como estava.','Descartar','Continuar editando',()=>cBack());
- else if(k==='fxexp')mcadSave();else if(k==='fxpick')mcadPick();else if(k==='fximp')mcadOpen();else if(k==='close')$('#dlg').close();else if(k==='rotgo'){const q=B.bb[sel];if(!sel||!q)MSGS.e='Selecione um elemento.';else{if(!ROT.pv)ROT.pv=[Math.floor((q.x0+q.x1)/2)+.5,Math.floor((q.z0+q.z1)/2)+.5];rotApply(ROT.ang)}render()}
+ else if(k==='fxexp')mcadSave();else if(k==='fxpick')mcadPick();else if(k==='fximp')mcadOpen();else if(k==='wnew'){openP(newProject());toast('Projeto novo','ok')}else if(k==='wpick'){const q=load(a);if(q)openP(q);else toast('Projeto não encontrado.')}else if(k==='wmore'){welClose();dlgProjects()}else if(k==='welcome')welOpen();else if(k==='wopen'){const D=window.mcDesktop;
+  if(D)D.escolherAbrir().then(r=>{if(r)welFile(r.texto,r.caminho)});else $('#wfile').click()}else if(k==='close')$('#dlg').close();else if(k==='rotgo'){const q=B.bb[sel];if(!sel||!q)MSGS.e='Selecione um elemento.';else{if(!ROT.pv)ROT.pv=[Math.floor((q.x0+q.x1)/2)+.5,Math.floor((q.z0+q.z1)/2)+.5];rotApply(ROT.ang)}render()}
  else if(k==='mcschem'||k==='mccmd')mcExport(k)
  else if(k==='bkcat'){BKC=val||'';dlgBlocks()}
  else if(k==='sh'){SHT={id:a};view='sheet';render()}
@@ -1739,6 +1805,7 @@ document.addEventListener('change',e=>{const t=e.target;if(t.dataset.a)act(t.dat
  else if(t.dataset.tt)ttEdit(t);else if(t.dataset.tl)tlEdit(t);else if(t.dataset.tf)tfEdit(t);
  else if(t.dataset.ti&&TIMP){const k=t.dataset.ti;TIMP[k]=['cx','cy','cz','sc'].includes(k)?+t.value:t.value;
   if(TIMP.rows&&(k==='sep'||k==='dec'))tImpRead();else dlgTopoImp()}
+ else if(t.id==='wfile'){const f=t.files&&t.files[0];if(f)f.text().then(x=>welFile(x,''));t.value=''}
  else if(t.dataset.wm){const k=t.dataset.wm;
   if(k==='mundo'){WMSEL=t.value;wRegioes()}else if(k==='regiao'){WRSEL=t.value;dlgTopoImp()}
   else{WVIZ=tv(t);dlgTopoImp()}}
@@ -1798,7 +1865,7 @@ if(w&&w.cat==='door'){mutate(()=>{w.dir=(((w.dir||0)+1)%4)});return}
  else if(DEF[tool]&&DEF[tool].ext){DEF[tool].ext*=-1;render()}}
 document.addEventListener('keyup',e=>{if(e.key===' '&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))e.preventDefault()});
 document.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toLowerCase();if(k===' '){e.preventDefault();flipExt();return}if(SK){if(k==='escape'){if(SK.cur>=0){SK.cur=-1;render()}else skEnd(false)}else if(k==='enter')skEnd(true);else if(k==='delete'||k==='backspace')skDel();return}
- if((e.ctrlKey||e.metaKey)&&k==='s'){e.preventDefault();dlgFile();return}
+ if((e.ctrlKey||e.metaKey)&&k==='s'){e.preventDefault();projSave(e.shiftKey);return}
  if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();undo()}else if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();redo()}
  else if(k==='pageup'||k==='pagedown'){if(selSet().length){e.preventDefault();mutate(()=>offSel(k==='pageup'?1:-1))}}
  else if(k==='delete'||k==='backspace'){if(TED){tedDel();return}del()}
@@ -3909,20 +3976,18 @@ function render(){syncT(P);ui();calcDims();const p=view==='plan';$('#dims').styl
 new ResizeObserver(()=>{if(view==='plan')draw2d();else if(view==='3d')draw3d();else if(view==='sec')drawSec();else if(view==='sheet')drawSheet()}).observe($('#vp'));
 /* a biblioteca de blocos é registrada depois do primeiro build: recalcula o modelo com ela carregada */
 UIREADY=true;libLoad();libAdopt(P);B=build(P);fit();applyTheme();if(window.indexedDB)packLoad();
+MCPATH=LS.g('mc:file:'+P.id)||'';welOpen();
 /* ===== APLICATIVO DESKTOP =====
    Dentro do Electron, o menu nativo e o clique duplo num .mcad chegam por esta ponte.
    No navegador o objeto não existe e o bloco inteiro fica inerte. */
 (function(){const D=window.mcDesktop;if(!D)return;
- const ler=t=>{try{const o=JSON.parse(t),q=o&&(o.p||(o.levels&&o.els?o:null));
-   if(!q||!Array.isArray(q.levels)||!Array.isArray(q.els))throw 0;return o}
-  catch(e){toast('Arquivo inválido: não parece um projeto do MineCAD.');return null}};
- const abrir=o=>{MCIMP=o;mcadOpen()};
- D.ao('abrir-projeto',async()=>{const r=await D.escolherAbrir();if(!r)return;const o=ler(r.texto);if(o)abrir(o)});
- D.ao('abrir-arquivo',d=>{const o=d&&ler(d.texto);if(o)abrir(o)});
- D.ao('salvar-projeto',async()=>{const c=await D.escolherSalvar(fname(P.name),JSON.stringify(mcadBundle(false)));
-  if(c)toast('Projeto salvo em '+c,'ok')});
+ D.ao('abrir-projeto',async()=>{const r=await D.escolherAbrir();if(r)welFile(r.texto,r.caminho)});
+ D.ao('abrir-arquivo',d=>{if(d)welFile(d.texto,d.caminho)});
+ D.ao('salvar-projeto',()=>projSave(false));
+ D.ao('salvar-como',()=>projSave(true));
+ D.ao('tela-inicial',()=>welOpen());
  D.ao('desfazer',()=>undo());D.ao('refazer',()=>redo());
  /* projeto aberto por clique duplo antes de a janela existir */
- D.pendente().then(r=>{const o=r&&ler(r.texto);if(o)abrir(o)}).catch(()=>{});
+ D.pendente().then(r=>{if(r)welFile(r.texto,r.caminho)}).catch(()=>{});
 })();
 </script></body></html>
