@@ -26,7 +26,7 @@
     "copyright": "MineCAD",
     "directories": { "output": "dist", "buildResources": "build" },
     "files": ["main.js", "preload.js", "app/**", "!node_modules/**/{test,__tests__,docs,example,examples}/**"],
-    "publish": [{ "provider": "github", "owner": "Elnata001", "repo": "minecad" }],
+    "publish": [{ "provider": "github", "owner": "Elnata001", "repo": "minecad", "releaseType": "release" }],
     "fileAssociations": [
       { "ext": "mcad", "name": "Projeto do MineCAD", "description": "Projeto do MineCAD", "icon": "build/icon.ico", "role": "Editor" }
     ],
