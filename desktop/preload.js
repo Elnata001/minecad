@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('mcDesktop',{
  /* pasta compartilhada com o mod mCAD Connect */
  connectListar:()=>ipcRenderer.invoke('connect-listar'),
  connectLer:nome=>ipcRenderer.invoke('connect-ler',{nome}),
+ connectGravar:(nome,dados)=>ipcRenderer.invoke('connect-gravar',{nome,dados}),
  connectAbrirPasta:()=>ipcRenderer.invoke('connect-abrir-pasta'),
  associar:()=>ipcRenderer.invoke('associar'),
  sobre:()=>ipcRenderer.invoke('sobre'),

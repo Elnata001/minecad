@@ -158,6 +158,15 @@ ipcMain.handle('connect-ler',async(ev,{nome})=>{
  if(base!==nome||!CAPEXT.test(base))throw new Error('nome de captura inválido');
  return fsp.readFile(path.join(CONNECT(),'capturas',base),'utf8')});
 
+ipcMain.handle('connect-gravar',async(ev,{nome,dados})=>{
+ const base=path.basename(String(nome||''));
+ if(base!==nome||!/\.(schem|nbt)$/i.test(base))throw new Error('nome de projeto inválido');
+ const dir=path.join(CONNECT(),'projetos');
+ await fsp.mkdir(dir,{recursive:true});
+ const destino=path.join(dir,base);
+ await fsp.writeFile(destino,Buffer.from(dados,'base64'));
+ return destino});
+
 ipcMain.handle('connect-abrir-pasta',async()=>{
  const dir=CONNECT();
  try{await fsp.mkdir(path.join(dir,'capturas'),{recursive:true});

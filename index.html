@@ -1325,6 +1325,87 @@ function wLayers(hist){let top='grass_block',n=0;
  if(top==='stone'||/deepslate|basalt|blackstone|netherrack/.test(top))return[{m:top,t:8}];
  return[{m:top,t:1},{m:MATS.dirt?'dirt':top,t:3},{m:MATS.stone?'stone':top,t:4}]}
 const wTop=hist=>{let b='',n=0;for(const[k,v]of hist)if(v>n){b=k;n=v}return b};
+/* ---------- mCAD Connect: capturas feitas dentro do jogo ---------- */
+/* O mod grava o que o jogador capturou numa pasta que os dois lados conhecem
+   (Documentos/mCAD/Connect/capturas). Aqui só lemos o arquivo e entregamos ao mesmo
+   caminho do recorte do mundo — inclusive o posicionamento por prévia. */
+let CCAP=null,CCSEL=null,CCBSY='',CCERR='';
+const CCEXT=/\.(mcadcap|json)$/i;
+
+function ccPanel(){
+ if(!window.mcDesktop)
+  return '<p class="m">O mCAD Connect é um mod do Minecraft que grava a área capturada numa pasta '
+   +'do computador. No navegador não há acesso a pastas: use o aplicativo de desktop, ou carregue '
+   +'aqui um arquivo de captura.</p>'
+   +'<div class="row"><input type="file" id="ccf" accept=".mcadcap,.json"><button data-a="ccread">Ler arquivo</button></div>'
+   +'<div id="ccprev">'+ccPrev()+'</div>';
+ let L='';
+ if(CCBSY)L='<p class="m">'+esc(CCBSY)+'</p>';
+ else if(CCERR)L='<p class="m">'+esc(CCERR)+'</p>';
+ else if(CCAP===null)L='<p class="m">Procurando capturas…</p>';
+ else if(!CCAP.length)L='<p class="m">Nenhuma captura ainda. No jogo, abra o inventário, clique em '
+   +'<b>mCAD</b>, marque os dois cantos da área e confirme — a captura aparece aqui.</p>';
+ else L='<div class="lst">'+CCAP.map((c,i)=>
+   `<div class="li${CCSEL===i?' on':''}" data-a="ccsel:${i}"><b>${esc(c.rotulo||c.nome)}</b>`
+   +`<span class="m">${esc(c.detalhe||'')}</span></div>`).join('')+'</div>';
+ return '<p class="m">Capturas feitas no jogo pelo mod mCAD Connect, lidas de '
+   +'<code>'+esc(CCDIR||'Documentos/mCAD/Connect/capturas')+'</code>.</p>'
+   +L
+   +'<div class="row"><button data-a="ccrefresh">Procurar de novo</button>'
+   +'<button data-a="ccgo"'+(CCSEL===null?' disabled':'')+'>Criar terreno</button></div>'
+   +'<div id="ccprev">'+ccPrev()+'</div>'}
+
+let CCDIR='';
+function ccPrev(){if(!WPRE||!CCSEL&&CCSEL!==0)return '';
+ const{F,V}=WPRE;
+ return '<p class="m">'+F.w+'×'+F.h+' blocos · '+F.n+' colunas com chão · '
+  +V.length+' pontos cotados · cotas '+fmt(F.zmin)+' a '+fmt(F.zmax)+'.</p>'}
+
+async function ccListar(){
+ if(!window.mcDesktop||!window.mcDesktop.connectListar){CCAP=[];return}
+ CCBSY='Procurando capturas…';CCERR='';dlgTopoImp();
+ try{const r=await window.mcDesktop.connectListar();
+  CCDIR=r&&r.pasta||'';
+  CCAP=((r&&r.itens)||[]).map(c=>({nome:c.nome,rotulo:c.nome.replace(CCEXT,''),
+   detalhe:[c.quando||'',c.tam?Math.round(c.tam/1024)+' KB':''].filter(Boolean).join(' · ')}));
+ }catch(e){CCAP=[];CCERR='Não foi possível ler a pasta de capturas: '+(e&&e.message||e)}
+ CCBSY='';CCSEL=null;WPRE=null;dlgTopoImp()}
+
+/* Lê a captura e monta exatamente as estruturas do recorte do mundo, para reaproveitar
+   o mesmo caminho de criação do terreno. */
+function ccParse(txt,nome){
+ let d;try{d=JSON.parse(txt)}catch(e){throw new Error('o arquivo não é uma captura válida')}
+ if(!d||d.formato!=='mcad-connect/captura')throw new Error('o arquivo não é uma captura do mCAD Connect');
+ const w=d.w|0,h=d.h|0,alt=d.alt||[],pal=d.pal||[],blo=d.blo||[];
+ if(w<2||h<2||alt.length!==w*h)throw new Error('a captura está incompleta');
+ /* o campo de alturas do recorte do mundo usa NaN para "sem chão"; a captura usa null */
+ const g=new Float64Array(w*h);
+ const hist=new Map();let n=0,zmin=1e9,zmax=-1e9;
+ for(let k=0;k<alt.length;k++){const y=alt[k];
+  if(y===null||y===undefined){g[k]=NaN;continue}
+  g[k]=y;n++;if(y<zmin)zmin=y;if(y>zmax)zmax=y;
+  const b=pal[blo[k]];if(b)hist.set(b,(hist.get(b)||0)+1)}
+ if(!n)throw new Error('a captura não tem nenhuma coluna com chão');
+ const F={x0:d.x0|0,z0:d.z0|0,w,h,g,hist,n,zmin,zmax};
+ const cap=4000,D=wDecim(F,+WOPT.tol||1,cap);
+ WIMP={name:(d.mundo||nome||'captura').replace(CCEXT,'')};
+ WPRE={F,V:D.V,err:D.err,it:D.it,cap:D.V.length>=cap&&D.err>(+WOPT.tol||1)?cap:0,ms:0};
+ return F}
+
+async function ccAbrir(i){const c=CCAP&&CCAP[i];if(!c)return;
+ CCSEL=i;CCBSY='Lendo '+c.nome+'…';CCERR='';WPRE=null;dlgTopoImp();
+ try{const txt=await window.mcDesktop.connectLer(c.nome);ccParse(txt,c.nome)}
+ catch(e){WPRE=null;CCERR='Não deu para ler “'+c.nome+'”: '+(e&&e.message||e)}
+ CCBSY='';dlgTopoImp()}
+
+function ccRead(){const f=$('#ccf'),a=f&&f.files&&f.files[0];
+ if(!a){toast('Escolha um arquivo de captura.');return}
+ const r=new FileReader();
+ r.onload=()=>{try{ccParse(String(r.result),a.name);CCSEL=0;CCERR=''}
+  catch(e){WPRE=null;CCERR='Não deu para ler o arquivo: '+(e&&e.message||e)}
+  dlgTopoImp()};
+ r.readAsText(a)}
+
 /* ---------- aba do recorte do mundo ---------- */
 let WIMP=null,WSEL=null,WPRE=null,WBSY='';
 /* lista de mundos do aplicativo desktop: null enquanto não foi procurada */
@@ -1458,8 +1539,9 @@ function wImpGo(){if(!WPRE){toast('Analise o recorte antes de criar o terreno.')
 function dlgTopoImp(){TIMP=TIMP||{sep:'auto',dec:'auto',cx:0,cy:1,cz:2,sc:1,rows:null,hdr:false,name:''};
  const d=$('#dlg'),T=TIMP,cols=T.rows&&T.rows[0]?T.rows[0].map((v,i)=>[i,'Coluna '+(i+1)+(T.hdr?' — '+v:'')]):[[0,'Coluna 1'],[1,'Coluna 2'],[2,'Coluna 3']];
  const TB2='<h3>Importar terreno</h3>'
-  +`<div class="row ctabs"><button class="${TIMPT==='csv'?'on':''}" data-a="titab:csv">Levantamento (CSV)</button><button class="${TIMPT==='world'?'on':''}" data-a="titab:world">Recorte do mundo</button></div>`;
+  +`<div class="row ctabs"><button class="${TIMPT==='csv'?'on':''}" data-a="titab:csv">Levantamento (CSV)</button><button class="${TIMPT==='world'?'on':''}" data-a="titab:world">Recorte do mundo</button><button class="${TIMPT==='game'?'on':''}" data-a="titab:game">Do jogo (mCAD Connect)</button></div>`;
  if(TIMPT==='world'){d.innerHTML=TB2+wPanel();if(!d.open)d.showModal();wPrev();return}
+ if(TIMPT==='game'){d.innerHTML=TB2+ccPanel();if(!d.open)d.showModal();return}
  d.innerHTML=TB2
   +'<p class="m">Arquivo de texto com uma linha por ponto: coordenadas horizontais e cota. O separador e o decimal são reconhecidos automaticamente, mas podem ser trocados.</p>'
   +`<div class="row"><input type="file" id="tif" accept=".csv,.txt,text/csv,text/plain"><button data-a="tiread">Ler arquivo</button></div>`
@@ -1845,7 +1927,13 @@ function act(s,val){const[k,a]=s.split(/:(.*)/);
  else if(k==='tiread')tImpRead();else if(k==='tigo')tImpGo();
 else if(k==='tporig'){if(TPEND)topoPlaceAt([TPEND.ox,TPEND.oz]);render()}
  else if(k==='tpcancel'){topoPlaceCancel()}
- else if(k==='titab'){TIMPT=a;dlgTopoImp();if(a==='world'&&window.mcDesktop&&WMUN===null)wMundos()}else if(k==='wiload')wCarregar();else if(k==='wiread')wImpRead();else if(k==='wiscan')wImpScan();else if(k==='wigo')wImpGo();
+ else if(k==='titab'){TIMPT=a;dlgTopoImp();
+  if(a==='world'&&window.mcDesktop&&WMUN===null)wMundos();
+  if(a==='game'&&CCAP===null)ccListar()}
+ else if(k==='ccrefresh'){CCAP=null;ccListar()}
+ else if(k==='ccsel')ccAbrir(+a);
+ else if(k==='ccread')ccRead();
+ else if(k==='ccgo'){if(!WPRE)toast('Escolha uma captura antes de criar o terreno.');else wImpGo()}else if(k==='wiload')wCarregar();else if(k==='wiread')wImpRead();else if(k==='wiscan')wImpScan();else if(k==='wigo')wImpGo();
  else if(k==='tedit')tedStart();else if(k==='tdone')tedEnd();else if(k==='tddel')tedDel();
  else if(k==='gnew')gNew();
  else if(k==='gdone')gDone();else if(k==='gcancel')gCancel();
@@ -1863,6 +1951,7 @@ else if(k==='tporig'){if(TPEND)topoPlaceAt([TPEND.ox,TPEND.oz]);render()}
  else if(k==='cdone')cDone();else if(k==='ccancel')askYes('Descartar componente','O que você modelou aqui será perdido. O seu projeto volta exatamente como estava.','Descartar','Continuar editando',()=>cBack());
  else if(k==='fxexp')mcadSave();else if(k==='fxpick')mcadPick();else if(k==='fximp')mcadOpen();else if(k==='wnew'){openP(newProject());toast('Projeto novo','ok')}else if(k==='wpick'){const q=load(a);if(q)openP(q);else toast('Projeto não encontrado.')}else if(k==='wmore'){welClose();dlgProjects()}else if(k==='welcome')welOpen();else if(k==='wopen'){const D=window.mcDesktop;
   if(D)D.escolherAbrir().then(r=>{if(r)welFile(r.texto,r.caminho)});else $('#wfile').click()}else if(k==='close')$('#dlg').close();else if(k==='rotgo'){const q=B.bb[sel];if(!sel||!q)MSGS.e='Selecione um elemento.';else{if(!ROT.pv)ROT.pv=[Math.floor((q.x0+q.x1)/2)+.5,Math.floor((q.z0+q.z1)/2)+.5];rotApply(ROT.ang)}render()}
+ else if(k==='mcsend')mcSend()
  else if(k==='mcschem'||k==='mccmd')mcExport(k)
  else if(k==='bkcat'){BKC=val||'';dlgBlocks()}
  else if(k==='sh'){SHT={id:a};view='sheet';render()}
@@ -2773,6 +2862,19 @@ function zipOne(nome,dados){const nm=new TextEncoder().encode(nome),n=nm.length,
  const fim=o;
  u32(0x06054b50);u16(0);u16(0);u16(1);u16(1);u32(fim-cd);u32(cd);u16(0);
  return out}
+/* Envia o projeto direto para a pasta que o mod mCAD Connect lê no jogo: sem caixa de
+   diálogo, sem procurar onde salvar, sem comando nenhum do lado de lá. */
+async function mcSend(){const msg=t=>{const e=$('#mcmsg');if(e)e.textContent=t};
+ const D=window.mcDesktop;
+ if(!D||!D.connectGravar){msg('Disponível no aplicativo de desktop.');return}
+ const{ents,c}=mcPlan();
+ if(!ents.length){msg('Não há blocos exportáveis neste projeto.');return}
+ try{msg('Gerando…');
+  const nm='mcad-'+P.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_')+'.schem';
+  const gz=new Uint8Array(await new Response(new Blob([await mcBuild(ents)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+  const onde=await D.connectGravar(nm,b64de(gz));
+  msg('“'+nm+'” está no jogo: abra o inventário, clique em mCAD e escolha Colar aqui.'+(onde?' ('+onde+')':''));}
+ catch(e){msg('Não foi possível enviar ('+((e&&(e.message||e.code))||'erro')+').')}}
 async function mcExport(k){const msg=t=>{const e=$('#mcmsg');if(e)e.textContent=t},{ents}=mcPlan(),c=mcs();if(!ents.length){msg('Nada para exportar com estes filtros.');return}
  try{msg('Gerando…');const nm='minecad-'+P.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_');
   let r;
@@ -2784,7 +2886,7 @@ async function mcExport(k){const msg=t=>{const e=$('#mcmsg');if(e)e.textContent=
 function dlgMc(){DLGM='m';const c=mcs(),{ents,iss}=mcPlan(),d=$('#dlg'),lvs=[['','Todos os níveis'],...P.levels.map(l=>[l.id,l.name])],F=(k,l)=>`<label>${l}<input type="number" step="1" style="width:70px" data-mc="${k}" value="${c[k]}"></label>`;
  d.innerHTML=`<h3>Exportar para Minecraft (Java)</h3><div class="row" style="flex-wrap:wrap"><label>Versão ${dd(MCV.map(v=>[v[0],v[0]]),c.ver,'data-mc="ver"')}</label><label>Níveis ${dd(lvs,c.lv,'data-mc="lv"')}</label></div>
  <div class="row" style="flex-wrap:wrap"><span class="m">Origem de colagem (blocos a partir do canto mínimo)</span>${F('ox','X')}${F('oy','Y')}${F('oz','Z')}</div><h4>Verificação</h4><p class="m">${ents.length} blocos serão exportados.</p>
- ${iss.map(([l,t])=>`<p class="m">${l==='!'?'⚠':'ℹ'} ${esc(t)}</p>`).join('')}<div class="row" style="flex-wrap:wrap"><button data-a="mcschem">Schematic (.schem, em .zip)</button><button data-a="mccmd">Comandos (.txt)</button><button data-a="close">Fechar</button></div><p class="m" id="mcmsg"></p>`;if(!d.open)d.showModal()}
+ ${iss.map(([l,t])=>`<p class="m">${l==='!'?'⚠':'ℹ'} ${esc(t)}</p>`).join('')}<div class="row" style="flex-wrap:wrap">${window.mcDesktop&&window.mcDesktop.connectGravar?'<button data-a="mcsend">Enviar para o Minecraft</button>':''}<button data-a="mcschem">Schematic (.schem, em .zip)</button><button data-a="mccmd">Comandos (.txt)</button><button data-a="close">Fechar</button></div><p class="m" id="mcmsg"></p>`;if(!d.open)d.showModal()}
 /* ---- edição: alças, arraste, Aparar, Repartir e Rotacionar (todas via mutate: desfazer/refazer e vistas sincronizadas) ---- */
 const EDIT=['move','cs','trim','split','rot','anchor'],LINEK=['wall','window','beam','fence'];
 const CWTOOL='curtain';

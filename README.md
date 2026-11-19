@@ -27,6 +27,12 @@ Cobre a janela e as ferramentas, níveis e vistas, planta, fachadas e 3D, a mode
 escadas e coberturas, os tipos, o anexar topo, o terreno, componentes e grupos, as tabelas
 quantitativas, a exportação, os arquivos `.mcad` e os atalhos de teclado.
 
+## mCAD Connect — o mod
+
+Liga o jogo ao programa: captura o terreno onde você está para virar projeto e cola no mundo
+o que o mCAD exportou, sem comando nenhum. Mod de cliente para **Minecraft 26.3** com Fabric;
+o código e as instruções estão em [`mcad-connect/`](mcad-connect/).
+
 ## O que tem dentro
 
 - **Modelagem em planta** com métodos de desenho (linha, retângulo, polígono, círculo,
@@ -46,6 +52,7 @@ quantitativas, a exportação, os arquivos `.mcad` e os atalhos de teclado.
 |---|---|
 | `index.html` | o aplicativo inteiro |
 | `MANUAL.md`, `docs/manual/` | o manual ilustrado e as imagens das 23 páginas |
+| `mcad-connect/` | o mod do Minecraft que conversa com o aplicativo |
 | `tests/` | ~120 suítes Playwright, o arnês e o duplê do Three.js usado offline |
 | `tests/run.sh` | roda todas as suítes contra o `index.html` deste repositório |
 | `tools/mkworld.js` | gera o mundo sintético (região, estrutura e esquema) usado nos testes de importação |
