@@ -1,20 +1,20 @@
 plugins {
-    id 'fabric-loom' version "${loom_version}"
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
-
-version = project.mod_version
-group = project.maven_group
 
 base {
     archivesName = project.archives_base_name
+    version = project.mod_version
+    group = project.maven_group
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${minecraft_version}"
-    /* A documentação do Fabric para 26.x usa os nomes oficiais da Mojang. */
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    /* O Minecraft 26.x é distribuído sem ofuscação: não há linha de mapeamentos, e os nomes
+       das classes no código são os oficiais da Mojang (Level, BlockState, Button…). */
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 
 processResources {
@@ -34,10 +34,4 @@ java {
         languageVersion = JavaLanguageVersion.of(25)
     }
     withSourcesJar()
-}
-
-jar {
-    from('../LICENSE') {
-        rename { "${it}_${project.base.archivesName.get()}" }
-    }
 }
