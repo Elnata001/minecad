@@ -17,9 +17,13 @@ prepare(){
 }
 prepare
 
+# MINECAD_ONLY="pwTrap pwVis" roda só as suítes citadas
 fail=0; ran=0
 for f in "$ROOT"/tests/pw*.js; do
   n=$(basename "$f")
+  if [ -n "${MINECAD_ONLY:-}" ]; then
+    case " $MINECAD_ONLY " in *" ${n%.js} "*) ;; *) continue;; esac
+  fi
   grep -qx "$n" "$ROOT/tests/skip.txt" && { echo "— $n (ignorada: suíte antiga, API mudou)"; continue; }
   out=$(timeout 180 node "$f" 2>&1); rc=$?
   ran=$((ran+1))
