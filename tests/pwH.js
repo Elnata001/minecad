@@ -4,6 +4,8 @@ const {chromium}=require('playwright'),fs=require('fs');
  const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
  await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  const nav=()=>pg.evaluate(()=>{const x=[...document.querySelectorAll('#nav .it')].find(y=>y.className.includes('on'));return x?x.textContent.trim():'-'});
  const bar=()=>pg.evaluate(()=>document.querySelector('#pp .pph').textContent.trim());
  // abre e fecha um menu suspenso (o popup fica no DOM depois disso)

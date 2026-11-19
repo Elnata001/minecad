@@ -5,6 +5,8 @@ const {chromium}=require('playwright'),fs=require('fs');
  await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
  await pg.addInitScript(()=>{window.prompt=()=>null;window.confirm=()=>false;window.alert=()=>{}});
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  // 1) biblioteca numa janela baixa: o botão Fechar está visível sem rolar?
  await pg.evaluate(()=>dlgComp());await pg.waitForTimeout(400);
  const fe=await pg.$('[data-a="close"]');

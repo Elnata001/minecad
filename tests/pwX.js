@@ -4,6 +4,8 @@ const {chromium}=require('playwright'),fs=require('fs');
  const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
  await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  // 1) espaçamento do cabeçalho
  console.log('1. espaço entre os menus:',await pg.evaluate(()=>{const b2=[...document.querySelectorAll('#menus button')];
   return b2.length>1?Math.round(b2[1].getBoundingClientRect().left-b2[0].getBoundingClientRect().right)+'px':'?'}));

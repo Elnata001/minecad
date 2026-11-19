@@ -5,6 +5,8 @@ const {chromium}=require('playwright');
  pg.on('console',m=>{if(m.type()==='error')errs.push('CONSOLE '+m.text().slice(0,120))});
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');
  await pg.waitForTimeout(1500);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  console.log('THREE disponível:',await pg.evaluate(()=>!!window.THREE));
  console.log('ferramentas na barra:',await pg.evaluate(()=>[...document.querySelectorAll('#tools .tl')].map(b=>(b.dataset.lab||b.title).split(' (')[0]).join(' | ')));
  // ativa a ferramenta Bloco

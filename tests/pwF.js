@@ -3,6 +3,8 @@ const {chromium}=require('playwright'),fs=require('fs');
  const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1400,height:900}});
  await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  const nav=()=>pg.evaluate(()=>{const b2=[...document.querySelectorAll('#nav .it')].find(x=>x.className.includes('on'));return b2?b2.textContent:'(nenhum)'});
  const props=()=>pg.evaluate(()=>document.querySelector('#props').textContent.replace(/\s+/g,' ').slice(0,45));
  console.log('nível ativo (nav):',await nav(),'| lv interno:',await pg.evaluate(()=>lvl().name));

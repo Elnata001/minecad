@@ -88,11 +88,14 @@ function associarMcad(){
   ['HKCU\\Software\\Classes\\MineCAD.Projeto\\shell\\open','/ve','/d','Abrir no MineCAD'],
   ['HKCU\\Software\\Classes\\MineCAD.Projeto\\shell\\open\\command','/ve','/d','"'+exe+'" "%1"']
  ];
- return new Promise(res=>{let i=0;
+ /* uma chave que falhe não interrompe as outras: a que decide o clique duplo é a última,
+    shell\\open\\command, e é o resultado dela que vale */
+ return new Promise(res=>{let i=0,ok=true;
   const passo=()=>{if(i>=chaves.length){
-    try{fs.writeFileSync(ASSOC,JSON.stringify({exe}))}catch(e){}
-    return res(true)}
-   execFile('reg',['add'].concat(chaves[i++]).concat(['/f']),{windowsHide:true},err=>err?res(false):passo())};
+    if(ok)try{fs.writeFileSync(ASSOC,JSON.stringify({exe}))}catch(e){}
+    return res(ok)}
+   const ch=chaves[i++],crit=ch[0].indexOf('OpenWithProgids')<0;
+   execFile('reg',['add'].concat(ch).concat(['/f']),{windowsHide:true},err=>{if(err&&crit)ok=false;passo()})};
   passo()})}
 const ASSOC=path.join(app.getPath('userData'),'assoc.json');
 const assocPendente=()=>{try{return JSON.parse(fs.readFileSync(ASSOC,'utf8')).exe!==process.execPath}catch(e){return true}};

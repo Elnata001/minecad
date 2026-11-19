@@ -4,6 +4,8 @@ const {chromium}=require('playwright'),fs=require('fs');
  const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
  await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(800);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  await pg.evaluate(()=>cEnter('Teste',null));await pg.waitForTimeout(300);
  await pg.click('#cfb [data-ce="c"]');await pg.waitForTimeout(250);
  console.log('1. categorias oferecidas:',await pg.evaluate(()=>[...document.querySelectorAll('#sxp .sxi')].map(x=>x.textContent.trim()).join(' · ')));

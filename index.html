@@ -3976,7 +3976,11 @@ function render(){syncT(P);ui();calcDims();const p=view==='plan';$('#dims').styl
 new ResizeObserver(()=>{if(view==='plan')draw2d();else if(view==='3d')draw3d();else if(view==='sec')drawSec();else if(view==='sheet')drawSheet()}).observe($('#vp'));
 /* a biblioteca de blocos é registrada depois do primeiro build: recalcula o modelo com ela carregada */
 UIREADY=true;libLoad();libAdopt(P);B=build(P);fit();applyTheme();if(window.indexedDB)packLoad();
-MCPATH=LS.g('mc:file:'+P.id)||'';welOpen();
+MCPATH=LS.g('mc:file:'+P.id)||'';
+/* abre na tela inicial — a não ser que o programa tenha sido chamado por um clique duplo
+   num .mcad, caso em que o projeto entra direto, sem piscar a tela do meio */
+if(window.mcDesktop)window.mcDesktop.pendente().then(r=>{r?welFile(r.texto,r.caminho):welOpen()}).catch(()=>welOpen());
+else welOpen();
 /* ===== APLICATIVO DESKTOP =====
    Dentro do Electron, o menu nativo e o clique duplo num .mcad chegam por esta ponte.
    No navegador o objeto não existe e o bloco inteiro fica inerte. */
@@ -3987,7 +3991,5 @@ MCPATH=LS.g('mc:file:'+P.id)||'';welOpen();
  D.ao('salvar-como',()=>projSave(true));
  D.ao('tela-inicial',()=>welOpen());
  D.ao('desfazer',()=>undo());D.ao('refazer',()=>redo());
- /* projeto aberto por clique duplo antes de a janela existir */
- D.pendente().then(r=>{if(r)welFile(r.texto,r.caminho)}).catch(()=>{});
 })();
 </script></body></html>

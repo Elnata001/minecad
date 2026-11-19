@@ -4,6 +4,8 @@ const {chromium}=require('playwright'),fs=require('fs');
  const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
  await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(800);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  // componente modelado ao longo de Z (como quem traça na vertical da planta)
  await pg.evaluate(()=>cEnter('Módulo vertical',null));await pg.waitForTimeout(300);
  await pg.evaluate(()=>{CEDIT.cat='Paredes';

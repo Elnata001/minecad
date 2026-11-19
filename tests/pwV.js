@@ -4,6 +4,8 @@ const {chromium}=require('playwright'),fs=require('fs');
  const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message+' @ '+String(e.stack||'').split('\n')[1]));
  await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
  await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(800);
+ // o programa abre na tela inicial: sai dela como o usuário sairia
+ await pg.evaluate(()=>welClose());
  // eixos no modo de criação
  await pg.evaluate(()=>{cEnter('Parede com pilar',null);CEDIT.cat='Paredes';
   for(let x=0;x<6;x++)for(let y=0;y<4;y++)P.els.push(mk(P,'block',{x1:x+.5,z1:.5,off:y,mat:'cobblestone'},lv));
