@@ -35,7 +35,11 @@
       "icon": "build/icon.ico",
       "artifactName": "MineCAD-${version}-${arch}.${ext}"
     },
+    "portable": {
+      "artifactName": "MineCAD-${version}-${arch}-portatil.${ext}"
+    },
     "nsis": {
+      "artifactName": "MineCAD-Setup-${version}-${arch}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,
