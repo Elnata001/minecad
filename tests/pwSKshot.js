@@ -1,0 +1,12 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1300,height:800},deviceScaleFactor:2});
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const f=mk(P,'floor',{pts:[[0.5,0.5],[10.5,0.5],[10.5,7.5],[0.5,7.5]]},P.levels[0].id);P.els.push(f);
+  B=build(P);sel=f.id;tool='sel';cam={x:8,z:4,s:30};render();act('sk');
+  [[13.5,1.5],[17.5,1.5],[17.5,5.5]].forEach(q=>{cur=q.slice();skPen(q)});SK.cur=-1;render()});
+ await pg.waitForTimeout(300);await pg.screenshot({path:'/tmp/skA.png'});
+ await pg.evaluate(()=>act('skok'));await pg.waitForTimeout(250);
+ await pg.screenshot({path:'/tmp/skB.png'});
+ await b.close()})();

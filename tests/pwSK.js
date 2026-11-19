@@ -1,0 +1,25 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1360,height:880}});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const f=mk(P,'floor',{pts:[[0.5,0.5],[8.5,0.5],[8.5,6.5],[0.5,6.5]]},P.levels[0].id);P.els.push(f);
+  const s=mk(P,'stair',{pts:[[12.5,0.5],[12.5,6.5]]},P.levels[0].id);P.els.push(s);
+  B=build(P);sel=f.id;SELS=[f.id];tool='sel';cam={x:6,z:3,s:34};render()});
+ const T=()=>pg.evaluate(()=>{const d=[...document.querySelectorAll('.tst')].pop();return d?(d.classList.contains('err')?'ERRO: ':'ok: ')+d.dataset.t:'—'});
+ console.log('alças do piso fora do modo:',await pg.evaluate(()=>handlesOf(P.els[0]).length),'| encaixe:',await pg.evaluate(()=>handlesOf(P.els[0],1).length),
+  '| escada mantém alças:',await pg.evaluate(()=>handlesOf(P.els[1]).length));
+ console.log('botão:',await pg.evaluate(()=>{const b2=document.querySelector('#fb .fbmw button[data-a="sk"]');return b2?b2.textContent:'ausente'}));
+ console.log('botão na escada:',await pg.evaluate(()=>{sel=P.els[1].id;render();const b2=document.querySelector('#fb .fbmw button[data-a="sk"]');return b2?b2.textContent:'ausente'}));
+ await pg.evaluate(()=>{sel=P.els[0].id;render();act('sk')});await pg.waitForTimeout(250);
+ console.log('entrou:',await pg.evaluate(()=>SK.P.length+'v/'+SK.E.length+'a · modo '+SK.mode+' · '+skStatus()));
+ console.log('painel:',(await pg.textContent('#pp')).replace(/\s+/g,' ').slice(0,110));
+ await pg.evaluate(()=>act('tool:rot'));await pg.waitForTimeout(150);
+ console.log('Rotacionar:',await T(),'| ferramenta:',await pg.evaluate(()=>tool));
+ await pg.evaluate(()=>act('tool:wall'));await pg.waitForTimeout(150);
+ console.log('Parede:',await T());
+ console.log('ferramentas apagadas na barra:',await pg.evaluate(()=>document.querySelectorAll('#tools .tl.dim').length));
+ await pg.evaluate(()=>act('skcancel'));await pg.waitForTimeout(200);
+ console.log('cancelou:',await pg.evaluate(()=>!SK&&JSON.stringify(P.els[0].pts)));
+ console.log(errs.join('\n')||' sem erros');await b.close()})();

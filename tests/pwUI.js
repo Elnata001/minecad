@@ -1,0 +1,25 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1340,height:820},deviceScaleFactor:2});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ await pg.evaluate(()=>{openP(newProject(true));B=build(P);cam={x:6,z:4,s:26};render()});
+ await pg.click('#tools .tl[data-a="tool:wall"]');await pg.waitForTimeout(250);
+ console.log('1. barra:',await pg.evaluate(()=>{const b2=document.querySelectorAll('#pp .dmb');return b2.length+' botão(ões) · ícone '+(b2[0]?getComputedStyle(b2[0].querySelector('svg')).width:'?')+' em quadrado de '+(b2[0]?Math.round(b2[0].getBoundingClientRect().width):'?')+'px'}));
+ console.log('   dica:',JSON.stringify(await pg.evaluate(()=>{const p=document.querySelector('#pp .pps p.m');return p?p.textContent.slice(0,90):'(sem dica)'})));
+ const trg=await pg.$('#pp .dmb[data-dmo]');
+ await trg.hover();await pg.waitForTimeout(350);
+ console.log('2. menu flutuante:',await pg.evaluate(()=>{const p=document.querySelector('#dmp.on');if(!p)return'não abriu';
+  const t=document.querySelector('#pp .dmb[data-dmo]').getBoundingClientRect(),f=p.querySelector('.dmb').getBoundingClientRect();
+  return p.querySelectorAll('.dmb').length+' opções · alinhamento esquerda '+Math.round(f.left-t.left)+'px · topo '+Math.round(f.top-t.bottom)+'px abaixo'}));
+ await pg.screenshot({path:'/tmp/ui1.png',clip:{x:0,y:60,width:700,height:300}});
+ await pg.evaluate(()=>{const p=document.querySelector('#dmp');p.querySelectorAll('.dmb')[5].click()});
+ await pg.waitForTimeout(250);
+ console.log('   após escolher círculo:',await pg.evaluate(()=>dmet('wall')+' · menu '+(document.querySelector('#dmp.on')?'aberto':'fechado')+' · ícone do botão = m_circle? '+(document.querySelector('#pp .dmb[data-dmo]').innerHTML===IC.m_circle)));
+ // 3: Editar forma no painel flutuante
+ await pg.evaluate(()=>{tool='sel';sel=P.els.find(e=>e.cat==='wall').id;render()});await pg.waitForTimeout(300);
+ console.log('3. painel flutuante:',await pg.evaluate(()=>{const f=document.querySelector('#fb .fbmw');return f?(f.textContent.trim()||'(ícone)')+' · ação '+(f.querySelector('button')?f.querySelector('button').dataset.a:'—')+' · título '+(f.querySelector('button')?f.querySelector('button').title:'—'):'sem painel'}));
+ console.log('   botão no canvas:',await pg.evaluate(()=>document.querySelector('#dims button[data-a="sk"]')?'ainda existe':'removido'));
+ console.log('   ícone de editar tipos:',await pg.evaluate(()=>{const b2=document.querySelector('#fb [data-a="types"]')||document.querySelector('#pp [data-a="types"]');return b2?(b2.innerHTML.includes('circle')?'três pontos':'lápis'):'não achei'}));
+ await pg.screenshot({path:'/tmp/ui2.png'});
+ console.log(errs.join('\n')||' sem erros');await b.close()})();

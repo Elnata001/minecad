@@ -1,0 +1,17 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1100,height:560}});
+ pg.on('pageerror',e=>console.log('ERRO',e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(800);
+ const info=await pg.evaluate(()=>{const t=$('#tools');return{h:t.clientHeight,sh:t.scrollHeight,largura:t.clientWidth,offset:t.offsetWidth}});
+ console.log('tools:',JSON.stringify(info));
+ const bb=await (await pg.$('#tools .tl[data-a="tool:wall"]')).boundingBox();
+ await pg.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2);
+ await pg.mouse.wheel(0,200);await pg.waitForTimeout(300);
+ console.log('scrollTop sobre o botão:',await pg.evaluate(()=>$('#tools').scrollTop));
+ await pg.evaluate(()=>$('#tools').scrollTop=0);
+ const tb=await (await pg.$('#tools')).boundingBox();
+ await pg.mouse.move(tb.x+tb.width-3,tb.y+100);await pg.mouse.wheel(0,200);await pg.waitForTimeout(300);
+ console.log('scrollTop na borda:',await pg.evaluate(()=>$('#tools').scrollTop));
+ console.log('botão direito x:',bb.x+bb.width,'| tools direito:',tb.x+tb.width);
+ await b.close()})();

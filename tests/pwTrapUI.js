@@ -1,0 +1,16 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1400,height:900},deviceScaleFactor:2});
+ pg.on('pageerror',e=>console.log('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ console.log(await pg.evaluate(()=>{openP(newProject());P.els=[];lv=P.levels[0].id;view='plan';cam.s=30;cam.x=6;cam.z=5;
+  P.els.push(mk(P,'floor',{pts:[[.5,.5],[10.5,8.5]],pk:'rect',closed:true,off:0,mat:'oak_planks'},lv));
+  tool='trap';sel=null;render();
+  const h=document.querySelector('#props').innerText.replace(/\n+/g,' | ');
+  return 'barra com a ferramenta ativa: '+h}));
+ await pg.waitForTimeout(250);await pg.screenshot({path:'/tmp/trap_tool.png',clip:{x:0,y:60,width:1400,height:120}});
+ console.log(await pg.evaluate(()=>{const t=mk(P,'trap',{x1:4.5,z1:3.5},lv);P.els.push(t);B=build(P);tool='sel';sel=t.id;SELS=[t.id];render();
+  return 'barra com o elemento selecionado: '+document.querySelector('#props').innerText.replace(/\n+/g,' | ')}));
+ await pg.waitForTimeout(250);await pg.screenshot({path:'/tmp/trap_props.png',clip:{x:0,y:60,width:1400,height:120}});
+ console.log(await pg.evaluate(()=>{dlgElInfo(sel);const txt=document.querySelector('#dlg').innerText.replace(/\n+/g,' | ');$('#dlg').close();return 'informações: '+txt}));
+ await b.close()})();

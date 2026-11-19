@@ -1,0 +1,4 @@
+pwDMshot.js
+pwDot.js
+pwG8.js
+pwGeo.js

@@ -1,0 +1,18 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1360,height:880},deviceScaleFactor:2});
+ pg.on('pageerror',e=>console.log('ERRO',e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ await pg.evaluate(()=>{openP(newProject());dlgPack()});await pg.waitForTimeout(400);
+ await pg.setInputFiles('#pkf','/tmp/pack_test.jar');
+ await pg.evaluate(()=>loadPack());await pg.waitForTimeout(2500);
+ console.log('pacote:',await pg.evaluate(()=>PACKN+' · blocos '+Object.keys(PACK).join(', ')+' · TXON '+TXON));
+ await pg.evaluate(()=>$('#dlg').close());await pg.waitForTimeout(200);
+ await pg.evaluate(()=>{dlgMats();mtAct('mtnew','')});await pg.waitForTimeout(300);
+ await pg.evaluate(()=>{const s=document.querySelector('#dlg .sxd[data-f="block"]');s&&s.click()});await pg.waitForTimeout(500);
+ await pg.fill('#sxq','grama');await pg.waitForTimeout(250);
+ const pb=await (await pg.$('#sxp')).boundingBox();
+ await pg.screenshot({path:'/tmp/tx_dd.png',clip:{x:pb.x,y:pb.y,width:pb.width,height:Math.min(pb.height,220)}});
+ await pg.fill('#sxq','carvalho');await pg.waitForTimeout(250);
+ await pg.screenshot({path:'/tmp/tx_dd2.png',clip:{x:pb.x,y:pb.y,width:pb.width,height:Math.min(pb.height,260)}});
+ await b.close()})();

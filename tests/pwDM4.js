@@ -1,0 +1,18 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1360,height:880}});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ console.log(await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const w=mk(P,'wall',{pts:[[0.5,0.5],[6.5,0.5]],pk:'circle',closed:true,h:2},P.levels[0].id);P.els.push(w);B=build(P);sel=w.id;
+  const a=[...document.querySelectorAll('#pp label')].map(l=>l.textContent.trim().split('\n')[0]);
+  ui();const b2=[...document.querySelectorAll('#pp label')].map(l=>l.textContent.trim().split('\n')[0]);
+  return 'campos da parede circular: '+b2.filter(x=>/Raio|Lados/.test(x)).join(', ')+' | info: '+info(w).filter(r=>/Método|Raio|Comprimento/.test(r[0])).map(r=>r[0]+' '+r[1]).join(' · ')}));
+ console.log(await pg.evaluate(()=>{const w=P.els[0];const n0=[...B.vox.values()].filter(v=>v.o===w.id).length;
+  mutate(()=>{const c=w.pts[0].slice();w.pts=[c,[c[0]+10,c[1]]]});
+  return 'raio 6 -> '+n0+' blocos; raio 10 -> '+[...B.vox.values()].filter(v=>v.o===w.id).length+' blocos'}));
+ console.log(await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const f=mk(P,'floor',{pts:[[0.5,0.5],[8.5,4.5]],pk:'rect'},P.levels[0].id);P.els.push(f);B=build(P);sel=f.id;
+  const n0=geo(f).area;ROT.pv=[0.5,0.5];rotApply(45);
+  return 'piso retângulo girado 45°: pk='+f.pk+' vértices '+f.pts.length+' área '+n0+' -> '+geo(f).area}));
+ console.log(errs.join('\n')||' sem erros');await b.close()})();

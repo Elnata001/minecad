@@ -1,0 +1,18 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1340,height:820},deviceScaleFactor:2});
+ pg.on('pageerror',e=>console.log('ERRO',e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const lv0=P.levels[0].id;
+  P.els.push(mk(P,'floor',{pts:[[0.5,0.5],[9.5,0.5]],pk:'circle',closed:true},lv0));
+  P.els.push(mk(P,'wall',{pts:[[0.5,0.5],[9.5,0.5]],pk:'circle',closed:true,h:4,t:1},lv0));
+  P.els.push(mk(P,'wall',{pts:[[16.5,-6.5],[24.5,-6.5],[28.5,2.5],[20.5,8.5]],pk:'bez',closed:false,h:4},lv0));
+  P.els.push(mk(P,'floor',{pts:[[-14.5,0.5],[-6.5,0.5]],pk:'reg',pn:8,closed:true},lv0));
+  P.els.push(mk(P,'column',{x1:-10.5,z1:0.5,cs:'circle',sx:5,sz:5,h:5},lv0));
+  P.els.push(mk(P,'beam',{pts:[[-14.5,-10.5],[-6.5,-16.5],[2.5,-10.5]],pk:'arc',closed:false,bw:1,bh:1,off:3},lv0));
+  B=build(P);sel=null;tool='sel';cam={x:5,z:-2,s:13};render()});
+ await pg.waitForTimeout(400);
+ await pg.screenshot({path:'/tmp/dm_plan.png'});
+ console.log(await pg.evaluate(()=>P.els.map(e=>e.cat+'/'+(e.pk||e.cs||'—')).join(', ')+' · '+B.vox.size+' blocos'));
+ await b.close()})();

@@ -1,0 +1,31 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1100,height:700}});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ console.log(await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const a=P.levels[0].id,b2=P.levels[1].id,o=[];
+  const w=mkWall(P,[0.5,0.5],[0.5,7.5],a);w.h=4;w.top=null;P.els.push(w);
+  const r=mk(P,'roof',{pts:[[0.5,0.5],[11.5,0.5],[11.5,7.5],[0.5,7.5]],sp:1,base:b2,off:0},b2);P.els.push(r);
+  const ty=typeOf(P,r.ty);
+  const cols=()=>{const c=voxRoof(P,r),col=new Map();c.forEach(q=>{const k=q[0]+','+q[2];if(!col.has(k))col.set(k,[]);col.get(k).push(q)});return{n:c.length,col}};
+  B=build(P);
+  o.push('sem apoio: '+cols().n+' blocos de cobertura');
+  mutate(()=>{ty.under='stair'});
+  const c1=cols();o.push('apoio em escadas invertidas: '+c1.n+' blocos');
+  const amostra=[...c1.col.entries()].filter(([k])=>k.startsWith('0,')).sort((x,y)=>+x[0].split(',')[1]-+y[0].split(',')[1])
+   .map(([k,v])=>k+' -> '+v.sort((p,q)=>p[1]-q[1]).map(q=>'y'+q[1]+':'+(q[4]||'?')+(q[3]?'/'+q[3].half:'')+(q[6]?'/'+q[6]:'')).join(' '));
+  o.push('coluna X=0 (sem parede anexada):\\n  '+amostra.join('\\n  '));
+  mutate(()=>{w.att=r.id});
+  const c2=cols();o.push('com a parede anexada: '+c2.n+' blocos de cobertura (apoio sai em '+(c1.n-c2.n)+' colunas)');
+  const am2=[...c2.col.entries()].filter(([k])=>k.startsWith('0,')).sort((x,y)=>+x[0].split(',')[1]-+y[0].split(',')[1])
+   .map(([k,v])=>k+' -> '+v.sort((p,q)=>p[1]-q[1]).map(q=>'y'+q[1]).join(' '));
+  o.push('coluna X=0 agora:\\n  '+am2.join('\\n  '));
+  const wc=[...B.vox.values()].filter(v=>v.o===w.id);
+  const topo=new Map();wc.forEach(v=>{if(!topo.has(v.z)||topo.get(v.z)<v.y)topo.set(v.z,v.y)});
+  o.push('topo da parede por Z: '+[...topo.entries()].sort((x,y)=>x[0]-y[0]).map(([z,y])=>y).join(','));
+  const rb=[...B.vox.values()].filter(v=>v.o===r.id&&v.x===0);
+  const base=new Map();rb.forEach(v=>{if(!base.has(v.z)||base.get(v.z)>v.y)base.set(v.z,v.y)});
+  o.push('base da cobertura em X=0: '+[...base.entries()].sort((x,y)=>x[0]-y[0]).map(([z,y])=>y).join(','));
+  return o.join('\n')}));
+ console.log(errs.join('\n')||'sem erros');await b.close()})();

@@ -1,0 +1,13 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:900,height:700},deviceScaleFactor:2});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ await pg.evaluate(()=>{openP(newProject());P.els=[];const a=P.levels[0].id;
+  const f=mk(P,'floor',{pts:[[0.5,0.5],[9.5,0.5],[9.5,4.5],[5.5,4.5],[5.5,8.5],[0.5,8.5]],off:0},a);P.els.push(f);
+  const st=mk(P,'stair',{pts:[[7.5,6.5],[7.5,10.5]],w:2,base:a},a);P.els.push(st);
+  window.__f=f;window.__st=st;B=build(P);view='plan';lv=a;cam.s=28;cam.x=5;cam.z=5;
+  sel=f.id;SELS=[f.id];tool='sel';hovSet(null);hovSet(st.id);render();draw2d()});
+ await pg.waitForTimeout(350);
+ await pg.screenshot({path:'/tmp/edge_L.png',clip:{x:60,y:140,width:560,height:420}});
+ console.log(errs.join('\n')||'sem erros');await b.close()})();

@@ -1,0 +1,17 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1280,height:800},deviceScaleFactor:2});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(900);
+ await pg.evaluate(()=>{openP(newProject());P.els=[];const a=P.levels[0].id;
+  const w=mkWall(P,[0.5,0.5],[10.5,0.5],a);w.h=3;P.els.push(w);
+  const w2=mkWall(P,[0.5,0.5],[0.5,8.5],a);w2.h=3;P.els.push(w2);
+  const f=mk(P,'floor',{pts:[[0.5,0.5],[10.5,0.5],[10.5,8.5],[0.5,8.5]],off:0},a);P.els.push(f);
+  B=build(P);view='plan';lv=a;cam.s=30;cam.x=5;cam.z=4;tool='sel';render();
+  gEnter('Mesa',null,null);
+  tool='block';DEF.block.mat='oak_planks';DEF.block.off=1;
+  for(const q of [[4.5,4.5],[5.5,4.5],[4.5,5.5],[5.5,5.5]])toolClick(q,q,{});
+  render()});
+ await pg.waitForTimeout(400);
+ await pg.screenshot({path:'/tmp/grp_plan.png'});
+ console.log(errs.join('\n')||'sem erros');await b.close()})();

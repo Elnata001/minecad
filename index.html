@@ -1037,7 +1037,7 @@ const tedBar=()=>`<span class="m" style="max-width:none;white-space:nowrap">Edit
    A leitura reconhece os separadores e o decimal mais comuns, deixa o usuário mapear as colunas e
    mostra uma prévia antes de criar o terreno. A estrutura aceita outros formatos no futuro: basta
    alimentar a mesma lista de pontos. */
-let TIMP=null;
+let TIMP=null,TIMPT='csv';
 /* envoltória convexa (monotone chain): vira o perímetro inicial do levantamento */
 function hull(P2){const p=P2.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);if(p.length<3)return p;
  const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
@@ -1053,9 +1053,304 @@ function csvRows(txt,sep){const ls=txt.split(/\r?\n/).filter(l=>l.trim().length)
 const csvNum=(v,dec)=>{if(v===undefined)return NaN;let t=String(v).trim();
  if(dec===','||(dec==='auto'&&/,\d{1,6}$/.test(t)&&!/\.\d/.test(t)))t=t.replace(/\./g,'').replace(',','.');
  else t=t.replace(/,/g,'');return parseFloat(t)};
+/* ===== IMPORTAR UM RECORTE DO MUNDO DO MINECRAFT =====
+   O mundo chega em NBT comprimido, em três embalagens: região do mundo (.mca), estrutura do bloco
+   de estrutura (.nbt) e esquema do WorldEdit (.schem/.schematic). O que entra no projeto não é um
+   amontoado de blocos e sim uma superfície: para cada coluna do recorte acha-se o chão — pulando
+   folhagem e construção, se for o caso — e esse campo de alturas vira uma TIN por refinamento
+   sucessivo. A malha nasce grosseira e só ganha pontos onde o erro vertical passa da tolerância
+   pedida, então um recorte de dezenas de milhares de colunas cabe em algumas centenas de pontos
+   cotados, editáveis como qualquer levantamento. Nada sai da máquina: a leitura é toda no navegador. */
+function nbtRead(buf){const dv=new DataView(buf),td=new TextDecoder();let p=0;
+ const u8=()=>dv.getUint8(p++),i32=()=>{const v=dv.getInt32(p);p+=4;return v},
+  str=()=>{const n=dv.getUint16(p);p+=2;const s=td.decode(new Uint8Array(buf,p,n));p+=n;return s},
+  val=t=>{switch(t){
+   case 1:return dv.getInt8(p++);
+   case 2:{const v=dv.getInt16(p);p+=2;return v}
+   case 3:return i32();
+   case 4:{const v=dv.getBigInt64(p);p+=8;return v}
+   case 5:{const v=dv.getFloat32(p);p+=4;return v}
+   case 6:{const v=dv.getFloat64(p);p+=8;return v}
+   case 7:{const n=i32(),a=new Int8Array(buf.slice(p,p+n));p+=n;return a}
+   case 8:return str();
+   case 9:{const it=u8(),n=i32(),a=[];for(let i=0;i<n;i++)a.push(it?val(it):null);return a}
+   case 10:{const o={};for(;;){const t2=u8();if(!t2)break;const k=str();o[k]=val(t2)}return o}
+   case 11:{const n=i32(),a=new Int32Array(n);for(let i=0;i<n;i++){a[i]=dv.getInt32(p);p+=4}return a}
+   case 12:{const n=i32(),a=new BigUint64Array(n);for(let i=0;i<n;i++){a[i]=dv.getBigUint64(p);p+=8}return a}
+   default:throw new Error('etiqueta NBT desconhecida ('+t+')')}};
+ if(u8()!==10)throw new Error('o arquivo não começa como NBT');
+ str();return val(10)}
+async function nbtUnz(ab){const u=new Uint8Array(ab,0,Math.min(4,ab.byteLength));
+ if(u[0]===0x1f&&u[1]===0x8b)return nbtStream(ab,'gzip');
+ if(u[0]===10)return ab;/* já descomprimido */
+ return nbtStream(ab,'deflate')}
+async function nbtStream(ab,fmt){if(typeof DecompressionStream!=='function')throw new Error('este navegador não descomprime arquivos (DecompressionStream)');
+ const s=new Blob([ab]).stream().pipeThrough(new DecompressionStream(fmt));
+ return await new Response(s).arrayBuffer()}
+/* valores empacotados em long: até a 1.15 um valor podia atravessar dois longs; da 1.16 em diante não */
+function nbtUnpack(L,bits,n){if(!L||!L.length)return null;
+ const out=new Int32Array(n),per=Math.floor(64/bits),mask=(1n<<BigInt(bits))-1n;
+ if(L.length>=Math.ceil(n/per)){for(let i=0;i<n;i++)out[i]=Number((L[(i/per)|0]>>BigInt((i%per)*bits))&mask);return out}
+ for(let i=0;i<n;i++){const b=i*bits,j=(b/64)|0,o=b%64,r=64-o;
+  let v=L[j]>>BigInt(o);
+  if(r<bits&&j+1<L.length)v|=L[j+1]<<BigInt(r);
+  out[i]=Number(v&mask)}
+ return out}
+/* chão natural: só estes blocos contam como terreno quando o filtro está ligado */
+const WGND=new Set(['grass_block','dirt','coarse_dirt','rooted_dirt','podzol','mycelium','dirt_path','grass_path','farmland','mud','clay',
+ 'sand','red_sand','suspicious_sand','suspicious_gravel','gravel','stone','cobblestone','mossy_cobblestone','andesite','diorite','granite',
+ 'deepslate','cobbled_deepslate','tuff','calcite','dripstone_block','smooth_basalt','basalt','blackstone','netherrack','soul_sand','soul_soil',
+ 'sandstone','red_sandstone','end_stone','crimson_nylium','warped_nylium','moss_block','bedrock','obsidian','magma_block','snow_block','powder_snow',
+ 'ice','packed_ice','blue_ice','prismarine','sea_lantern','amethyst_block','budding_amethyst','sculk','bone_block','mangrove_roots','muddy_mangrove_roots']);
+const wIsGnd=n=>WGND.has(n)||/_ore$|_terracotta$|^terracotta$|_concrete$|^deepslate_|^infested_/.test(n);
+const wIsAir=n=>!n||n==='air'||n==='cave_air'||n==='void_air';
+const wIsFluid=n=>n==='water'||n==='lava'||n==='bubble_column'||n==='flowing_water'||n==='flowing_lava';
+const wName=b=>{const n=typeof b==='string'?b:(b&&(b.Name||b.name))||'';return String(n).replace(/^minecraft:/,'').replace(/\[.*$/,'')};
+/* ---------- região do mundo (.mca) ---------- */
+async function wReadMca(ab,nm){
+ if(ab.byteLength<8192)throw new Error('arquivo de região curto demais');
+ const dv=new DataView(ab),ent=[];
+ for(let i=0;i<1024;i++){const o=(dv.getUint8(i*4)<<16)|(dv.getUint8(i*4+1)<<8)|dv.getUint8(i*4+2),n=dv.getUint8(i*4+3);
+  if(o>1&&n&&o*4096<ab.byteLength)ent.push([i,o*4096])}
+ if(!ent.length)throw new Error('esta região não tem nenhum chunk gravado');
+ const m=/r\.(-?\d+)\.(-?\d+)\./i.exec(nm);let rx,rz;
+ if(m){rx=+m[1];rz=+m[2]}
+ else{const c=await wChunk(ab,ent[0][1]),L=(c&&c.Level)||c||{};
+  const cx=L.xPos!==undefined?L.xPos|0:0,cz=L.zPos!==undefined?L.zPos|0:0;
+  rx=Math.floor(cx/32);rz=Math.floor(cz/32)}
+ const ix=new Map();let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;
+ for(const[i,off]of ent){const cx=rx*32+(i%32),cz=rz*32+((i/32)|0);ix.set(cx+','+cz,{ab,off});
+  if(cx*16<x0)x0=cx*16;if(cz*16<z0)z0=cz*16;if(cx*16+15>x1)x1=cx*16+15;if(cz*16+15>z1)z1=cz*16+15}
+ return{kind:'mca',ab,ix,ch:new Map(),x0,z0,x1,z1,n:ent.length,rx,rz}}
+async function wChunk(ab,off){const dv=new DataView(ab),len=dv.getUint32(off),ct=dv.getUint8(off+4);
+ if(len<1||off+4+len>ab.byteLength)throw new Error('chunk corrompido');
+ if(ct!==1&&ct!==2&&ct!==3)throw new Error('compressão de chunk não suportada pelo navegador (tipo '+ct+')');
+ const raw=ab.slice(off+5,off+4+len);
+ return nbtRead(ct===3?raw:await nbtStream(raw,ct===1?'gzip':'deflate'))}
+/* seções do chunk, já desempacotadas: cada uma vira palheta + índices dos 4096 blocos */
+function wSecs(ch){const L=(ch&&ch.Level)||ch||{},ss=L.sections||L.Sections||[],out=new Map();
+ for(const s of ss){const bs=s.block_states||{},pal=(bs.palette||s.Palette||[]).map(wName);
+  if(!pal.length||(pal.length===1&&wIsAir(pal[0])))continue;/* seção só de ar não entra */
+  const data=bs.data||s.BlockStates;let idx=null;
+  if(pal.length>1){const bits=Math.max(4,32-Math.clz32(pal.length-1));idx=nbtUnpack(data,bits,4096)}
+  out.set(s.Y|0,{pal,idx})}
+ return out}
+function wBlk(secs,x,y,z){const s=secs.get(y>>4);if(!s)return 'air';
+ const i=((y&15)<<8)|((z&15)<<4)|(x&15);return s.pal[s.idx?s.idx[i]:0]||'air'}
+/* ---------- estrutura (.nbt) e esquema (.schem/.schematic) ---------- */
+function wReadStruct(r){const sz=r.size||[],W=sz[0]|0,H=sz[1]|0,L=sz[2]|0;
+ if(!W||!H||!L)throw new Error('estrutura sem tamanho');
+ const pal=(r.palette||[]).map(wName),idx=new Int32Array(W*H*L).fill(-1);
+ for(const b of r.blocks||[]){const p=b.pos||[];const x=p[0]|0,y=p[1]|0,z=p[2]|0;
+  if(x<0||y<0||z<0||x>=W||y>=H||z>=L)continue;idx[(y*L+z)*W+x]=b.state|0}
+ return{kind:'struct',W,H,L,pal,idx,oy:0,x0:0,z0:0,x1:W-1,z1:L-1}}
+function wReadSchem(S){const W=S.Width|0,H=S.Height|0,L=S.Length|0;
+ if(!W||!H||!L)throw new Error('esquema sem dimensões');
+ if(W*H*L>12e6)throw new Error('esquema grande demais para o navegador ('+(W*H*L)+' blocos)');
+ const B=S.Blocks||{},rawPal=B.Palette||S.Palette,raw=B.Data||S.BlockData;
+ const idx=new Int32Array(W*H*L).fill(-1);let pal=[];
+ if(rawPal&&raw){const mx=Math.max(...Object.values(rawPal).map(Number));pal=new Array(mx+1).fill('air');
+  for(const k in rawPal)pal[Number(rawPal[k])]=wName(k);
+  /* BlockData é uma sequência de varints na ordem Y, Z, X */
+  const u=new Uint8Array(raw.buffer?raw.buffer:raw,raw.byteOffset||0,raw.length);
+  let p=0;for(let i=0;i<W*H*L&&p<u.length;i++){let v=0,s=0,b;
+   do{b=u[p++];v|=(b&127)<<s;s+=7}while(b&128&&p<=u.length);
+   idx[i]=v}}
+ else if(S.Blocks&&S.Blocks.length){/* .schematic antigo: identificadores numéricos, só serve para dizer sólido ou vazio */
+  const u=S.Blocks;pal=['air','stone'];
+  for(let i=0;i<W*H*L&&i<u.length;i++)idx[i]=(u[i]&255)?1:0}
+ else throw new Error('esquema sem dados de blocos');
+ const off=S.Offset||[0,0,0];
+ return{kind:'schem',W,H,L,pal,idx,oy:off[1]|0,x0:off[0]|0,z0:off[2]|0,x1:(off[0]|0)+W-1,z1:(off[2]|0)+L-1}}
+const wVox=(w,x,y,z)=>{const i=((y-w.oy)*w.L+(z-w.z0))*w.W+(x-w.x0);
+ if(x<w.x0||z<w.z0||x>w.x1||z>w.z1||y<w.oy||y>=w.oy+w.H)return 'air';
+ const k=w.idx[i];return k<0?'air':(w.pal[k]||'air')};
+/* ---------- do volume de blocos para o campo de alturas ---------- */
+/* desce a coluna até o primeiro bloco que conta como chão. A varredura começa no topo da seção
+   mais alta que tem algum bloco — é exato em qualquer versão do mundo, sem depender do mapa de
+   alturas gravado, cuja origem muda de formato para formato. */
+function wGround(C,x,z,opt){const{secs,top,bot}=C;let y=top;
+ for(let n=0;y>=bot&&n<420;y--,n++){const b=wBlk(secs,x,y,z);
+  if(wIsAir(b))continue;
+  if(wIsFluid(b)){if(opt.water==='top')return{y,m:b};continue}
+  if(opt.nat&&!wIsGnd(b))continue;
+  return{y,m:b}}
+ return null}
+async function wField(W,sel,opt,note){const{x0,z0,x1,z1}=sel,w=x1-x0+1,h=z1-z0+1,
+ g=new Float32Array(w*h).fill(NaN),hist=new Map();let n=0;
+ const put=(x,z,y,m)=>{g[(z-z0)*w+(x-x0)]=y+1;/* a cota é a face superior do bloco, como nos pisos */
+  hist.set(m,(hist.get(m)||0)+1);n++};
+ if(W.kind==='mca'){const c0=x0>>4,c1=x1>>4,d0=z0>>4,d1=z1>>4;let k=0;
+  for(let cz=d0;cz<=d1;cz++)for(let cx=c0;cx<=c1;cx++){
+   const key=cx+','+cz,src=W.ix.get(key);if(!src)continue;
+   let C=W.ch.get(key);
+   if(!C){try{const secs=wSecs(await wChunk(src.ab,src.off));
+     let top=-1e9,bot=1e9;for(const y of secs.keys()){if(y*16+15>top)top=y*16+15;if(y*16<bot)bot=y*16}
+     C=secs.size?{secs,top,bot}:{secs:new Map(),top:0,bot:0}}
+    catch(e){C={secs:new Map(),top:0,bot:0,erro:e.message};W.erro=e.message}
+    W.ch.set(key,C)}
+   if(!C.secs.size)continue;
+   const xs=Math.max(x0,cx*16),xe=Math.min(x1,cx*16+15),zs=Math.max(z0,cz*16),ze=Math.min(z1,cz*16+15);
+   for(let z=zs;z<=ze;z++)for(let x=xs;x<=xe;x++){const r=wGround(C,x,z,opt);if(r)put(x,z,r.y,r.m)}
+   if(note&&!(++k%24)){note('Lendo chunks… '+k);await new Promise(r=>setTimeout(r))}}}
+ else{for(let z=Math.max(z0,W.z0);z<=Math.min(z1,W.z1);z++)for(let x=Math.max(x0,W.x0);x<=Math.min(x1,W.x1);x++){
+   for(let y=W.oy+W.H-1;y>=W.oy;y--){const b=wVox(W,x,y,z);
+    if(wIsAir(b))continue;
+    if(wIsFluid(b)){if(opt.water==='top'){put(x,z,y,b);break}continue}
+    if(opt.nat&&!wIsGnd(b))continue;
+    put(x,z,y,b);break}}}
+ return{x0,z0,w,h,g,hist,n}}
+/* ---------- do campo de alturas para a TIN: refinamento por erro ---------- */
+function tinQuick(V){const out={V,T:[],bbT:[]};
+ if(V.length<3)return out;
+ for(const tr of delaunay(V.map(v=>[v[0],v[1]]))){const a=V[tr[0]],b=V[tr[1]],c=V[tr[2]],
+  cr=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+  if(Math.abs(cr)<1e-9)continue;
+  out.T.push(tr);out.bbT.push([Math.min(a[0],b[0],c[0]),Math.min(a[1],b[1],c[1]),Math.max(a[0],b[0],c[0]),Math.max(a[1],b[1],c[1])])}
+ if(out.T.length){let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;
+  for(const b of out.bbT){if(b[0]<x0)x0=b[0];if(b[1]<z0)z0=b[1];if(b[2]>x1)x1=b[2];if(b[3]>z1)z1=b[3]}
+  const gs=Math.max(1,Math.sqrt((x1-x0+1)*(z1-z0+1)/out.T.length)*2),
+   gw=Math.max(1,Math.ceil((x1-x0)/gs)+1),gh=Math.max(1,Math.ceil((z1-z0)/gs)+1),G=new Array(gw*gh);
+  for(let i=0;i<out.bbT.length;i++){const b=out.bbT[i],
+   a0=Math.floor((b[0]-x0)/gs),a1=Math.floor((b[2]-x0)/gs),c0=Math.floor((b[1]-z0)/gs),c1=Math.floor((b[3]-z0)/gs);
+   for(let a=a0;a<=a1;a++)for(let c=c0;c<=c1;c++){const j=c*gw+a;(G[j]||(G[j]=[])).push(i)}}
+  out.gx=x0;out.gz=z0;out.gs=gs;out.gw=gw;out.gh=gh;out.G=G}
+ return out}
+/* a malha nasce de uma grade grossa e só recebe pontos onde o erro vertical passa da tolerância */
+function wDecim(F,tol,cap){const{x0,z0,w,h,g}=F,at=(x,z)=>g[(z-z0)*w+(x-x0)],
+ V=[],seen=new Set(),
+ push=(x,z)=>{if(x<x0||z<z0||x>=x0+w||z>=z0+h)return false;const y=at(x,z);
+  if(!(y===y))return false;const k=x+','+z;if(seen.has(k))return false;
+  seen.add(k);V.push([x+.5,z+.5,y]);return true};
+ const st=Math.max(4,Math.round(Math.max(w,h)/10));
+ for(let z=z0;z<z0+h;z+=st)for(let x=x0;x<x0+w;x+=st)push(x,z);
+ for(let x=x0;x<x0+w;x+=st){push(x,z0);push(x,z0+h-1)}
+ for(let z=z0;z<z0+h;z+=st){push(x0,z);push(x0+w-1,z)}
+ for(const c of [[x0,z0],[x0+w-1,z0],[x0,z0+h-1],[x0+w-1,z0+h-1]])push(c[0],c[1]);
+ /* campo grande: o erro é medido numa amostra, e só a última volta varre tudo */
+ const big=w*h>30000?2:1;
+ let err=1e9,it=0,q=null;
+ for(;it<26;it++){q=tinQuick(V);
+  const sp2=it>=25||V.length>=cap?1:big,cand=[];err=0;
+  for(let z=z0;z<z0+h;z+=sp2)for(let x=x0;x<x0+w;x+=sp2){const y=at(x,z);if(!(y===y))continue;
+   const e=tinZ(q,x+.5,z+.5);if(e===null)continue;
+   const d=Math.abs(y-e);if(d>err)err=d;
+   if(d>tol)cand.push([d,x,z])}
+  if(!cand.length||V.length>=cap)break;
+  cand.sort((a,b)=>b[0]-a[0]);
+  /* os piores primeiro, espaçados entre si para não amontoar tudo num pico só */
+  const sep=Math.max(1,Math.round(Math.sqrt(w*h/Math.max(64,cand.length))*.6)),used=new Set();
+  const lim=Math.min(cap-V.length,Math.max(24,Math.round(V.length*.7)));let add=0;
+  for(const[d,x,z]of cand){if(add>=lim)break;
+   const kk=Math.floor((x-x0)/sep)+','+Math.floor((z-z0)/sep);if(used.has(kk))continue;
+   used.add(kk);if(push(x,z))add++}
+  if(!add)break}
+ return{V,err,it:it+1,q}}
+/* ---------- camadas do tipo de terreno a partir do que havia na superfície ---------- */
+function wLayers(hist){let top='grass_block',n=0;
+ for(const[k,v]of hist)if(v>n&&MATS[k]){top=k;n=v}
+ if(/sand$/.test(top))return[{m:top,t:4},{m:MATS.sandstone?'sandstone':'stone',t:4}];
+ if(top==='stone'||/deepslate|basalt|blackstone|netherrack/.test(top))return[{m:top,t:8}];
+ return[{m:top,t:1},{m:MATS.dirt?'dirt':top,t:3},{m:MATS.stone?'stone':top,t:4}]}
+const wTop=hist=>{let b='',n=0;for(const[k,v]of hist)if(v>n){b=k;n=v}return b};
+/* ---------- aba do recorte do mundo ---------- */
+let WIMP=null,WSEL=null,WPRE=null,WBSY='';
+const WOPT={nat:true,water:'floor',tol:1,org:'zero'},WMAX=320;
+function wDefSel(){if(!WIMP){WSEL=null;WPRE=null;return}
+ const cx=Math.round((WIMP.x0+WIMP.x1)/2),cz=Math.round((WIMP.z0+WIMP.z1)/2),
+  w=Math.min(WMAX,WIMP.x1-WIMP.x0+1),h=Math.min(WMAX,WIMP.z1-WIMP.z0+1);
+ WSEL={x0:Math.max(WIMP.x0,cx-(w>>1)),z0:Math.max(WIMP.z0,cz-(h>>1))};
+ WSEL.x1=Math.min(WIMP.x1,WSEL.x0+w-1);WSEL.z1=Math.min(WIMP.z1,WSEL.z0+h-1);WPRE=null}
+const wArea=()=>WSEL?(WSEL.x1-WSEL.x0+1)*(WSEL.z1-WSEL.z0+1):0;
+function wPanel(){
+ let h='<p class="m">Um recorte do mundo vira uma superfície editável, não um amontoado de blocos. Aceita a região do mundo (<b>.mca</b>, na pasta <i>region</i> do save), a estrutura do bloco de estrutura (<b>.nbt</b>) e o esquema do WorldEdit (<b>.schem</b>). Dá para escolher várias regiões de uma vez, e o recorte pode atravessá-las. Os arquivos são lidos no próprio navegador.</p>'
+  +'<div class="row"><input type="file" id="wif" multiple accept=".mca,.mcr,.nbt,.schem,.schematic"><button data-a="wiread">Ler arquivo</button></div>';
+ if(WBSY)return h+`<p class="m">${esc(WBSY)}</p>`;
+ if(!WIMP)return h+'<p class="m">Nenhum arquivo lido ainda.</p>';
+ const K={mca:'Região do mundo',struct:'Estrutura',schem:'Esquema'}[WIMP.kind];
+ h+=`<p class="m"><b>${esc(WIMP.name)}</b> — ${K}`
+  +(WIMP.kind==='mca'?` · ${WIMP.n} chunk(s) gravados`:` · ${WIMP.W}×${WIMP.H}×${WIMP.L} blocos`)
+  +` · X de ${WIMP.x0} a ${WIMP.x1} · Z de ${WIMP.z0} a ${WIMP.z1}</p>`;
+ const N=(k,l)=>`<label>${l}<input type="number" step="1" style="width:86px" data-wi="${k}" value="${WSEL[k]}"></label>`;
+ h+=`<div class="row">${N('x0','X de')}${N('x1','X até')}${N('z0','Z de')}${N('z1','Z até')}</div>`
+  +`<p class="m">Recorte de ${WSEL.x1-WSEL.x0+1} × ${WSEL.z1-WSEL.z0+1} blocos (${wArea().toLocaleString('pt-BR')} colunas)`
+  +(wArea()>WMAX*WMAX?` — acima do limite de ${WMAX}×${WMAX}; reduza o recorte.`:'')+'</p>'
+  +`<div class="row"><label>Superfície${dd([['1','Só o terreno natural'],['0','Como está, com construções']],WOPT.nat?'1':'0','data-wi="nat"')}</label>`
+  +`<label>Lâmina d'água${dd([['floor','Medir o fundo'],['top','Medir a superfície']],WOPT.water,'data-wi="water"')}</label></div>`
+  +`<div class="row"><label>Fidelidade${dd([[.5,'± 0,5 bloco (muitos pontos)'],[1,'± 1 bloco (recomendado)'],[2,'± 2 blocos'],[3,'± 3 blocos (mais leve)']],WOPT.tol,'data-wi="tol"')}</label>`
+  +`<label>Posição${dd([['zero','Origem do projeto'],['world','Coordenadas do mundo']],WOPT.org,'data-wi="org"')}</label></div>`
+  +`<div class="row"><button data-a="wiscan">Analisar recorte</button></div><div id="wiprev"></div>`
+  +`<div class="row"><button data-a="wigo" ${WPRE?'':'disabled'}>Criar terreno</button><button data-a="close">Fechar</button></div>`;
+ return h}
+function wPrev(){const e=$('#wiprev');if(!e)return;
+ if(!WPRE){e.innerHTML='<p class="m">Clique em Analisar recorte para ler as colunas e montar a superfície.</p>';return}
+ const{F,V,err,ms}=WPRE,zs=V.map(v=>v[2]),tp=wTop(F.hist);
+ e.innerHTML=`<p class="m">${F.n.toLocaleString('pt-BR')} coluna(s) com chão · <b>${V.length}</b> ponto(s) cotados`
+  +` · erro máximo ${fmt(Math.round(err*100)/100)} bloco · cotas ${fmt(Math.min.apply(null,zs))} a ${fmt(Math.max.apply(null,zs))}`
+  +(tp?` · superfície predominante: ${esc((MATS[tp]||[tp])[0])}`:'')+` · ${ms} ms</p>`
+  +`<p class="m">Uma superfície em blocos tem cota inteira em cada coluna, então quanto mais apertada a tolerância mais perto de um ponto por coluna o resultado fica. ± 1 bloco costuma reproduzir o relevo com uma fração dos pontos.</p>`
+  +(WPRE.cap?`<p class="m" style="color:#ff8a3d">O limite de ${WPRE.cap} pontos foi atingido antes da fidelidade pedida: o erro máximo ficou em ${fmt(Math.round(err*100)/100)} bloco. Para chegar mais perto, recorte uma área menor.</p>`:'')
+  +`<canvas id="wimg" width="${F.w}" height="${F.h}" style="width:100%;max-width:240px;image-rendering:pixelated;border:1px solid var(--line);border-radius:4px"></canvas>`;
+ const c=$('#wimg');if(!c)return;const g2=c.getContext('2d'),im=g2.createImageData(F.w,F.h);
+ let zi=1e9,za=-1e9;for(const v of F.g)if(v===v){if(v<zi)zi=v;if(v>za)za=v}
+ const dz=Math.max(1,za-zi);
+ for(let i=0;i<F.w*F.h;i++){const v=F.g[i],j=i*4;
+  if(!(v===v)){im.data[j]=im.data[j+1]=im.data[j+2]=30;im.data[j+3]=255;continue}
+  const u=(v-zi)/dz;
+  im.data[j]=Math.round(60+150*u);im.data[j+1]=Math.round(90+120*u);im.data[j+2]=Math.round(60+90*u*u);im.data[j+3]=255}
+ g2.putImageData(im,0,0)}
+async function wImpRead(){const f=$('#wif'),fls=f&&f.files?[].slice.call(f.files):[];
+ if(!fls.length){toast('Escolha um arquivo primeiro.');return}
+ WBSY=fls.length>1?'Lendo '+fls.length+' arquivos…':'Lendo '+fls[0].name+'…';dlgTopoImp();await new Promise(r=>setTimeout(r));
+ try{const reg=fls.filter(x=>/\.mc[ar]$/i.test(x.name));
+  if(reg.length){/* várias regiões entram no mesmo índice: o recorte pode atravessar os arquivos */
+   let W=null;
+   for(const fl of reg){const w=await wReadMca(await fl.arrayBuffer(),fl.name);
+    if(!W)W=w;else{for(const e of w.ix)W.ix.set(e[0],e[1]);W.n+=w.n;
+     W.x0=Math.min(W.x0,w.x0);W.z0=Math.min(W.z0,w.z0);W.x1=Math.max(W.x1,w.x1);W.z1=Math.max(W.z1,w.z1)}}
+   W.name=reg.length>1?reg.length+' regiões':reg[0].name.replace(/\.[^.]+$/,'');WIMP=W}
+  else{const fl=fls[0],r=nbtRead(await nbtUnz(await fl.arrayBuffer())),S=r.Schematic||r;
+   WIMP=(r.size&&r.blocks&&r.palette)?wReadStruct(r):wReadSchem(S);
+   WIMP.name=fl.name.replace(/\.[^.]+$/,'')}
+  wDefSel()}
+ catch(e){WIMP=null;WSEL=null;WPRE=null;toast('Não foi possível ler o arquivo: '+e.message)}
+ WBSY='';dlgTopoImp()}
+async function wImpScan(){if(!WIMP||!WSEL)return false;
+ if(wArea()>WMAX*WMAX){toast('Recorte acima do limite de '+WMAX+'×'+WMAX+' blocos.');return false}
+ const e=$('#wiprev');if(e)e.innerHTML='<p class="m">Lendo as colunas do recorte…</p>';
+ await new Promise(r=>setTimeout(r));
+ const t0=performance.now();
+ try{const F=await wField(WIMP,WSEL,WOPT,s=>{if(e)e.innerHTML='<p class="m">'+esc(s)+'</p>'});
+  if(!F.n){WPRE=null;
+   if(e)e.innerHTML='<p class="m">Nenhuma coluna com chão neste recorte. '
+    +(WIMP.erro?'Os chunks não puderam ser lidos: '+esc(WIMP.erro):'Confira as coordenadas ou troque o filtro de superfície.')+'</p>';
+   return false}
+  const cap=4000,D=wDecim(F,+WOPT.tol||1,cap);
+  WPRE={F,V:D.V,err:D.err,it:D.it,cap:D.V.length>=cap&&D.err>(+WOPT.tol||1)?cap:0,ms:Math.round(performance.now()-t0)}}
+ catch(err){WPRE=null;if(e)e.innerHTML='<p class="m">Falha ao analisar: '+esc(err.message)+'</p>';return false}
+ dlgTopoImp();return true}
+function wImpGo(){if(!WPRE){toast('Analise o recorte antes de criar o terreno.');return}
+ const{F,V}=WPRE;
+ if(V.length<3){toast('São necessários ao menos três pontos para gerar uma superfície.');return}
+ let zi=1e9;for(const v of V)if(v[2]<zi)zi=v[2];
+ const z0=WOPT.org==='zero'?Math.round((lvl().elev||0)-zi):0,
+  ox=WOPT.org==='zero'?-F.x0:0,oz=WOPT.org==='zero'?-F.z0:0,
+  X0=F.x0+ox,Z0=F.z0+oz,X1=X0+F.w,Z1=Z0+F.h;
+ mutate(()=>{const ty=Object.assign(newTT('Terreno de '+(WIMP.name||'importação')),{ly:wLayers(F.hist)});
+  P.types.topo.push(ty);
+  const t=mk(P,'topo',{pts:[[X0,Z0],[X1,Z0],[X1,Z1],[X0,Z1]],closed:true,ty:ty.id,pv:V.length<=150},lv);
+  t.name='Terreno importado — '+(WIMP.name||'mundo');
+  t.tp=V.map(v=>[v[0]+ox,v[1]+oz,v[2]+z0]);
+  P.els.push(t);sel=t.id;SELS=[t.id];tool='sel'});
+ $('#dlg').close();fit();
+ const t=P.els[P.els.length-1],q=tinOf(t);
+ toast('Recorte importado: '+V.length+' pontos, '+(q?q.T.length:0)+' triângulos, '+F.w+'×'+F.h+' blocos.','ok')}
 function dlgTopoImp(){TIMP=TIMP||{sep:'auto',dec:'auto',cx:0,cy:1,cz:2,sc:1,rows:null,hdr:false,name:''};
  const d=$('#dlg'),T=TIMP,cols=T.rows&&T.rows[0]?T.rows[0].map((v,i)=>[i,'Coluna '+(i+1)+(T.hdr?' — '+v:'')]):[[0,'Coluna 1'],[1,'Coluna 2'],[2,'Coluna 3']];
- d.innerHTML='<h3>Importar levantamento topográfico</h3>'
+ const TB2='<h3>Importar terreno</h3>'
+  +`<div class="row ctabs"><button class="${TIMPT==='csv'?'on':''}" data-a="titab:csv">Levantamento (CSV)</button><button class="${TIMPT==='world'?'on':''}" data-a="titab:world">Recorte do mundo</button></div>`;
+ if(TIMPT==='world'){d.innerHTML=TB2+wPanel();if(!d.open)d.showModal();wPrev();return}
+ d.innerHTML=TB2
   +'<p class="m">Arquivo de texto com uma linha por ponto: coordenadas horizontais e cota. O separador e o decimal são reconhecidos automaticamente, mas podem ser trocados.</p>'
   +`<div class="row"><input type="file" id="tif" accept=".csv,.txt,text/csv,text/plain"><button data-a="tiread">Ler arquivo</button></div>`
   +`<div class="row"><label>Separador${dd([['auto','Automático'],[',','Vírgula'],[';','Ponto e vírgula'],['\t','Tabulação']],T.sep,'data-ti="sep"')}</label>`
@@ -1278,7 +1573,7 @@ const SCMAP={},SCFOR={};for(const[k,n,a]of SCT2){if(k)SCMAP[k]=[n,a];if(a)SCFOR[
 const SCKEYS=Object.keys(SCMAP),scOf=a=>SCFOR[a]?' ('+SCFOR[a]+')':'';
 const TOOLS=[['sel','Selecionar'],['move','Mover'],['block','Bloco'],['comp','Componente'],['topo','Terreno'],['tpt','Ponto cotado'],['pad','Plataforma'],['tbl','Curva de nível'],['wall','Parede'],['floor','Piso'],['column','Pilar'],['door','Porta'],['trap','Alçapão'],['window','Janela'],['stair','Escada'],['roof','Cobertura'],['beam','Viga'],['fence','Cerca/Muro'],['curtain','Parede-cortina'],['cs','Criar similar'],['cut','Corte'],['dim','Cota'],['txt','Texto'],['ln','Linha'],['tag','Identificador'],['trim','Aparar'],['split','Repartir'],['rot','Rotacionar'],['anchor','Ancorar']].map(([k,l])=>[k,l+scOf('tool:'+k)]);
 const MENUS={Arquivo:[['Novo projeto',()=>openP(newProject())],['Projetos salvos…',dlgProjects],['Duplicar projeto',()=>{const c=JSON.parse(JSON.stringify(P));c.id=uid();c.name+=' (cópia)';openP(c)}],['Exportar / importar (.mcad)…',dlgFile],['Exportar para Minecraft…',dlgMc]],
- Editar:[['Desfazer (Ctrl+Z)',undo],['Refazer (Ctrl+Y)',redo],['Excluir seleção (Del)',del]],Ajuda:[['Atalhos de teclado…',dlgKeys]],Modelagem:[['Biblioteca de componentes…',dlgComp],['Importar levantamento topográfico…',dlgTopoImp],['Biblioteca de blocos…',dlgBlocks],['Materiais…',dlgMats],['Tipos de parede…',dlgTypes],['Tipos de cobertura…',dlgRoofTypes],['Tipos de escada…',dlgStairTypes]],Visualizar:[['Texturas…',dlgPack],['Navegação 3D…',dlgNav]]};
+ Editar:[['Desfazer (Ctrl+Z)',undo],['Refazer (Ctrl+Y)',redo],['Excluir seleção (Del)',del]],Ajuda:[['Atalhos de teclado…',dlgKeys]],Modelagem:[['Biblioteca de componentes…',dlgComp],['Importar terreno…',dlgTopoImp],['Biblioteca de blocos…',dlgBlocks],['Materiais…',dlgMats],['Tipos de parede…',dlgTypes],['Tipos de cobertura…',dlgRoofTypes],['Tipos de escada…',dlgStairTypes]],Visualizar:[['Texturas…',dlgPack],['Navegação 3D…',dlgNav]]};
 $('#menus').innerHTML=Object.keys(MENUS).map(n=>`<button data-a="menu:${n}">${n}</button>`).join('');
 function dlgProjects(){const d=$('#dlg');d.innerHTML='<h3>Projetos salvos no navegador</h3>'+(idx().map(i=>`<div class="row"><span>${esc(i.name)}</span><button data-a="open:${i.id}">Abrir</button><button data-a="dup:${i.id}">Duplicar</button><button data-a="rm:${i.id}">Excluir</button></div>`).join('')||'<p class="m">Nenhum projeto salvo.</p>')+'<button data-a="close">Fechar</button>';if(!d.open)d.showModal()}
 /* ---- projeto em arquivo .mcad: projeto + componentes + materiais + tipos + texturas ---- */
@@ -1361,6 +1656,7 @@ function act(s,val){const[k,a]=s.split(/:(.*)/);
  else if(k==='vis')vpOpen();else if(k==='einfo')dlgElInfo(a);
  else if(k==='tfeat')dlgTopoFeat(a);else if(k==='tfdel')tfDel(a);
  else if(k==='tiread')tImpRead();else if(k==='tigo')tImpGo();
+ else if(k==='titab'){TIMPT=a;dlgTopoImp()}else if(k==='wiread')wImpRead();else if(k==='wiscan')wImpScan();else if(k==='wigo')wImpGo();
  else if(k==='tedit')tedStart();else if(k==='tdone')tedEnd();else if(k==='tddel')tedDel();
  else if(k==='gnew')gNew();
  else if(k==='gdone')gDone();else if(k==='gcancel')gCancel();
@@ -1404,6 +1700,13 @@ document.addEventListener('change',e=>{const t=e.target;if(t.dataset.a)act(t.dat
  else if(t.dataset.tt)ttEdit(t);else if(t.dataset.tl)tlEdit(t);else if(t.dataset.tf)tfEdit(t);
  else if(t.dataset.ti&&TIMP){const k=t.dataset.ti;TIMP[k]=['cx','cy','cz','sc'].includes(k)?+t.value:t.value;
   if(TIMP.rows&&(k==='sep'||k==='dec'))tImpRead();else dlgTopoImp()}
+ else if(t.dataset.wi){const k=t.dataset.wi;
+  if(k==='nat')WOPT.nat=t.value==='1';else if(k==='tol')WOPT.tol=+t.value||.5;
+  else if(k==='water'||k==='org')WOPT[k]=t.value;
+  else if(WSEL){WSEL[k]=Math.round(+t.value||0);
+   if(WIMP){WSEL.x0=Math.max(WIMP.x0,Math.min(WSEL.x0,WIMP.x1));WSEL.x1=Math.max(WSEL.x0,Math.min(WSEL.x1,WIMP.x1));
+    WSEL.z0=Math.max(WIMP.z0,Math.min(WSEL.z0,WIMP.z1));WSEL.z1=Math.max(WSEL.z0,Math.min(WSEL.z1,WIMP.z1))}}
+  WPRE=null;dlgTopoImp()}
  else if(t.dataset.cwb){CWB=t.value;}
  else if(t.dataset.cm2){cmSet(t.dataset.cm2,compId(t.value));render()}
  else if(t.dataset.dreg){DREG=Math.max(3,Math.min(32,Math.round(+t.value||6)));RP=[];render()}

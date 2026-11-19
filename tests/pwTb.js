@@ -1,0 +1,11 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1100,height:600},deviceScaleFactor:2});
+ pg.on('pageerror',e=>console.log('ERRO',e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(800);
+ await pg.addStyleTag({content:'#tools::-webkit-scrollbar{width:8px}'});
+ await pg.evaluate(()=>{const t=$('#tools');t.style.scrollbarWidth='auto'});await pg.waitForTimeout(200);
+ await pg.screenshot({path:'/tmp/tb1.png',clip:{x:0,y:60,width:200,height:460}});
+ const o=await pg.evaluate(()=>{const t=$('#tools'),b=t.querySelector('.tl');const r=b.getBoundingClientRect(),q=t.getBoundingClientRect();
+  return'botão '+Math.round(r.left)+'–'+Math.round(r.right)+' | tools '+Math.round(q.left)+'–'+Math.round(q.right)+' | área útil '+t.clientWidth});
+ console.log(o);await b.close()})();

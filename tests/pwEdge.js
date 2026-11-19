@@ -1,0 +1,18 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1100,height:760}});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ console.log(await pg.evaluate(()=>{openP(newProject());P.els=[];const a=P.levels[0].id,o=[];
+  const bl=mk(P,'block',{x1:0.5,z1:0.5},a);P.els.push(bl);
+  const cl=mk(P,'column',{x1:5.5,z1:5.5,sx:2,sz:2,h:2},a);P.els.push(cl);
+  const w=mkWall(P,[10.5,0.5],[13.5,0.5],a);w.h=1;P.els.push(w);
+  B=build(P);view='3d';render();
+  const segs=()=>{const l=OVM.filter(x=>x.__own);return l.length?l[0].geometry.attributes.position.count/2:0};
+  const fills=()=>OVM.filter(x=>!x.__own).reduce((s,x)=>s+x.count,0);
+  sel=bl.id;SELS=[sel];hi3();o.push('bloco 1×1×1 -> arestas: '+segs()+' (esperado 12) · peças no destaque: '+fills());
+  sel=cl.id;SELS=[sel];hi3();o.push('pilar 2×2×2 -> arestas: '+segs()+' (esperado 24) · peças: '+fills());
+  sel=w.id;SELS=[sel];hi3();o.push('parede 4×1×1 -> arestas: '+segs()+' (esperado 28) · peças: '+fills());
+  sel=null;SELS=[];hi3();o.push('sem seleção -> camadas: '+OVM.length);
+  return o.join('\n')}));
+ console.log(errs.join('\n')||'sem erros');await b.close()})();

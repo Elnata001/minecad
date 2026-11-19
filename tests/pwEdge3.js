@@ -1,0 +1,33 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1000,height:700}});
+ const errs=[];pg.on('pageerror',e=>errs.push('ERRO '+e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(850);
+ const r=await pg.evaluate(()=>{openP(newProject());P.els=[];const a=P.levels[0].id,b2=P.levels[1].id,o=[];
+  const rf=mk(P,'roof',{pts:[[0.5,0.5],[5.5,0.5],[5.5,4.5],[0.5,4.5]],sp:1,base:b2,off:0},b2);P.els.push(rf);
+  const fc=mk(P,'fence',{x1:0.5,z1:10.5,x2:5.5,z2:10.5,h:1},a);P.els.push(fc);
+  const w=mkWall(P,[0.5,14.5],[6.5,14.5],a);w.h=3;P.els.push(w);
+  const d=mk(P,'door',{host:w.id,pos:2},a);P.els.push(d);
+  B=build(P);view='3d';render();
+  const seg=id=>{OVM.length=0;ovEdge(id,1);const l=OVM.filter(x=>x.__own)[0];
+   if(!l)return{n:0,p:[]};const p=[...l.geometry.attributes.position.array];return{n:p.length/6,p}};
+  const blocos=id=>[...B.vox.values()].filter(v=>v.o===id).length;
+  const R1=seg(rf.id),R2=seg(fc.id),R3=seg(w.id);
+  o.push('cobertura em escadas: '+blocos(rf.id)+' blocos -> '+R1.n+' segmentos (uma caixa por bloco daria '+blocos(rf.id)*12+')');
+  o.push('cerca: '+blocos(fc.id)+' blocos -> '+R2.n+' segmentos');
+  o.push('parede com porta: '+blocos(w.id)+' blocos -> '+R3.n+' segmentos');
+  window.__S=[R1.p,R2.p,R3.p];return o.join('\n')});
+ console.log(r);
+ const S=await pg.evaluate(()=>window.__S);
+ const pg2=await b.newPage({viewport:{width:1000,height:700},deviceScaleFactor:2});
+ await pg2.setContent('<body style="margin:0"><canvas id="cv" width="1000" height="700" style="background:#1b1f1c"></canvas></body>');
+ await pg2.evaluate(S=>{
+  const g=document.getElementById('cv').getContext('2d'),P2=(x,y,z)=>[(x-z)*Math.cos(Math.PI/6),(x+z)*Math.sin(Math.PI/6)-y];
+  const views=[[480,420,90],[9e9,0,1],[9e9,0,1]];
+  S.forEach((p,k)=>{const[ox,oy,sc]=views[k];g.strokeStyle=['#36d07a','#6cf','#fc6'][k];g.lineWidth=1.6;g.beginPath();
+   for(let i=0;i<p.length;i+=6){const A=P2(p[i],p[i+1],p[i+2]),B2=P2(p[i+3],p[i+4],p[i+5]);
+    g.moveTo(ox+A[0]*sc,oy+A[1]*sc);g.lineTo(ox+B2[0]*sc,oy+B2[1]*sc)}
+   g.stroke()})},S);
+ await pg.waitForTimeout(200);
+ await pg2.screenshot({path:'/tmp/edge3d.png'});
+ console.log(errs.join('\n')||'sem erros');await b.close()})();

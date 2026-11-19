@@ -1,0 +1,21 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{
+ const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1100,height:780},deviceScaleFactor:2});
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(800);
+ await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const el=(c,ex)=>{const w=mk(P,c,ex,lv);P.els.push(w);return w};
+  el('fence',{x1:.5,z1:.5,x2:4.5,z2:.5,mat:'oak_fence',h:1});
+  el('fence',{x1:2.5,z1:.5,x2:2.5,z2:3.5,mat:'oak_fence',h:1});
+  el('fence',{x1:.5,z1:6.5,x2:4.5,z2:6.5,mat:'cobblestone_wall',h:1});
+  el('fence',{x1:2.5,z1:6.5,x2:2.5,z2:9.5,mat:'cobblestone_wall',h:1});
+  el('fence',{x1:7.5,z1:.5,x2:7.5,z2:.5,mat:'oak_fence',h:1});
+  el('fence',{x1:9.5,z1:.5,x2:9.5,z2:.5,mat:'cobblestone_wall',h:1});
+  const w=el('wall',{x1:.5,z1:12.5,x2:9.5,z2:12.5,t:1,h:4});
+  el('window',{x1:5.5,z1:12.5,x2:8.5,z2:12.5,mat:'glass_pane',t:1,off:1,h:2});
+  const d1=el('door',{host:w.id,pos:1}),d2=el('door',{host:w.id,pos:2});
+  const uu=doorAxes(w,d1).u;d1.dir=dirIdx(DOORC[0][0],hgFromVec(w,[uu[0],uu[1]]));d2.dir=dirIdx(DOORC[0][0],hgFromVec(w,[-uu[0],-uu[1]]));
+  B=build(P);fit();cam.s=52;cam.x=5;cam.z=6.5;render()});
+ await pg.waitForTimeout(500);
+ await pg.screenshot({path:'/tmp/s6.png',clip:{x:60,y:100,width:700,height:620}});
+ await b.close()})();

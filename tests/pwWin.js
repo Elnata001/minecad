@@ -1,0 +1,20 @@
+const {chromium}=require('playwright'),fs=require('fs');
+(async()=>{const b=await chromium.launch(),pg=await b.newPage({viewport:{width:1300,height:860}});
+ pg.on('pageerror',e=>console.log('ERRO',e.message));
+ await pg.addInitScript(fs.readFileSync('/tmp/three-shim.js','utf8'));
+ await pg.goto('file:///mnt/user-data/outputs/minecad.html');await pg.waitForTimeout(800);
+ console.log(await pg.evaluate(()=>{openP(newProject());P.els=[];
+  const w=mkWall(P,[0.5,4.5],[10.5,4.5],P.levels[0].id);P.els.push(w);
+  const j=mk(P,'window',{x1:4.5,z1:4.5,x2:4.5,z2:4.5},P.levels[0].id);P.els.push(j);
+  B=build(P);
+  const cells=[...B.vox.values()].filter(v=>v.o===j.id);
+  const rem=[...B.vox.values()].filter(v=>v.o===w.id).length;
+  return 'janela de 1 bloco: células '+cells.length+' · X '+[...new Set(cells.map(c=>c.x))].join(',')+' · Y '+[...new Set(cells.map(c=>c.y))].join(',')+' · parede restante '+rem+' blocos'}));
+ // desenho com dois cliques na mesma célula
+ await pg.evaluate(()=>{openP(newProject());P.els=[];P.els.push(mkWall(P,[0.5,4.5],[10.5,4.5],P.levels[0].id));B=build(P);tool='window';pts=null;render()});
+ const bb=await (await pg.$('#c2')).boundingBox();
+ await pg.evaluate(()=>{const p=[4.5,4.5];pts=null;c2.dispatchEvent(new MouseEvent('x'))}).catch(()=>{});
+ await pg.evaluate(()=>{tool='window';pts=[4.5,4.5];cur=[4.5,4.5]});
+ await pg.evaluate(()=>{const q=[4.5,4.5];if(pts){const a=pts;mutate(()=>{const w=mk(P,'window',{x1:a[0],z1:a[1],x2:q[0],z2:q[1]},lv);P.els.push(w);sel=w.id})}});
+ console.log('por desenho:',await pg.evaluate(()=>{const j=P.els.find(e=>e.cat==='window');if(!j)return'não criada';const n=[...B.vox.values()].filter(v=>v.o===j.id).length;return n+' células'}));
+ await b.close()})();
