@@ -1,5 +1,19 @@
 # Histórico
 
+## mCAD 27 — v27.1.0
+**Novo nome e nova identidade.** O programa passa a se chamar **mCAD 27**; MineCAD fica como
+nome do projeto. O logo novo entra em todos os lugares: ícone do executável e do instalador,
+ícone dos arquivos `.mcad`, marca no cabeçalho, tela inicial e favicon da versão de navegador.
+Os títulos visuais mostram só "mCAD"; o Windows trata como "mCAD 27" na barra de título, na
+barra de tarefas e no menu Iniciar. A numeração recomeça em 27.1.0 — o atualizador recebeu
+`allowDowngrade` para que quem está na v103 consiga fazer a travessia.
+
+**Cara de aplicativo, não de navegador.** O menu nativo do Electron saiu: era ele que trazia
+recarregar, zoom e ferramentas de desenvolvedor para a janela. O que havia de útil ali mudou-se
+para o menu do próprio programa — Abrir, Salvar, Salvar como, associar o `.mcad` e Sobre —, os
+atalhos Ctrl+O e Ctrl+Shift+N passaram a ser tratados pelo programa, e o zoom de navegador ficou
+travado em 100%, para Ctrl+roda não desalinhar a interface.
+
 ## v103 — jeito de aplicativo
 **Ctrl+S grava.** No aplicativo ele sobrescreve o `.mcad` do projeto e só pergunta onde salvar
 quando ainda não existe arquivo; Ctrl+Shift+S é o "salvar como". O caminho fica amarrado ao

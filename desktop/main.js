@@ -1,10 +1,12 @@
-/* Processo principal do MineCAD no Electron.
+/* Processo principal do mCAD no Electron.
    O aplicativo em si continua sendo o index.html — este arquivo só dá a ele o que
    um navegador não dá: janela que lembra o tamanho, menu nativo, associação do
    .mcad, leitura direta da pasta de mundos do Minecraft e atualização automática. */
 const {app,BrowserWindow,Menu,ipcMain,dialog,shell,nativeTheme}=require('electron');
 const path=require('path'),fs=require('fs'),fsp=fs.promises;
 
+const NOME='mCAD 27';
+app.setAppUserModelId('com.elnata001.mcad');
 const ESTADO=path.join(app.getPath('userData'),'janela.json');
 const lerEstado=()=>{try{return JSON.parse(fs.readFileSync(ESTADO,'utf8'))}catch(e){return{}}};
 const salvarEstado=o=>{try{fs.writeFileSync(ESTADO,JSON.stringify(o))}catch(e){}};
@@ -20,7 +22,7 @@ function criarJanela(){
   width:e.width||1440,height:e.height||900,x:e.x,y:e.y,
   minWidth:960,minHeight:600,show:false,
   backgroundColor:nativeTheme.shouldUseDarkColors?'#1d1f1c':'#f2f2ef',
-  title:'MineCAD',
+  title:NOME,
   webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,spellcheck:false}
  });
  if(e.maximized)win.maximize();
@@ -31,46 +33,22 @@ function criarJanela(){
  win.on('resize',guardar);win.on('move',guardar);win.on('close',guardar);
  win.on('closed',()=>{win=null});
  /* link externo abre no navegador do sistema, não dentro do aplicativo */
+ /* o título é do aplicativo, não da página, e a página não muda o que aparece na barra */
+ win.on('page-title-updated',e=>e.preventDefault());
+ win.setTitle(NOME);
+ /* nada de zoom de navegador: Ctrl+roda e pinça ficam travados em 100% */
+ win.webContents.setVisualZoomLevelLimits(1,1);
+ win.webContents.on('zoom-changed',()=>win.webContents.setZoomFactor(1));
+ win.webContents.on('before-input-event',(ev,i)=>{
+  if(i.control&&i.shift&&(i.key==='I'||i.key==='i')){ev.preventDefault();win.webContents.toggleDevTools()}});
  win.webContents.setWindowOpenHandler(({url})=>{shell.openExternal(url);return{action:'deny'}});
  win.webContents.on('will-navigate',(ev,url)=>{if(url!==win.webContents.getURL()){ev.preventDefault();shell.openExternal(url)}});
  return win}
 
-function menu(){
- const t=[
-  {label:'Arquivo',submenu:[
-   {label:'Tela inicial',accelerator:'CmdOrCtrl+Shift+N',click:()=>enviar('tela-inicial')},
-   {label:'Abrir projeto…',accelerator:'CmdOrCtrl+O',click:()=>enviar('abrir-projeto')},
-   {label:'Salvar',accelerator:'CmdOrCtrl+S',click:()=>enviar('salvar-projeto')},
-   {label:'Salvar como…',accelerator:'CmdOrCtrl+Shift+S',click:()=>enviar('salvar-como')},
-   {type:'separator'},
-   {label:'Associar os arquivos .mcad a este programa',click:async()=>{
-     const ok=await associarMcad();
-     dialog.showMessageBox(win,{type:ok?'info':'warning',title:'Arquivos .mcad',
-      message:ok?'Pronto.':'Não foi possível registrar a associação.',
-      detail:ok?'O clique duplo num arquivo .mcad passa a abrir o MineCAD. Se o Windows ainda abrir outro programa, clique com o botão direito no arquivo, escolha “Abrir com” › “Escolher outro aplicativo” e marque o MineCAD como padrão.'
-              :'Tente novamente com o programa aberto normalmente, sem privilégios especiais.'})}},
-   {type:'separator'},
-   {label:'Sair',role:'quit'}]},
-  {label:'Editar',submenu:[
-   {label:'Desfazer',accelerator:'CmdOrCtrl+Z',click:()=>enviar('desfazer')},
-   {label:'Refazer',accelerator:'CmdOrCtrl+Y',click:()=>enviar('refazer')},
-   {type:'separator'},
-   {label:'Recortar',role:'cut'},{label:'Copiar',role:'copy'},{label:'Colar',role:'paste'}]},
-  {label:'Visualizar',submenu:[
-   {label:'Recarregar',role:'reload'},
-   {label:'Aproximar',role:'zoomIn'},{label:'Afastar',role:'zoomOut'},{label:'Tamanho normal',role:'resetZoom'},
-   {type:'separator'},
-   {label:'Tela cheia',role:'togglefullscreen'},
-   {label:'Ferramentas de desenvolvedor',accelerator:'F12',role:'toggleDevTools'}]},
-  {label:'Ajuda',submenu:[
-   {label:'Repositório no GitHub',click:()=>shell.openExternal('https://github.com/Elnata001/minecad')},
-   {label:'Versão para navegador',click:()=>shell.openExternal('https://elnata001.github.io/minecad/')},
-   {type:'separator'},
-   {label:'Sobre o MineCAD',click:()=>dialog.showMessageBox(win,{type:'info',title:'Sobre',
-     message:'MineCAD '+app.getVersion(),
-     detail:'BIM simplificado para projetar arquitetura de Minecraft.\n\nElectron '+process.versions.electron+' · Chromium '+process.versions.chrome})}]}
- ];
- Menu.setApplicationMenu(Menu.buildFromTemplate(t))}
+/* Sem menu nativo. Ele trazia a cara de navegador — recarregar, zoom, ferramentas de
+   desenvolvedor — e tudo o que era útil ali passou para o menu do próprio programa.
+   As ferramentas de desenvolvedor continuam alcançáveis por Ctrl+Shift+I, sem anúncio. */
+function menu(){Menu.setApplicationMenu(null)}
 const enviar=(canal,dado)=>{if(win&&!win.isDestroyed())win.webContents.send(canal,dado)};
 
 /* ---- associação dos arquivos .mcad ----
@@ -81,12 +59,12 @@ function associarMcad(){
  if(process.platform!=='win32'||!app.isPackaged)return Promise.resolve(false);
  const exe=process.execPath,{execFile}=require('child_process');
  const chaves=[
-  ['HKCU\\Software\\Classes\\.mcad','/ve','/d','MineCAD.Projeto'],
-  ['HKCU\\Software\\Classes\\.mcad\\OpenWithProgids','/v','MineCAD.Projeto','/t','REG_NONE'],
-  ['HKCU\\Software\\Classes\\MineCAD.Projeto','/ve','/d','Projeto do MineCAD'],
-  ['HKCU\\Software\\Classes\\MineCAD.Projeto\\DefaultIcon','/ve','/d',exe+',0'],
-  ['HKCU\\Software\\Classes\\MineCAD.Projeto\\shell\\open','/ve','/d','Abrir no MineCAD'],
-  ['HKCU\\Software\\Classes\\MineCAD.Projeto\\shell\\open\\command','/ve','/d','"'+exe+'" "%1"']
+  ['HKCU\\Software\\Classes\\.mcad','/ve','/d','mCAD.Projeto'],
+  ['HKCU\\Software\\Classes\\.mcad\\OpenWithProgids','/v','mCAD.Projeto','/t','REG_NONE'],
+  ['HKCU\\Software\\Classes\\mCAD.Projeto','/ve','/d','Projeto do mCAD'],
+  ['HKCU\\Software\\Classes\\mCAD.Projeto\\DefaultIcon','/ve','/d',exe+',0'],
+  ['HKCU\\Software\\Classes\\mCAD.Projeto\\shell\\open','/ve','/d','Abrir no mCAD'],
+  ['HKCU\\Software\\Classes\\mCAD.Projeto\\shell\\open\\command','/ve','/d','"'+exe+'" "%1"']
  ];
  /* uma chave que falhe não interrompe as outras: a que decide o clique duplo é a última,
     shell\\open\\command, e é o resultado dela que vale */
@@ -130,13 +108,23 @@ ipcMain.handle('ler-arquivo',async(ev,caminho)=>{const b=await fsp.readFile(cami
 
 /* ---- diálogos de projeto ---- */
 ipcMain.handle('escolher-abrir',async()=>{const r=await dialog.showOpenDialog(win,{title:'Abrir projeto',
-  filters:[{name:'Projeto do MineCAD',extensions:['mcad','json']}],properties:['openFile']});
+  filters:[{name:'Projeto do mCAD',extensions:['mcad','json']}],properties:['openFile']});
  if(r.canceled||!r.filePaths[0])return null;
  return{caminho:r.filePaths[0],texto:await fsp.readFile(r.filePaths[0],'utf8')}});
+ipcMain.handle('associar',async()=>{const ok=await associarMcad();
+ dialog.showMessageBox(win,{type:ok?'info':'warning',title:'Arquivos .mcad',
+  message:ok?'Pronto.':'Não foi possível registrar a associação.',
+  detail:ok?'O clique duplo num arquivo .mcad passa a abrir o '+NOME+'. Se o Windows ainda abrir outro programa, clique com o botão direito no arquivo, escolha “Abrir com” › “Escolher outro aplicativo” e marque o '+NOME+' como padrão.'
+          :'Tente novamente com o programa aberto normalmente, sem privilégios especiais.'});
+ return ok});
+ipcMain.handle('sobre',async()=>{dialog.showMessageBox(win,{type:'info',title:'Sobre',
+ message:NOME+' '+app.getVersion(),
+ detail:'BIM simplificado para projetar arquitetura de Minecraft.\n\nElectron '+process.versions.electron+' · Chromium '+process.versions.chrome});
+ return true});
 ipcMain.handle('salvar-em',async(ev,{caminho,texto})=>{
  try{await fsp.writeFile(caminho,texto,'utf8');return true}catch(e){return false}});
 ipcMain.handle('escolher-salvar',async(ev,{nome,texto})=>{const r=await dialog.showSaveDialog(win,{title:'Salvar projeto',
-  defaultPath:(nome||'projeto')+'.mcad',filters:[{name:'Projeto do MineCAD',extensions:['mcad']}]});
+  defaultPath:(nome||'projeto')+'.mcad',filters:[{name:'Projeto do mCAD',extensions:['mcad']}]});
  if(r.canceled||!r.filePath)return null;
  await fsp.writeFile(r.filePath,texto,'utf8');return r.filePath});
 
@@ -150,6 +138,9 @@ else{
   menu();criarJanela();
   if(app.isPackaged&&assocPendente())associarMcad().catch(()=>{});
   if(app.isPackaged){try{const{autoUpdater}=require('electron-updater');
+    /* a numeração recomeçou em 27.1.0 com o nome mCAD 27, abaixo das versões antigas do
+       MineCAD: sem isto o atualizador recusaria a troca por considerá-la um retrocesso */
+    autoUpdater.allowDowngrade=true;
     autoUpdater.autoDownload=true;autoUpdater.checkForUpdatesAndNotify()}catch(e){}}
  });
  app.on('window-all-closed',()=>app.quit());

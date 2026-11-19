@@ -1,4 +1,6 @@
-# MineCAD
+# mCAD
+
+*MineCAD é o nome do projeto; **mCAD 27** é o nome do programa.*
 
 BIM simplificado para projetar arquitetura de Minecraft. Desenha-se em planta com
 elementos de verdade — paredes com tipo e camadas, pisos, pilares, vigas, coberturas,
@@ -9,7 +11,7 @@ quantitativas e a exportação, então o que aparece na tela é exatamente o que
 **O aplicativo é um arquivo só.** `index.html` não tem dependência de build nem de
 servidor: abrir o arquivo no navegador já é o programa inteiro rodando.
 
-👉 **[Abrir no navegador](https://elnata001.github.io/minecad/)** · **[Baixar para Windows](https://github.com/Elnata001/minecad/releases/latest)**
+👉 **[Abrir no navegador](https://elnata001.github.io/minecad/)** · **[Baixar o mCAD 27 para Windows](https://github.com/Elnata001/minecad/releases/latest)**
 
 ## O que tem dentro
 
@@ -49,7 +51,7 @@ APIs internas que mudaram e são mantidas só como referência.
 
 ## Aplicativo para Windows
 
-O `desktop/` embrulha o mesmo `index.html` num Electron, e com isso ganha o que o
+O `desktop/` embrulha o mesmo `index.html` num Electron e o publica como **mCAD 27**, e com isso ganha o que o
 navegador não dá: janela que lembra o tamanho, menu nativo, associação do `.mcad`,
 leitura direta da pasta `saves` do Minecraft e atualização automática a partir dos
 releases deste repositório.
@@ -60,11 +62,12 @@ então não é preciso ter Node para gerar uma versão. Para compilar localmente
 ```bash
 cd desktop
 npm install
-npm run dist      # gera desktop/dist/MineCAD-<versão>-x64.exe
+npm run dist      # gera desktop/dist/mCAD-27-Setup-<versão>-x64.exe
 npm start         # roda sem empacotar
 ```
 
 ## Histórico
 
-O histórico de código começa na v98. As versões anteriores existem apenas como versões
+A numeração recomeçou em **27.1.0** junto com o nome mCAD 27; antes disso as versões
+iam de v98 a v103 sob o nome MineCAD. O histórico de código começa na v98. As versões anteriores existem apenas como versões
 do artefato no claude.ai e não puderam ser recuperadas como código. Veja o `CHANGELOG.md`.
