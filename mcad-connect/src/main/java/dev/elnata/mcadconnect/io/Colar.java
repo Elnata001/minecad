@@ -9,7 +9,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,9 +46,11 @@ public final class Colar {
             estados[i] = interpretar(d.paleta()[i], cache);
         }
 
-        int postos = 0, ignorados = 0;
-        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-        /* A escrita tem de acontecer na linha do servidor; executamos tudo lá e esperamos. */
+        /* Montamos a lista aqui e mandamos UMA tarefa para a linha do servidor. Uma tarefa por
+           bloco encheria a fila com dezenas de milhares de lambdas e engasgaria o jogo. */
+        int ignorados = 0;
+        List<BlockPos> onde = new ArrayList<>();
+        List<BlockState> oque = new ArrayList<>();
         for (int y = 0; y < d.altura(); y++) {
             for (int z = 0; z < d.comprimento(); z++) {
                 for (int x = 0; x < d.largura(); x++) {
@@ -56,15 +60,17 @@ public final class Colar {
                         continue;
                     }
                     if (!comAr && e.isAir()) continue;
-                    p.set(origem.getX() + x, origem.getY() + y, origem.getZ() + z);
-                    BlockPos fixo = p.immutable();
-                    BlockState estado = e;
-                    servidor.execute(() -> nivel.setBlock(fixo, estado, 2));
-                    postos++;
+                    onde.add(new BlockPos(origem.getX() + x, origem.getY() + y, origem.getZ() + z));
+                    oque.add(e);
                 }
             }
         }
-        return new Resultado(postos, ignorados, origem);
+        servidor.execute(() -> {
+            for (int i = 0; i < onde.size(); i++) {
+                nivel.setBlock(onde.get(i), oque.get(i), 2);
+            }
+        });
+        return new Resultado(onde.size(), ignorados, origem);
     }
 
     /**
