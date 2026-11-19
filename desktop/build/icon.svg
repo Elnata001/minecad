@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+ <rect width="256" height="256" rx="52" fill="#1d1f1c"/>
+ <!-- bloco isométrico: a planta de um terreno com curvas de nível -->
+ <path d="M32 148 L128 94 L224 148 L128 202 Z" fill="#2a2e29"/>
+ <g fill="none" stroke="#36d07a" stroke-width="9" stroke-linejoin="round">
+  <path d="M32 148 L128 94 L224 148 L128 202 Z"/>
+ </g>
+ <path d="M32 148 L32 176 L128 230 L224 176 L224 148" fill="none" stroke="#2a9e60" stroke-width="9" stroke-linejoin="round"/>
+ <g fill="none" stroke="#9adfbb" stroke-width="5" stroke-linejoin="round" opacity=".85">
+  <path d="M63 148 L128 111 L193 148 L128 185 Z"/>
+  <path d="M94 148 L128 128 L162 148 L128 168 Z"/>
+ </g>
+</svg>

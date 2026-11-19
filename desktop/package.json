@@ -1,0 +1,49 @@
+{
+  "name": "minecad",
+  "productName": "MineCAD",
+  "version": "101.0.0",
+  "description": "BIM simplificado para projetar arquitetura de Minecraft",
+  "author": "Elnata001",
+  "main": "main.js",
+  "scripts": {
+    "prestart": "node scripts/copy-app.js",
+    "start": "electron .",
+    "predist": "node scripts/copy-app.js",
+    "dist": "electron-builder --win",
+    "prerelease": "node scripts/copy-app.js",
+    "release": "electron-builder --win --publish always"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "build": {
+    "appId": "com.elnata001.minecad",
+    "productName": "MineCAD",
+    "copyright": "MineCAD",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "app/**", "!node_modules/**/{test,__tests__,docs,example,examples}/**"],
+    "publish": [{ "provider": "github", "owner": "Elnata001", "repo": "minecad" }],
+    "fileAssociations": [
+      { "ext": "mcad", "name": "Projeto do MineCAD", "description": "Projeto do MineCAD", "icon": "build/icon.ico", "role": "Editor" }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
+      "icon": "build/icon.ico",
+      "artifactName": "MineCAD-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MineCAD",
+      "installerLanguages": ["pt_BR", "en_US"],
+      "language": "1046"
+    }
+  }
+}

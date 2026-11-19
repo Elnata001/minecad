@@ -9,7 +9,7 @@ quantitativas e a exportação, então o que aparece na tela é exatamente o que
 **O aplicativo é um arquivo só.** `index.html` não tem dependência de build nem de
 servidor: abrir o arquivo no navegador já é o programa inteiro rodando.
 
-👉 **[Abrir o MineCAD](https://elnata001.github.io/minecad/)**
+👉 **[Abrir no navegador](https://elnata001.github.io/minecad/)** · **[Baixar para Windows](https://github.com/Elnata001/minecad/releases/latest)**
 
 ## O que tem dentro
 
@@ -32,7 +32,8 @@ servidor: abrir o arquivo no navegador já é o programa inteiro rodando.
 | `tests/` | ~120 suítes Playwright, o arnês e o duplê do Three.js usado offline |
 | `tests/run.sh` | roda todas as suítes contra o `index.html` deste repositório |
 | `tools/mkworld.js` | gera o mundo sintético (região, estrutura e esquema) usado nos testes de importação |
-| `.github/workflows/` | testes a cada push e publicação no Pages |
+| `desktop/` | invólucro Electron: janela, menu nativo, `.mcad`, pasta de mundos e atualização automática |
+| `.github/workflows/` | testes a cada push, publicação no Pages e empacotamento do aplicativo Windows |
 
 ## Rodar os testes
 
@@ -45,6 +46,23 @@ As suítes foram escritas contra caminhos absolutos da máquina de desenvolvimen
 `run.sh` recria esses caminhos antes de rodar, para que o que roda aqui seja byte a
 byte o que roda lá. Quatro suítes antigas ficam em `tests/skip.txt`: elas apontam para
 APIs internas que mudaram e são mantidas só como referência.
+
+## Aplicativo para Windows
+
+O `desktop/` embrulha o mesmo `index.html` num Electron, e com isso ganha o que o
+navegador não dá: janela que lembra o tamanho, menu nativo, associação do `.mcad`,
+leitura direta da pasta `saves` do Minecraft e atualização automática a partir dos
+releases deste repositório.
+
+O instalador é compilado pelo próprio GitHub numa máquina Windows a cada tag `v*`,
+então não é preciso ter Node para gerar uma versão. Para compilar localmente:
+
+```bash
+cd desktop
+npm install
+npm run dist      # gera desktop/dist/MineCAD-<versão>-x64.exe
+npm start         # roda sem empacotar
+```
 
 ## Histórico
 
