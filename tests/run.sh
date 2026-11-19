@@ -13,6 +13,7 @@ prepare(){
   sudo chown -R "$(id -u)":"$(id -g)" /mnt/user-data 2>/dev/null || true
   cp "$ROOT/index.html" "$APP"
   cp "$ROOT/tests/three-shim.js" /tmp/three-shim.js
+  cp "$ROOT"/tests/fixtures/* /tmp/
   mkdir -p /tmp/w && node "$ROOT/tools/mkworld.js" >/dev/null
 }
 prepare

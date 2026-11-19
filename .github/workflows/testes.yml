@@ -15,7 +15,7 @@ jobs:
       - name: Instalar Playwright e o Chromium
         run: |
           npm init -y >/dev/null
-          npm i -D playwright@1.49.1 >/dev/null
+          npm i -D playwright@1.63.0 >/dev/null
           npx playwright install --with-deps chromium
       - name: Rodar as suítes
         run: ./tests/run.sh
