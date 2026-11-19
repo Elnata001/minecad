@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Manual do mCAD 27</title>
+<meta name="description" content="Manual ilustrado do mCAD 27: a interface, as ferramentas, escadas, coberturas, terreno, grupos e a exportação para o Minecraft.">
+<link rel="icon" href="img/icon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{--fundo:#161815;--fundo2:#1F2320;--linha:#3A3E38;--ink:#ECEEE8;--mut:#A6AB9F;--acc:#4FB255}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--fundo);color:var(--ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  line-height:1.55;-webkit-text-size-adjust:100%}
+.env{max-width:1180px;margin:0 auto;padding:0 16px 96px}
+header{padding:72px 0 44px;border-bottom:1px solid var(--linha);margin-bottom:44px}
+.eyebrow{font-family:'Space Grotesk',Arial,sans-serif;font-size:13px;font-weight:500;
+  letter-spacing:3px;color:var(--acc);margin:0 0 14px;text-transform:uppercase}
+h1{font-family:'Space Grotesk',Arial,sans-serif;font-size:clamp(34px,6vw,62px);
+  font-weight:700;letter-spacing:-1.5px;line-height:1.04;margin:0 0 18px}
+.lede{font-size:clamp(16px,2.2vw,20px);color:var(--mut);max-width:62ch;margin:0 0 26px}
+.links a{display:inline-block;margin:0 10px 10px 0;padding:10px 18px;border:1px solid var(--linha);
+  border-radius:999px;color:var(--ink);text-decoration:none;font-size:15px;background:var(--fundo2)}
+.links a:hover{border-color:var(--acc);color:var(--acc)}
+nav{margin:0 0 56px}
+nav h2{font-family:'Space Grotesk',Arial,sans-serif;font-size:15px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--mut);font-weight:500;margin:0 0 16px}
+nav ol{list-style:none;margin:0;padding:0;display:grid;gap:4px 28px;
+  grid-template-columns:repeat(auto-fill,minmax(248px,1fr))}
+nav a{color:var(--ink);text-decoration:none;font-size:15px;display:block;padding:5px 0;
+  border-bottom:1px solid transparent}
+nav a:hover{color:var(--acc)}
+nav b{color:var(--mut);font-weight:500;font-variant-numeric:tabular-nums;margin-right:10px}
+section{margin:0 0 56px;scroll-margin-top:24px}
+section img{width:100%;height:auto;display:block;border:1px solid var(--linha);border-radius:12px;background:var(--fundo2)}
+.nota{font-size:15px;color:var(--mut);margin:16px 0 0;max-width:78ch;
+  border-left:2px solid var(--acc);padding-left:16px}
+footer{border-top:1px solid var(--linha);padding-top:28px;color:var(--mut);font-size:14px}
+footer a{color:var(--acc)}
+@media (max-width:640px){header{padding-top:44px}.env{padding-bottom:56px}section{margin-bottom:40px}}
+</style>
+</head>
+<body>
+<div class="env">
+<header>
+<p class="eyebrow">Manual para quem vai testar</p>
+<h1>mCAD 27</h1>
+<p class="lede">Um passeio pela interface, da primeira parede à exportação para o jogo.
+As imagens são de um projeto real feito no programa — a <b>Casa de exemplo</b>, com três níveis,
+cobertura de quatro águas, escada em L e terreno modelado.</p>
+<p class="links">
+<a href="../../index.html">Abrir o mCAD no navegador</a>
+<a href="https://github.com/Elnata001/minecad/releases/latest">Baixar para Windows</a>
+<a href="https://github.com/Elnata001/minecad">Repositório</a>
+</p>
+</header>
+<nav>
+<h2>Nesta página</h2>
+<ol>
+<li><a href="#capa"><b>01</b> mCAD 27</a></li>
+<li><a href="#ideia"><b>02</b> Você desenha elementos. O programa faz os blocos.</a></li>
+<li><a href="#comecar"><b>03</b> Duas portas de entrada</a></li>
+<li><a href="#interface"><b>04</b> Cinco regiões, sempre nos mesmos lugares</a></li>
+<li><a href="#ferramentas"><b>05</b> Uma por tipo de elemento</a></li>
+<li><a href="#desenhar"><b>06</b> Desenhar uma parede</a></li>
+<li><a href="#propriedades"><b>07</b> Tudo continua editável</a></li>
+<li><a href="#niveis"><b>08</b> O projeto é um empilhamento</a></li>
+<li><a href="#planta"><b>09</b> Desenho técnico, feito de blocos</a></li>
+<li><a href="#fachadas"><b>10</b> O projeto visto de lado</a></li>
+<li><a href="#tresd"><b>11</b> O mesmo projeto, em volume</a></li>
+<li><a href="#escadas"><b>12</b> Desenhadas em partes</a></li>
+<li><a href="#coberturas"><b>13</b> Um contorno e uma inclinação</a></li>
+<li><a href="#tipos"><b>14</b> Onde se define do que as coisas são feitas</a></li>
+<li><a href="#anexar"><b>15</b> A parede que segue o telhado</a></li>
+<li><a href="#terreno"><b>16</b> O relevo também é projeto</a></li>
+<li><a href="#componentes"><b>17</b> O que você desenha uma vez</a></li>
+<li><a href="#grupos"><b>18</b> Blocos à mão, virando peça</a></li>
+<li><a href="#tabelas"><b>19</b> Quanto de cada bloco você vai precisar</a></li>
+<li><a href="#exportar"><b>20</b> Do projeto para o mundo</a></li>
+<li><a href="#arquivos"><b>21</b> Onde o projeto mora</a></li>
+<li><a href="#atalhos"><b>22</b> Duas letras, como no Revit</a></li>
+<li><a href="#testar"><b>23</b> O que ajuda mais</a></li>
+</ol>
+</nav>
+<section id="capa">
+<img src="img/01-capa.webp" width="1600" height="900" loading="lazy"
+     alt="Manual Para Quem Vai Testar — mCAD 27">
+<p class="nota">Este manual é um passeio pela interface, não uma referência completa. A ideia é que quem nunca abriu o programa consiga desenhar uma casa pequena e exportá-la para o jogo no mesmo dia.</p>
+</section>
+<section id="ideia">
+<img src="img/02-ideia.webp" width="1600" height="900" loading="lazy"
+     alt="A Ideia — Você desenha elementos. O programa faz os blocos.">
+<p class="nota">O ponto a enfatizar com quem testa: mudar a altura de uma parede depois de pronta é um campo, não uma demolição.</p>
+</section>
+<section id="comecar">
+<img src="img/03-comecar.webp" width="1600" height="900" loading="lazy"
+     alt="Por Onde Começar — Duas portas de entrada">
+<p class="nota">Na primeira execução do aplicativo o Windows mostra o aviso do SmartScreen, porque o instalador não tem assinatura digital: Mais informações, Executar assim mesmo.</p>
+</section>
+<section id="interface">
+<img src="img/04-interface.webp" width="1600" height="900" loading="lazy"
+     alt="A Janela — Cinco regiões, sempre nos mesmos lugares">
+<p class="nota">Vale pedir a quem testa que repare se a barra de propriedades sempre mostra o que ele espera — ela é o ponto de maior densidade da interface.</p>
+</section>
+<section id="ferramentas">
+<img src="img/05-ferramentas.webp" width="1600" height="900" loading="lazy"
+     alt="As Ferramentas — Uma por tipo de elemento">
+<p class="nota">A setinha no canto do ícone abre o grupo da ferramenta: é assim que se chega ao alçapão, às curvas de nível e às variantes de parede.</p>
+</section>
+<section id="desenhar">
+<img src="img/06-desenhar.webp" width="1600" height="900" loading="lazy"
+     alt="O Primeiro Elemento — Desenhar uma parede">
+<p class="nota">A prévia é o que o programa vai construir, já em blocos: se ela não aparecer, algum parâmetro da barra está impedindo a criação.</p>
+</section>
+<section id="propriedades">
+<img src="img/07-propriedades.webp" width="1600" height="900" loading="lazy"
+     alt="Depois De Criado — Tudo continua editável">
+<p class="nota">A padronização da ordem dos campos é recente: se algum elemento fugir dela, é defeito e vale reportar.</p>
+</section>
+<section id="niveis">
+<img src="img/08-niveis.webp" width="1600" height="900" loading="lazy"
+     alt="Níveis E Vistas — O projeto é um empilhamento">
+<p class="nota">A altura de corte é o que explica por que uma janela aparece ou não na planta: o corte passa dois blocos acima do nível, por padrão.</p>
+</section>
+<section id="planta">
+<img src="img/09-planta.webp" width="1600" height="900" loading="lazy"
+     alt="A Planta — Desenho técnico, feito de blocos">
+<p class="nota">A faixa cinza em volta da casa é uma plataforma do terreno: a área aplainada onde a construção se assenta.</p>
+</section>
+<section id="fachadas">
+<img src="img/10-fachadas.webp" width="1600" height="900" loading="lazy"
+     alt="Fachadas E Cortes — O projeto visto de lado">
+<p class="nota">Repare como as camadas do terreno acompanham o relevo: isso é a mesma conversão em blocos que vai para o jogo, não um desenho à parte.</p>
+</section>
+<section id="tresd">
+<img src="img/11-tresd.webp" width="1600" height="900" loading="lazy"
+     alt="Vista 3D — O mesmo projeto, em volume">
+<p class="nota">As texturas são as do pacote de recursos carregado no projeto — o mesmo que aparece na planta e nas fachadas.</p>
+</section>
+<section id="escadas">
+<img src="img/12-escadas.webp" width="1600" height="900" loading="lazy"
+     alt="Escadas — Desenhadas em partes">
+<p class="nota">Nesta imagem a cobertura e o pavimento 1 estão ocultos na vista 3D, só para mostrar a escada por dentro. A escada do exemplo tem duas partes e dois blocos de largura.</p>
+</section>
+<section id="coberturas">
+<img src="img/13-coberturas.webp" width="1600" height="900" loading="lazy"
+     alt="Coberturas — Um contorno e uma inclinação">
+<p class="nota">A ponta que avança da cumeeira no oitão não é parte da cobertura: é um grupo de blocos que o autor montou à mão — o assunto da página Grupos.</p>
+</section>
+<section id="tipos">
+<img src="img/14-tipos.webp" width="1600" height="900" loading="lazy"
+     alt="Tipos — Onde se define do que as coisas são feitas">
+<p class="nota">A lógica é a mesma dos tipos de parede: um nome, um conjunto de materiais e as regras de como o tipo vira blocos. Trocar o tipo de um elemento é a forma mais rápida de testar variações.</p>
+</section>
+<section id="anexar">
+<img src="img/15-anexar.webp" width="1600" height="900" loading="lazy"
+     alt="Anexar Topo — A parede que segue o telhado">
+<p class="nota">Onde há parede anexada, a cobertura deixa de gerar o próprio apoio embaixo das águas — quem sustenta ali é a parede. Isso aparece na tabela quantitativa como menos blocos de apoio.</p>
+</section>
+<section id="terreno">
+<img src="img/16-terreno.webp" width="1600" height="900" loading="lazy"
+     alt="Terreno — O relevo também é projeto">
+<p class="nota">Repare nos degraus da grama em volta da casa: é o relevo real convertido em blocos, o mesmo que vai para o jogo. A faixa plana embaixo da construção é uma plataforma.</p>
+</section>
+<section id="componentes">
+<img src="img/17-componentes.webp" width="1600" height="900" loading="lazy"
+     alt="Componentes — O que você desenha uma vez">
+<p class="nota">Para quem está testando: vale criar dois ou três componentes seus e reinserir em outro projeto — é o caminho onde erros aparecem mais rápido.</p>
+</section>
+<section id="grupos">
+<img src="img/18-grupos.webp" width="1600" height="900" loading="lazy"
+     alt="Grupos — Blocos à mão, virando peça">
+<p class="nota">O grupo do exemplo tem quatro blocos e está ancorado na cobertura: é a ponta que prolonga a cumeeira no oitão, um detalhe que nenhuma ferramenta faria sozinha.</p>
+</section>
+<section id="tabelas">
+<img src="img/19-tabelas.webp" width="1600" height="900" loading="lazy"
+     alt="Tabelas Quantitativas — Quanto de cada bloco você vai precisar">
+<p class="nota">A contagem aparece em blocos e em pilhas de 64 — o jeito como o jogo organiza o inventário.</p>
+</section>
+<section id="exportar">
+<img src="img/20-exportar.webp" width="1600" height="900" loading="lazy"
+     alt="Levar Para O Jogo — Do projeto para o mundo">
+<p class="nota">Vale exportar cedo e colar no jogo uma vez, só para ver se a origem ficou onde você esperava. Depois disso o ciclo fica rápido.</p>
+</section>
+<section id="arquivos">
+<img src="img/21-arquivos.webp" width="1600" height="900" loading="lazy"
+     alt="Arquivos — Onde o projeto mora">
+<p class="nota">Enquanto durar o teste, mantenha uma cópia dos seus .mcad em outra pasta. É software novo, e um arquivo perdido atrapalha mais do que um defeito.</p>
+</section>
+<section id="atalhos">
+<img src="img/22-atalhos.webp" width="1600" height="900" loading="lazy"
+     alt="Atalhos — Duas letras, como no Revit">
+<p class="nota">A lista de atalhos vem de um arquivo no mesmo formato do KeyboardShortcuts.xml do Revit. Nem todo atalho da lista tem ferramenta no mCAD ainda; quando não tem, o programa avisa em vez de ficar calado.</p>
+</section>
+<section id="testar">
+<img src="img/23-testar.webp" width="1600" height="900" loading="lazy"
+     alt="Para Quem Vai Testar — O que ajuda mais">
+<p class="nota">Se der para anexar o .mcad junto com o relato, melhor ainda: o arquivo carrega níveis, elementos, terreno e componentes, então o estado do projeto volta inteiro.</p>
+</section>
+<footer>
+<p>mCAD 27 — software em teste. Achou algo estranho, conte o que tentou fazer, o que aconteceu
+e mande junto o arquivo <b>.mcad</b>: com ele o problema se reproduz em segundos.</p>
+</footer>
+</div>
+</body>
+</html>

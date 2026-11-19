@@ -1,5 +1,15 @@
 # Histórico
 
+## Manual — novembro de 2026
+**O repositório ganhou manual.** `MANUAL.md` traz 23 páginas ilustradas, da primeira parede à
+exportação para o jogo, e a mesma coisa como página em `docs/manual/`, publicada junto com o
+aplicativo no Pages. As imagens não são montagens: cada uma foi capturada do próprio mCAD com um
+projeto real carregado — a Casa de exemplo, com três níveis, cobertura de quatro águas, escada
+em L, grupos de blocos e terreno modelado —, inclusive a tabela quantitativa, que é a daquele
+projeto. Além do básico da interface, o manual cobre o que não é óbvio: escadas em partes com
+patamar, coberturas por contorno e inclinação, tipos, anexar topo, terreno, componentes, grupos
+e os atalhos de duas letras.
+
 ## mCAD 27 — v27.1.0
 **Novo nome e nova identidade.** O programa passa a se chamar **mCAD 27**; MineCAD fica como
 nome do projeto. O logo novo entra em todos os lugares: ícone do executável e do instalador,

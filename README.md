@@ -13,6 +13,20 @@ servidor: abrir o arquivo no navegador já é o programa inteiro rodando.
 
 👉 **[Abrir no navegador](https://elnata001.github.io/minecad/)** · **[Baixar o mCAD 27 para Windows](https://github.com/Elnata001/minecad/releases/latest)**
 
+## Manual
+
+Um passeio ilustrado pela interface, da primeira parede à exportação para o jogo, em
+23 páginas. As imagens são de um projeto real feito no programa — a **Casa de exemplo**:
+três níveis, cobertura de quatro águas, escada em L, grupos de blocos e terreno modelado.
+
+📖 **[Ler o manual](MANUAL.md)** · **[versão em página](https://elnata001.github.io/minecad/docs/manual/)**
+
+[![Vista 3D da Casa de exemplo no mCAD 27](docs/manual/img/11-tresd.webp)](MANUAL.md)
+
+Cobre a janela e as ferramentas, níveis e vistas, planta, fachadas e 3D, a modelagem de
+escadas e coberturas, os tipos, o anexar topo, o terreno, componentes e grupos, as tabelas
+quantitativas, a exportação, os arquivos `.mcad` e os atalhos de teclado.
+
 ## O que tem dentro
 
 - **Modelagem em planta** com métodos de desenho (linha, retângulo, polígono, círculo,
@@ -31,6 +45,7 @@ servidor: abrir o arquivo no navegador já é o programa inteiro rodando.
 | caminho | o que é |
 |---|---|
 | `index.html` | o aplicativo inteiro |
+| `MANUAL.md`, `docs/manual/` | o manual ilustrado e as imagens das 23 páginas |
 | `tests/` | ~120 suítes Playwright, o arnês e o duplê do Three.js usado offline |
 | `tests/run.sh` | roda todas as suítes contra o `index.html` deste repositório |
 | `tools/mkworld.js` | gera o mundo sintético (região, estrutura e esquema) usado nos testes de importação |
