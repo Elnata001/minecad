@@ -1,10 +1,19 @@
 {
   "mcadconnect.button.open": "mCAD",
   "mcadconnect.title": "mCAD Connect",
+  "mcadconnect.sec.capture": "Capturar o terreno para o mCAD",
+  "mcadconnect.sec.paste": "Colar um projeto do mCAD",
   "mcadconnect.size": "Área: %s × %s blocos",
-  "mcadconnect.capture": "Capturar terreno em volta",
+  "mcadconnect.capture": "Capturar em volta de mim",
+  "mcadconnect.paste": "Colar aqui",
+  "mcadconnect.air.off": "Manter o que já existe",
+  "mcadconnect.air.on": "Limpar o volume",
+  "mcadconnect.project": "%s (%s de %s)",
+  "mcadconnect.none": "Nenhum projeto na pasta",
+  "mcadconnect.none.hint": "Exporte do mCAD para a pasta Connect e reabra este menu.",
   "mcadconnect.folder": "Pasta: %s",
   "mcadconnect.ok": "Capturado em %s — %s colunas, cotas %s a %s.",
   "mcadconnect.partial": "%s colunas ficaram de fora: não estavam carregadas.",
-  "mcadconnect.erro": "Não deu para capturar: %s"
+  "mcadconnect.pasted": "Colados %s blocos (%s × %s × %s) a partir de %s, %s, %s.",
+  "mcadconnect.erro": "Não deu: %s"
 }

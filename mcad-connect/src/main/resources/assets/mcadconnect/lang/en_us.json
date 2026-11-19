@@ -1,10 +1,19 @@
 {
   "mcadconnect.button.open": "mCAD",
   "mcadconnect.title": "mCAD Connect",
+  "mcadconnect.sec.capture": "Capture terrain for mCAD",
+  "mcadconnect.sec.paste": "Paste an mCAD project",
   "mcadconnect.size": "Area: %s × %s blocks",
-  "mcadconnect.capture": "Capture terrain around you",
+  "mcadconnect.capture": "Capture around me",
+  "mcadconnect.paste": "Paste here",
+  "mcadconnect.air.off": "Keep what is there",
+  "mcadconnect.air.on": "Clear the volume",
+  "mcadconnect.project": "%s (%s of %s)",
+  "mcadconnect.none": "No project in the folder",
+  "mcadconnect.none.hint": "Export from mCAD into the Connect folder and reopen this menu.",
   "mcadconnect.folder": "Folder: %s",
   "mcadconnect.ok": "Captured to %s — %s columns, heights %s to %s.",
   "mcadconnect.partial": "%s columns were left out: not loaded.",
-  "mcadconnect.erro": "Capture failed: %s"
+  "mcadconnect.pasted": "Pasted %s blocks (%s × %s × %s) from %s, %s, %s.",
+  "mcadconnect.erro": "Failed: %s"
 }
