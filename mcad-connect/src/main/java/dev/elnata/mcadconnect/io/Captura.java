@@ -128,7 +128,7 @@ public final class Captura {
         StringBuilder b = new StringBuilder(w * h * 6 + 512);
         b.append("{\"formato\":\"mcad-connect/captura\",\"v\":1");
         b.append(",\"mundo\":").append(texto(mundo));
-        b.append(",\"dimensao\":").append(texto(nivel.dimension().location().toString()));
+        b.append(",\"dimensao\":").append(texto(nivel.dimension().identifier().toString()));
         b.append(",\"quando\":").append(texto(DateTimeFormatter.ISO_INSTANT.format(java.time.Instant.now())));
         b.append(",\"x0\":").append(x0).append(",\"z0\":").append(z0);
         b.append(",\"w\":").append(w).append(",\"h\":").append(h);
