@@ -712,6 +712,9 @@ function build(p){AOKC=null;syncT(p);const vox=new Map(),qty={},per={},cats={},b
    O terreno é uma superfície matemática, não um volume de blocos. Os dados de entrada (pontos cotados,
    perímetro, linhas de ruptura e plataformas) são a fonte da verdade; a malha TIN é sempre recalculada
    a partir deles, e a conversão em blocos só acontece na exportação para o Minecraft. */
+/* Até onde a planta afasta e aproxima, em pixels por bloco. O piso é baixo de propósito:
+   um recorte de mundo pode ter centenas de blocos de lado e precisa caber inteiro na tela. */
+const ZMIN=.25,ZMAX=120;
 const topoEls=p=>((p||P).els||[]).filter(e=>e.cat==='topo');
 /* circuncírculo do triângulo: é o teste de Delaunay */
 function circum(V,t){const a=V[t[0]],b=V[t[1]],c=V[t[2]],
@@ -864,6 +867,54 @@ function hypC(f){const n=HYPS.length-1,i=Math.max(0,Math.min(1,f))*n,
 function tinCntC(q,eq,ref){if(!q)return[];const k=eq+'|'+ref;
  if(q.__ck===k)return q.__cv;q.__ck=k;q.__cv=tinCnt(q,eq,ref);return q.__cv}
 const topoAt=(x,z)=>topoEls().find(t=>tinZ(tinOf(t),x,z)!==null)||null;
+/* O terreno é um elemento como os outros: os pontos cotados, as curvas de nível e as
+   plataformas pertencem a ele e andam com ele. topoXf aplica a mesma transformação da
+   geometria do contorno a todos os dados de entrada da superfície. */
+function topoXf(t,f){if(!t||t.cat!=='topo')return;
+ if(t.tp)t.tp=t.tp.map(p=>{const q=f([p[0],p[1]]);return[q[0],q[1],p[2]]});
+ if(t.bl)for(const l of t.bl)l.pts=l.pts.map(f);
+ if(t.pad)for(const q of t.pad)q.pts=q.pts.map(f);}
+const topoShift=(t,dx,dz)=>topoXf(t,q=>[q[0]+dx,q[1]+dz]);
+/* Terreno importado entra como componente ou bloco: uma prévia acompanha o cursor e o
+   clique decide onde ele se assenta. Até lá o elemento existe só aqui, fora do projeto. */
+let TPEND=null;
+function topoPlaceStart(t,msg){const bb=topoBB(t);
+ if(!bb){toast('O terreno importado não tem extensão para posicionar.');return false}
+ /* o centro da extensão vai para a origem: a prévia fica centrada no cursor */
+ const dx=-Math.round((bb[0]+bb[2])/2),dz=-Math.round((bb[1]+bb[3])/2);
+ topoShift(t,dx,dz);if(t.pts)t.pts=t.pts.map(q=>[q[0]+dx,q[1]+dz]);
+ TPEND={el:t,w:Math.round(bb[2]-bb[0]),h:Math.round(bb[3]-bb[1]),msg:msg||'',ox:-dx,oz:-dz};
+ tool='tplace';sel=null;SELS=[];if(view!=='plan'&&view!=='3d')view='plan';
+ toast((msg?msg+' ':'')+'Clique na planta para posicionar o terreno. Esc cancela.','ok');
+ render();return true}
+function topoPlaceCancel(q){if(!TPEND)return;TPEND=null;tool='sel';MSGS.e='';
+ if(q!==false)toast('Importação cancelada.','ok');render()}
+function topoPlaceAt(q){if(!TPEND)return;const t=TPEND.el,dx=Math.round(q[0]),dz=Math.round(q[1]);
+ TPEND=null;
+ mutate(()=>{topoShift(t,dx,dz);if(t.pts)t.pts=t.pts.map(r=>[r[0]+dx,r[1]+dz]);
+  t.base=lv;P.els.push(t);sel=t.id;SELS=[t.id];tool='sel'});
+ const n=(t.tp||[]).length,qq=tinOf(t);
+ toast('Terreno posicionado: '+n+' pontos, '+(qq?qq.T.length:0)+' triângulos.','ok')}
+/* o contorno da prévia em células, para a vista 3D mostrar onde o terreno vai cair */
+function tpendCells(cx,cz,y){if(!TPEND)return null;const c=contourOf(TPEND.el);
+ if(!c||c.length<2)return null;const dx=Math.round(cx),dz=Math.round(cz),out=[],seen=new Set(),
+  add=(x,z)=>{const k=x+','+z;if(seen.has(k)||seen.size>4000)return;seen.add(k);out.push([x,y,z])};
+ for(let i=0;i<c.length;i++){const a=c[i],b=c[(i+1)%c.length],
+   n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])));
+  for(let j=0;j<=n;j++)add(Math.floor(a[0]+(b[0]-a[0])*j/n)+dx,Math.floor(a[1]+(b[1]-a[1])*j/n)+dz)}
+ return out}
+/* contorno da prévia, já deslocado para o cursor */
+function tpendPath(){if(!TPEND||!cur)return null;const t=TPEND.el,c=contourOf(t);
+ if(!c||c.length<3)return null;const dx=Math.round(cur[0]),dz=Math.round(cur[1]);
+ return c.map(q=>[q[0]+dx,q[1]+dz])}
+/* extensão do terreno incluindo os dados de entrada, não só o contorno */
+function topoBB(t){let a=1e9,b=-1e9,c=1e9,d=-1e9;
+ const add=(x,z)=>{if(x<a)a=x;if(x>b)b=x;if(z<c)c=z;if(z>d)d=z};
+ for(const q of t.pts||[])add(q[0],q[1]);
+ for(const q of t.tp||[])add(q[0],q[1]);
+ for(const l of t.bl||[])for(const q of l.pts)add(q[0],q[1]);
+ for(const q of t.pad||[])for(const r of q.pts)add(r[0],r[1]);
+ return b<a?null:[a,c,b,d]}
 const tMst=(y,ref,mi)=>mi>0&&Math.abs((y-ref)/mi-Math.round((y-ref)/mi))<1e-6;
 /* sombra projetada: uma faixa suave na borda da célula, para o bloco manter o tom da textura.
    Os quatro sprites são desenhados uma vez por escala e reusados em todas as células. */
@@ -945,9 +996,13 @@ const topoSel=()=>P.els.find(e=>e.id===sel&&e.cat==='topo')||null;
 /* ponto cotado: vai para o terreno sob o cursor, para o selecionado, ou cria um terreno novo */
 function topoPt(q,y3){const x=q[0],z=q[1],
  y=Math.round((y3===undefined||y3===null?(+DEF.tpt.z||0):y3)*1e4)/1e4;
- let t=topoSel()||topoAt(x,z)||topoEls()[0];
+ /* o ponto entra no terreno selecionado, ou no que estiver sob o clique. Fora de qualquer
+    terreno nasce um terreno novo: um ponto solto não pertence à superfície de outro lugar. */
+ let t=topoSel()||topoAt(x,z);
+ if(t&&t!==topoSel()&&!tinZ(tinOf(t),x,z)&&topoSel())t=topoSel();
  if(!t){mutate(()=>{const n=mk(P,'topo',{},lv);n.tp.push([x,z,y]);P.els.push(n);sel=n.id;SELS=[n.id]});
-  toast('Terreno criado a partir do primeiro ponto cotado. Continue clicando para inserir mais.','ok');return}
+  toast(topoEls().length>1?'Ponto fora dos terrenos existentes: um terreno novo foi criado para ele.'
+   :'Terreno criado a partir do primeiro ponto cotado. Continue clicando para inserir mais.','ok');return}
  const i=(t.tp||[]).findIndex(p2=>Math.abs(p2[0]-x)<.01&&Math.abs(p2[1]-z)<.01);
  if(i>=0){const old=t.tp[i][2];
   if(Math.abs(old-y)<1e-9){toast('Já existe um ponto cotado nesta posição, na mesma cota.');return}
@@ -958,8 +1013,9 @@ function topoPt(q,y3){const x=q[0],z=q[1],
 function topoAdd(c,pr){const Q=contourOf({cat:c,pts:pr.pts,pk:pr.pk,closed:pr.closed,pn:pr.pn});
  if(!Q||Q.length<2){toast('Desenho insuficiente para esta operação.');return}
  const cx=Q.reduce((a,b)=>a+b[0],0)/Q.length,cz=Q.reduce((a,b)=>a+b[1],0)/Q.length,
-  t=topoSel()||topoAt(cx,cz)||topoEls()[0];
- if(!t){toast('Crie um terreno antes de desenhar plataformas ou curvas de nível.');return}
+  t=topoSel()||topoAt(cx,cz);
+ if(!t){toast(topoEls().length?'Este desenho não está sobre nenhum terreno. Selecione o terreno que deve recebê-lo e desenhe de novo.'
+  :'Crie um terreno antes de desenhar plataformas ou curvas de nível.');return}
  const y=Math.round((+DEF[c].z||0)*1e4)/1e4;
  if(c==='pad'&&Q.length<3){toast('A plataforma precisa de uma área fechada.');return}
  mutate(()=>{if(c==='pad')(t.pad=t.pad||[]).push({id:uid(),pts:Q,y});
@@ -1391,15 +1447,14 @@ function wImpGo(){if(!WPRE){toast('Analise o recorte antes de criar o terreno.')
  const z0=WOPT.org==='zero'?Math.round((lvl().elev||0)-zi):0,
   ox=WOPT.org==='zero'?-F.x0:0,oz=WOPT.org==='zero'?-F.z0:0,
   X0=F.x0+ox,Z0=F.z0+oz,X1=X0+F.w,Z1=Z0+F.h;
- mutate(()=>{const ty=Object.assign(newTT('Terreno de '+(WIMP.name||'importação')),{ly:wLayers(F.hist)});
-  P.types.topo.push(ty);
-  const t=mk(P,'topo',{pts:[[X0,Z0],[X1,Z0],[X1,Z1],[X0,Z1]],closed:true,ty:ty.id,pv:V.length<=150},lv);
-  t.name='Terreno importado — '+(WIMP.name||'mundo');
-  t.tp=V.map(v=>[v[0]+ox,v[1]+oz,v[2]+z0]);
-  P.els.push(t);sel=t.id;SELS=[t.id];tool='sel'});
- $('#dlg').close();fit();
- const t=P.els[P.els.length-1],q=tinOf(t);
- toast('Recorte importado: '+V.length+' pontos, '+(q?q.T.length:0)+' triângulos, '+F.w+'×'+F.h+' blocos.','ok')}
+ let ty;
+ mutate(()=>{ty=Object.assign(newTT('Terreno de '+(WIMP.name||'importação')),{ly:wLayers(F.hist)});
+  P.types.topo.push(ty)});
+ const t=mk(P,'topo',{pts:[[X0,Z0],[X1,Z0],[X1,Z1],[X0,Z1]],closed:true,ty:ty.id,pv:V.length<=150},lv);
+ t.name='Terreno importado — '+(WIMP.name||'mundo');
+ t.tp=V.map(v=>[v[0]+ox,v[1]+oz,v[2]+z0]);
+ $('#dlg').close();
+ topoPlaceStart(t,'Recorte lido: '+V.length+' pontos, '+F.w+'×'+F.h+' blocos.')}
 function dlgTopoImp(){TIMP=TIMP||{sep:'auto',dec:'auto',cx:0,cy:1,cz:2,sc:1,rows:null,hdr:false,name:''};
  const d=$('#dlg'),T=TIMP,cols=T.rows&&T.rows[0]?T.rows[0].map((v,i)=>[i,'Coluna '+(i+1)+(T.hdr?' — '+v:'')]):[[0,'Coluna 1'],[1,'Coluna 2'],[2,'Coluna 3']];
  const TB2='<h3>Importar terreno</h3>'
@@ -1450,11 +1505,11 @@ async function tImpRead(){const f=$('#tif'),fl=f&&f.files&&f.files[0];
 function tImpGo(){const ps=tImpPts();
  if(ps.length<3){toast('São necessários ao menos três pontos válidos para gerar uma superfície.');return}
  const H=hull(ps.map(p2=>[p2[0],p2[1]]));
- mutate(()=>{const t=mk(P,'topo',{pts:H.length>2?H:undefined,closed:true},lv);
-  t.name=TIMP.name||t.name;t.tp=ps;P.els.push(t);sel=t.id;SELS=[t.id];tool='sel'});
- $('#dlg').close();fit();
- const q=tinOf(P.els[P.els.length-1]);
- toast('Levantamento importado: '+ps.length+' pontos, '+q.T.length+' triângulos, cotas '+fmt(q.zmin)+' a '+fmt(q.zmax)+'.','ok')}
+ const t=mk(P,'topo',{pts:H.length>2?H:undefined,closed:true},lv);
+ t.name=TIMP.name||t.name;t.tp=ps;
+ const q=tinOf(t);
+ $('#dlg').close();
+ topoPlaceStart(t,'Levantamento lido: '+ps.length+' pontos, cotas '+fmt(q.zmin)+' a '+fmt(q.zmax)+'.')}
 /* ===== TOPOGRAFIA — DISCRETIZAÇÃO EM BLOCOS =====
    Uma conversão só, usada pela vista 3D, pelos cortes, pelos quantitativos e pela exportação: o que
    aparece no programa é exatamente o que sai no mundo. A superfície TIN continua intacta — os blocos
@@ -1619,7 +1674,7 @@ function del(){if(selA){mutate(()=>{P.ann=P.ann.filter(a=>a.id!==selA);selA=null
 function openP(p){P=migrate(p);libAdopt(P);H.length=RH.length=0;sel=null;pts=null;lv=P.levels[0].id;
  MCPATH=LS.g('mc:file:'+P.id)||'';welClose();B=build(P);save();fit();render()}
 function fit(){let a=1e9,b=-1e9,c=1e9,d=-1e9,e=1e9,f=-1e9;for(const v of B.vox.values()){a=Math.min(a,v.x);b=Math.max(b,v.x+1);c=Math.min(c,v.y);d=Math.max(d,v.y+1);e=Math.min(e,v.z);f=Math.max(f,v.z+1)}
- if(b<a)return;const w=c2.clientWidth||600,h=c2.clientHeight||400;cam.x=(a+b)/2;cam.z=(e+f)/2;cam.s=Math.max(3,Math.min(60,Math.min(w/(b-a+4),h/(f-e+4))));
+ if(b<a)return;const w=c2.clientWidth||600,h=c2.clientHeight||400;cam.x=(a+b)/2;cam.z=(e+f)/2;cam.s=Math.max(ZMIN,Math.min(60,Math.min(w/(b-a+4),h/(f-e+4))));
  if(o)o.t.set((a+b)/2,(c+d)/2,(e+f)/2),o.r=Math.max(b-a,f-e,d-c)*1.8+8}
 const setView=v=>{view=v;render()},snapV=v=>Math.floor(v)+.5;
 /* ===== INTERFACE ===== */
@@ -1695,8 +1750,26 @@ function mcadBundle(tex){const b={mcad:1,v:1,ts:Date.now(),app:'mCAD',p:P,lib:LI
   for(const id in PACK){const q=PACK[id];t[id]={s:q.s.toDataURL(),t:q.t?q.t.toDataURL():0,b:q.b?q.b.toDataURL():0}}
   b.pack={name:PACKN,tex:t}}
  return b}
+/* Gravar um arquivo: o aplicativo de desktop abre a caixa de diálogo nativa, o claude.ai usa a
+   capacidade de download e o navegador comum baixa pelo próprio link. Antes só havia o caminho
+   do claude.ai, e por isso o schematic e o .zip não saíam nem no aplicativo nem no Pages. */
+const b64de=u=>{let r='';const C=0x8000;for(let i=0;i<u.length;i+=C)r+=String.fromCharCode.apply(null,u.subarray(i,i+C));return btoa(r)};
+async function dlSave(nome,dados,mime){
+ const bin=dados instanceof Uint8Array,D=window.mcDesktop;
+ if(D&&D.salvarBinario){const r=await D.salvarBinario(nome,bin?b64de(dados):String(dados),!!bin);
+  if(r===null)return{ok:false,cancel:true};return{ok:true,onde:r}}
+ const dl=window.claude&&await window.claude.use('downloads');
+ if(dl&&dl.save){try{await dl.save({filename:nome,data:bin?new Blob([dados],{type:mime||'application/octet-stream'}):dados});return{ok:true}}
+  catch(e){if(e&&e.code==='declined')return{ok:false,cancel:true};throw e}}
+ const u=URL.createObjectURL(new Blob([dados],{type:mime||'application/octet-stream'})),a=document.createElement('a');
+ a.href=u;a.download=nome;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(u),3000);return{ok:true}}
 async function saveFile(base,ext,data,msg){const kb=Math.round(data.length/1024);
- try{const dl=window.claude&&await window.claude.use('downloads');
+ try{if(window.mcDesktop&&window.mcDesktop.salvarBinario){
+   const r=await dlSave(base+'.'+ext,data,'application/json');
+   if(r.cancel){msg('Exportação cancelada.');return false}
+   msg('“'+base+'.'+ext+'” salvo'+(r.onde?' em '+r.onde:'')+' ('+kb+' KB).');return true}
+  const dl=window.claude&&await window.claude.use('downloads');
   if(dl&&dl.save){const nm=base+'.'+ext+'.json';
    try{await dl.save({filename:nm,data});msg('“'+nm+'” salvo ('+kb+' KB).');return true}
    catch(e){if(e&&e.code==='declined'){msg('Exportação cancelada.');return false}
@@ -1770,6 +1843,8 @@ function act(s,val){const[k,a]=s.split(/:(.*)/);
  else if(k==='vis')vpOpen();else if(k==='einfo')dlgElInfo(a);
  else if(k==='tfeat')dlgTopoFeat(a);else if(k==='tfdel')tfDel(a);
  else if(k==='tiread')tImpRead();else if(k==='tigo')tImpGo();
+else if(k==='tporig'){if(TPEND)topoPlaceAt([TPEND.ox,TPEND.oz]);render()}
+ else if(k==='tpcancel'){topoPlaceCancel()}
  else if(k==='titab'){TIMPT=a;dlgTopoImp();if(a==='world'&&window.mcDesktop&&WMUN===null)wMundos()}else if(k==='wiload')wCarregar();else if(k==='wiread')wImpRead();else if(k==='wiscan')wImpScan();else if(k==='wigo')wImpGo();
  else if(k==='tedit')tedStart();else if(k==='tdone')tedEnd();else if(k==='tddel')tedDel();
  else if(k==='gnew')gNew();
@@ -1883,6 +1958,7 @@ document.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target
  else if(k==='pageup'||k==='pagedown'){if(selSet().length){e.preventDefault();mutate(()=>offSel(k==='pageup'?1:-1))}}
  else if(k==='delete'||k==='backspace'){if(TED){tedDel();return}del()}
  else if(k==='escape'&&TED){tedEnd();return}
+ else if(k==='escape'&&TPEND){topoPlaceCancel();return}
  else if(k==='escape'&&ATTP){ATTP=null;EHOV=null;MSGS.e='';toast('Anexar topo cancelado.','ok');render();return}
  else if(k==='escape'||k==='enter'){if(tool==='stair'&&RP.length){if(k==='enter')stairClose();else if(RP.length%2){RP.pop();toast('Parte descartada.','ok')}else{RP=[];MSGS.e='';toast('Escada cancelada.','ok')}render();return}if(DMETH[tool]&&RP.length){if(k==='enter')drawDone(true);else drawCancel();return}if(k==='escape'&&!pts&&!TR&&!SP&&!ROT.pv)tool='sel';pts=null;TR=SP=null;ROT.pv=null;MSGS.e='';render()}else if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&/^[1-9]$/.test(k)&&DMETH[tool]&&!SK&&DMETH[tool][+k-1])act('dmet:'+DMETH[tool][+k-1]);
  else if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&/^[a-z0-9]$/.test(k))scKey(k.toUpperCase())});
@@ -2011,6 +2087,7 @@ function moveEl(w,dx,dz){if(w.cat==='door'){const h=P.els.find(e=>e.id===w.host)
  if(w.tfz){const o={},ix=Math.round(dx),iz=Math.round(dz);for(const k in w.tfz){const[x,z]=k.split(',').map(Number);o[(x+ix)+','+(z+iz)]=w.tfz[k]}w.tfz=o}
  /* grupo ancorado: mover o próprio grupo desloca a distância guardada, e não o hospedeiro */
  if(w.anc){w.anc.dx+=Math.round(dx);w.anc.dz+=Math.round(dz)}
+ if(w.cat==='topo')topoShift(w,dx,dz);
  if(w.pts){w.pts=w.pts.map(q=>[q[0]+dx,q[1]+dz]);return}w.x1+=dx;w.z1+=dz;if(w.x2!==undefined){w.x2+=dx;w.z2+=dz}}
 let DM=[];
 /* para cada direção, o elemento mais próximo (com vão > 0) que se sobreponha em altura ao selecionado */
@@ -2028,6 +2105,10 @@ function dimDraw(sx,sz){const D=$('#dims');if(SK||(tool!=='sel'&&tool!=='move'))
  const w1=P.els.find(e=>e.id===sel),ecw=w1&&w1.cat==='curtain'&&w1.pts&&w1.pts.length?`<button data-a="cw" style="left:${sx(Math.min(...w1.pts.map(q=>q[0]))-.5)}px;top:${sz(Math.max(...w1.pts.map(q=>q[1]))+.5)}px">▦ Painéis</button>`:'',eb=ecw,h=eb+DM.map(m=>`<input type="number" min="0" step="1" data-dim="${m.d}" value="${m.gap}" style="left:${sx((m.ax+m.bx)/2)}px;top:${sz((m.az+m.bz)/2)}px" title="Blocos entre os elementos: edite para mover">`).join('');
  if(!D.contains(document.activeElement)&&D.dataset.h!==h){D.innerHTML=h;D.dataset.h=h}}
 function dimEdit(t){t.blur();const w=P.els.find(e=>e.id===sel),d=DM.find(m=>m.d===t.dataset.dim),k=d?d.gap-Math.max(0,Math.round(+t.value)):0;if(!w||!k||isNaN(k)){render();return}mutate(()=>moveEl(w,d.dx*k,d.dz*k))}
+const tplacePanel=()=>{const t=TPEND&&TPEND.el;if(!t)return '<h4>Posicionar terreno</h4>';
+ return `<h4>Posicionar terreno</h4><p class="m">${esc(TPEND.msg||'')} Mova o cursor e clique para assentar o terreno; ele fica centrado no ponto clicado. Esc cancela.</p>`
+  +`<p class="m">${TPEND.w}×${TPEND.h} blocos · ${(t.tp||[]).length} pontos cotados · nível ${esc(lvl().name)}</p>`
+  +`<div class="row"><button data-a="tporig">Nas coordenadas de origem (${TPEND.ox}, ${TPEND.oz})</button><button data-a="tpcancel">Cancelar importação</button></div>`};
 const movePanel=()=>{const e=P.els.find(x=>x.id===sel);return `<h4>Mover</h4><p class="m">${e?'Clique no ponto de partida e depois no destino. Esc cancela; Esc de novo sai.':'Clique em um elemento para selecioná-lo.'} Os números rosa também movem por distância.</p>${e?elPanel(e):''}`};
 /* Editar forma: área de croqui completa para o contorno de pisos e coberturas.
    O croqui é um conjunto de vértices (P) e arestas (E), não uma polilinha única: dá para
@@ -2303,10 +2384,14 @@ function drawSheet(){const c=$('#c4'),d=devicePixelRatio||1,w=c.clientWidth,h=c.
  const sc=sheetCanvas(1800);if(!sc)return;const r=Math.min((w-24)/sc.width,(h-24)/sc.height);g4.drawImage(sc,(w-sc.width*r)/2,(h-sc.height*r)/2,sc.width*r,sc.height*r)}
 const loadJ=()=>window.jspdf?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement('script');e.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';e.onload=ok;e.onerror=no;document.head.appendChild(e)});
 async function shExport(k){const S=SHo(),msg=t=>{const e=$('#shmsg');if(e)e.textContent=t},nm='minecad-'+(S.num+'-'+S.name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_');
- try{const dl=window.claude&&await window.claude.use('downloads');if(!dl){msg('Download indisponível neste ambiente.');return}msg('Gerando…');const c=sheetCanvas(3400);
-  if(k==='shpng')await dl.save({filename:nm+'.png',data:await new Promise(r=>c.toBlob(r,'image/png'))});
-  else{await loadJ();const W=S.size==='A4'?297:420,H=S.size==='A4'?210:297,doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:[W,H]});doc.addImage(c.toDataURL('image/png'),'PNG',0,0,W,H);await dl.save({filename:nm+'.pdf',data:doc.output('arraybuffer')})}
-  msg('Arquivo oferecido para download.')}catch(e){msg(e&&e.code==='declined'?'Exportação cancelada.':'Não foi possível exportar ('+((e&&e.code)||'erro')+').')}}
+ try{msg('Gerando…');const c=sheetCanvas(3400);let r;
+  if(k==='shpng'){const bl=await new Promise(q=>c.toBlob(q,'image/png'));
+   r=await dlSave(nm+'.png',new Uint8Array(await bl.arrayBuffer()),'image/png')}
+  else{await loadJ();const W=S.size==='A4'?297:420,H=S.size==='A4'?210:297,doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:[W,H]});
+   doc.addImage(c.toDataURL('image/png'),'PNG',0,0,W,H);
+   r=await dlSave(nm+'.pdf',new Uint8Array(doc.output('arraybuffer')),'application/pdf')}
+  msg(r.cancel?'Exportação cancelada.':'Arquivo gravado'+(r.onde?' em '+r.onde:'')+'.')}
+ catch(e){msg(e&&e.code==='declined'?'Exportação cancelada.':'Não foi possível exportar ('+((e&&(e.message||e.code))||'erro')+').')}}
 /* ---- ícones, dropdown reutilizável, navegador do projeto e barra flutuante ---- */
 const svg=p=>`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const IC=Object.fromEntries(Object.entries({sel:'<path d="M6 3l12 9-5.5 1.3L15 20l-2.7 1-2.5-6.7L6 17z"/>',wall:'<rect x="3" y="5" width="18" height="14"/><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4"/>',floor:'<path d="M3 14l9-5 9 5-9 5z"/><path d="M3 10l9-5 9 5"/>',column:'<rect x="7" y="3" width="10" height="3"/><rect x="9.5" y="6" width="5" height="12"/><rect x="6" y="18" width="12" height="3"/>',door:'<rect x="6" y="3" width="12" height="18"/><circle cx="15" cy="12" r=".9"/>',trap:'<path d="M3 17h18"/><path d="M4.5 17L13 9.6"/><path d="M18 17a6.6 6.6 0 0 0-3.6-5.6"/><path d="M15.6 10.2l-1.7 1.1 1.9.8"/>',window:'<rect x="4" y="4" width="16" height="16"/><path d="M12 4v16M4 12h16"/>',stair:'<path d="M3 20h5v-5h5v-5h5V5h3"/>',roof:'<path d="M3 13l9-8 9 8M6 11v9h12v-9"/>',beam:'<path d="M4 6h16M4 18h16M12 6v12"/>',fence:'<path d="M5 20V6M12 20V6M19 20V6M3 10h18M3 15h18"/>',curtain:'<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',cut:'<path d="M3 12h18" stroke-dasharray="4 3"/><path d="M12 11V5m0 0L9 8m3-3l3 3"/>',dim:'<path d="M4 7v10M20 7v10M4 12h16M7 10l-3 2 3 2M17 10l3 2-3 2"/>',txt:'<path d="M5 6h14M12 6v13M9 19h6"/>',ln:'<path d="M4 20L20 4"/><circle cx="4" cy="20" r="1.5"/><circle cx="20" cy="4" r="1.5"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',comp:'<path d="M6 21v-7M18 21v-7M5 14h14M6 14V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6"/><path d="M8 6V4"/>',block:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"<path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',move:'<path d="M12 3v18M3 12h18M12 3l-3 3m3-3l3 3M12 21l-3-3m3 3l3-3M3 12l3-3m-3 3l3 3M21 12l-3-3m3 3l-3 3"/>',pencil:'<path d="M4 20l1-4L16 5l3 3L8 19z"/>',dots:'<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>',
@@ -2330,10 +2415,11 @@ let SXP=null,SXO=null,NAVH='',TLH='',QTH='',FBP=null,FBH='';
 /* tema: escuro/claro para a interface e uma cor própria para a área de modelagem, usada na planta, nos cortes e no 3D */
 let THEME=LS.g('mc:theme')||'dark',CVC=LS.g('mc:cv')||'';
 const CVD={dark:'#23251f',light:'#fafaf8'},cvHex=()=>CVC||CVD[THEME]||'#fafaf8';
+var GCOL=0x888888;
 function applyTheme(){const rt=document.documentElement,cv=cvHex(),n=parseInt(cv.slice(1),16),L=(((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255;
  rt.dataset.theme=THEME;rt.style.setProperty('--cv',cv);
  rt.style.setProperty('--cink',L>.5?'#1d1f1c':'#eceee8');rt.style.setProperty('--cline',L>.5?'#d6d9d2':'#5d6157');rt.style.setProperty('--grid',L>.5?'#e6e7e1':'#3b3f36');
- if(R){R.setClearColor(cv,1);if(grid)grid.material.color.set(L>.5?0x888888:0x9aa08f)}
+ if(R){R.setClearColor(cv,1);GCOL=L>.5?0x888888:0x9aa08f;if(grid)grid.material.color.set(GCOL)}
  LS.s('mc:theme',THEME);LS.s('mc:cv',CVC);TLH=QTH=NAVH='';render()}
 function ddClose(){if(SXP)SXP.classList.remove('open');if(SXO)SXO.classList.remove('open');SXO=null}
 function ddToggle(el){const was=SXO===el;ddClose();if(!was)ddOpen(el)}
@@ -2665,12 +2751,36 @@ function mcCmds(ents,c){const a=[1e9,1e9,1e9],m=new Map(),out=[];for(const e of 
  for(const[x,y,z,s]of ents){const k=y+'|'+z+'|'+s;(m.get(k)||m.set(k,[]).get(k)).push(x)}
  const T=(x,y,z)=>`~${x-a[0]-c.ox} ~${y-a[1]-c.oy} ~${z-a[2]-c.oz}`;
  for(const[k,xs]of m){const[y,z,s]=k.split('|'),bl=s.replace('minecraft:','');xs.sort((p,q)=>p-q);let i=0;while(i<xs.length){let j=i;while(j+1<xs.length&&xs[j+1]===xs[j]+1)j++;out.push(i===j?`setblock ${T(xs[i],+y,+z)} ${bl}`:`fill ${T(xs[i],+y,+z)} ${T(xs[j],+y,+z)} ${bl}`);i=j+1}}return out.join('\n')}
+/* A leitura de pacotes de recursos (.zip/.jar) continua pela biblioteca externa: ali é preciso
+   descomprimir. A escrita, não — e é ela que precisa funcionar sem rede. */
 const loadZ=()=>window.JSZip?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement('script');e.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+/* Um .zip de uma entrada só, pelo método "armazenado": o .schem já vem comprimido em gzip,
+   então não há o que ganhar comprimindo de novo. Escrever aqui dispensa biblioteca externa —
+   o aplicativo de desktop e o uso offline não dependem mais de baixar nada. */
+const CRCT=(()=>{const t=new Uint32Array(256);
+ for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRCT[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function zipOne(nome,dados){const nm=new TextEncoder().encode(nome),n=nm.length,sz=dados.length,cr=crc32(dados),
+  d=new Date(),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(),
+  tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),
+  out=new Uint8Array(30+n+sz+46+n+22),v=new DataView(out.buffer);let o=0;
+ const u16=x=>{v.setUint16(o,x,true);o+=2},u32=x=>{v.setUint32(o,x,true);o+=4},
+  put=u=>{out.set(u,o);o+=u.length};
+ u32(0x04034b50);u16(20);u16(0);u16(0);u16(tm);u16(dt);u32(cr);u32(sz);u32(sz);u16(n);u16(0);put(nm);put(dados);
+ const cd=o;
+ u32(0x02014b50);u16(20);u16(20);u16(0);u16(0);u16(tm);u16(dt);u32(cr);u32(sz);u32(sz);
+ u16(n);u16(0);u16(0);u16(0);u16(0);u32(0);u32(0);put(nm);
+ const fim=o;
+ u32(0x06054b50);u16(0);u16(0);u16(1);u16(1);u32(fim-cd);u32(cd);u16(0);
+ return out}
 async function mcExport(k){const msg=t=>{const e=$('#mcmsg');if(e)e.textContent=t},{ents}=mcPlan(),c=mcs();if(!ents.length){msg('Nada para exportar com estes filtros.');return}
- try{const dl=window.claude&&await window.claude.use('downloads');if(!dl){msg('Download indisponível neste ambiente.');return}msg('Gerando…');const nm='minecad-'+P.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_');
-  if(k==='mccmd')await dl.save({filename:nm+'-comandos.txt',data:mcCmds(ents,c)});
-  else{const gz=new Uint8Array(await new Response(new Blob([await mcBuild(ents)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());await loadZ();const z=new JSZip();z.file(nm+'.schem',gz);await dl.save({filename:nm+'-schem.zip',data:await z.generateAsync({type:'blob'})})}
-  msg('Arquivo oferecido para download.')}catch(e){msg(e&&e.code==='declined'?'Exportação cancelada.':'Não foi possível exportar ('+((e&&e.code)||'erro')+').')}}
+ try{msg('Gerando…');const nm='minecad-'+P.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_');
+  let r;
+  if(k==='mccmd')r=await dlSave(nm+'-comandos.txt',mcCmds(ents,c),'text/plain');
+  else{const gz=new Uint8Array(await new Response(new Blob([await mcBuild(ents)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+   r=await dlSave(nm+'-schem.zip',zipOne(nm+'.schem',gz),'application/zip')}
+  msg(r.cancel?'Exportação cancelada.':'Arquivo gravado'+(r.onde?' em '+r.onde:'')+'.')}
+ catch(e){msg(e&&e.code==='declined'?'Exportação cancelada.':'Não foi possível exportar ('+((e&&(e.message||e.code))||'erro')+').')}}
 function dlgMc(){DLGM='m';const c=mcs(),{ents,iss}=mcPlan(),d=$('#dlg'),lvs=[['','Todos os níveis'],...P.levels.map(l=>[l.id,l.name])],F=(k,l)=>`<label>${l}<input type="number" step="1" style="width:70px" data-mc="${k}" value="${c[k]}"></label>`;
  d.innerHTML=`<h3>Exportar para Minecraft (Java)</h3><div class="row" style="flex-wrap:wrap"><label>Versão ${dd(MCV.map(v=>[v[0],v[0]]),c.ver,'data-mc="ver"')}</label><label>Níveis ${dd(lvs,c.lv,'data-mc="lv"')}</label></div>
  <div class="row" style="flex-wrap:wrap"><span class="m">Origem de colagem (blocos a partir do canto mínimo)</span>${F('ox','X')}${F('oy','Y')}${F('oz','Z')}</div><h4>Verificação</h4><p class="m">${ents.length} blocos serão exportados.</p>
@@ -2769,6 +2879,7 @@ function rotApply(deg){const e=P.els.find(x=>x.id===sel),pv=ROT.pv;if(!e||!pv)re
  const r=deg*Math.PI/180,c=Math.cos(r),s=Math.sin(r),R=q=>{const dx=q[0]-pv[0],dz=q[1]-pv[1];return[Math.floor(pv[0]+dx*c-dz*s+1e-9)+.5,Math.floor(pv[1]+dx*s+dz*c+1e-9)+.5]};
  mutate(()=>{if(e.tfz){delete e.tfz;toast('O perfil fixo do topo foi descartado na rotação.','ok')}
   if(e.pk==='rect'&&deg%90){const g=pathPts(elPa(e));if(g){e.pts=g.pts;e.pk='pgon';e.closed=true}}
+  if(e.cat==='topo')topoXf(e,R);
   if(e.pts)e.pts=e.pts.map(R);else{[e.x1,e.z1]=R([e.x1,e.z1]);if(e.x2!==undefined)[e.x2,e.z2]=R([e.x2,e.z2])}if(e.cat==='column'&&Math.abs(deg/90)%2===1)[e.sx,e.sz]=[e.sz,e.sx];
   if(e.cat==='trap'&&deg%90===0){let n=((Math.round(deg/90)%4)+4)%4;while(n--)e.fc=CW4[e.fc]||'north'}});
  MSGS.e='Rotacionado '+deg+'°.'+(deg%90?' Ângulo fora de múltiplos de 90°: a geometria é aproximada em blocos.':'')}
@@ -3017,9 +3128,12 @@ function tbMatrix(){const D=TB.cat==='blocks'?BCOL:ECOL,K=TB.keys,m=[K.map(k=>D[
 async function tbExport(k){const m=tbMatrix(),msg=t=>{const e=$('#tbmsg');if(e)e.textContent=t},csv='\ufeff'+m.map(r=>r.map(v=>/[";\n]/.test(v)?'"'+String(v).replace(/"/g,'""')+'"':v).join(';')).join('\r\n'),
  nm='minecad-'+(TB.cat==='blocks'?'blocos':TB.cat)+'-'+P.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_');
  if(k==='tbcopy'){try{await navigator.clipboard.writeText(csv);msg('CSV copiado.')}catch(e){const d=$('#dlg');d.innerHTML='<h3>CSV</h3><textarea rows="12">'+esc(csv)+'</textarea><div class="row"><button data-a="close">Fechar</button></div>';d.showModal()}return}
- try{const dl=window.claude&&await window.claude.use('downloads');if(!dl){msg('Download indisponível aqui; use Copiar CSV.');return}
-  if(k==='tbcsv')await dl.save({filename:nm+'.csv',data:csv});else{await loadX();const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(m),'Quantitativo');await dl.save({filename:nm+'.xlsx',data:XLSX.write(wb,{bookType:'xlsx',type:'array'})})}
-  msg('Arquivo oferecido para download.')}catch(e){msg(e&&e.code==='declined'?'Exportação cancelada.':'Não foi possível exportar ('+((e&&e.code)||'erro')+').')}}
+ try{let r;
+  if(k==='tbcsv')r=await dlSave(nm+'.csv',csv,'text/csv');
+  else{await loadX();const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(m),'Quantitativo');
+   r=await dlSave(nm+'.xlsx',new Uint8Array(XLSX.write(wb,{bookType:'xlsx',type:'array'})),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+  msg(r.cancel?'Exportação cancelada.':'Arquivo gravado'+(r.onde?' em '+r.onde:'')+'.')}
+ catch(e){msg(e&&e.code==='declined'?'Exportação cancelada.':'Não foi possível exportar ('+((e&&(e.message||e.code))||'erro')+').')}}
 /* gerenciador de materiais: material = nome + categoria + cor de representação + bloco do Minecraft */
 const MCATS=['Madeira','Pedra','Terra','Concreto','Tijolos','Vidro','Metais','Decoração','Iluminação','Redstone','Vegetação','Outros'];
 function matOpts(cat,wc){const bl=Object.entries(MATS).filter(([i,m])=>kindOK(cat,m[2])&&avail(i)).sort((a,b)=>(BCAT[a[0]]||'').localeCompare(BCAT[b[0]]||'')||a[1][0].localeCompare(b[1][0],'pt')).map(([i,m])=>[i,m[0]]),cu=(P.mats||[]).filter(m=>MATS[m.block]&&avail(m.block)&&kindOK(cat,MATS[m.block][2])).map(m=>[m.id,m.name+' ('+m.cat+')']);return bl.concat(cu)}
@@ -3079,7 +3193,7 @@ function ui(){
  if(nh!==NAVH&&!dig&&!$('#sxp.open')){nv.innerHTML=nh;NAVH=nh}
  
  const w=tool==='sel'?P.els.find(e=>e.id===sel):null,tot=Object.values(B.qty).reduce((a,b)=>a+b,0);
- if(view==='sheet'&&SHo())$('#props').innerHTML=shPanel();else if(TED)$('#props').innerHTML=tedPanel();else if(SK)$('#props').innerHTML=skPanel();else if(tool==='move')$('#props').innerHTML=movePanel();else if(DEF[tool])$('#props').innerHTML=toolPanel();else if(tool!=='sel')$('#props').innerHTML=annPanel();else if(!w&&selA&&annSel())$('#props').innerHTML=annSel();else if(!w)$('#props').innerHTML=viewPanel(tot);
+ if(view==='sheet'&&SHo())$('#props').innerHTML=shPanel();else if(TED)$('#props').innerHTML=tedPanel();else if(SK)$('#props').innerHTML=skPanel();else if(tool==='tplace')$('#props').innerHTML=tplacePanel();else if(tool==='move')$('#props').innerHTML=movePanel();else if(DEF[tool])$('#props').innerHTML=toolPanel();else if(tool!=='sel')$('#props').innerHTML=annPanel();else if(!w&&selA&&annSel())$('#props').innerHTML=annSel();else if(!w)$('#props').innerHTML=viewPanel(tot);
  else $('#props').innerHTML=elPanel(w);
  const cf=$('#cfb');cf.style.display=CEDIT||GED||TED?'flex':'none';
  if(CEDIT||GED||TED){const ch=CEDIT?cBar():GED?gBar():tedBar();if(ch!==CFH&&!cf.contains(document.activeElement)){cf.innerHTML=ch;CFH=ch}}else if(CFH){cf.innerHTML='';CFH=''}
@@ -3453,8 +3567,10 @@ function drawExt(w,sx,sz,col){const L=Math.hypot(w.x2-w.x1,w.z2-w.z1);if(!L)retu
 function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight,S=cam.s,st=getComputedStyle(document.documentElement),gv=n=>st.getPropertyValue(n);
  c2.width=w*d;c2.height=h*d;g.setTransform(d,0,0,d,0,0);g.fillStyle=gv('--cv');g.fillRect(0,0,w,h);
  const sx=x=>(x-cam.x)*S+w/2,sz=z=>(z-cam.z)*S+h/2,x0=Math.floor(cam.x-w/2/S),x1=Math.ceil(cam.x+w/2/S),z0=Math.floor(cam.z-h/2/S),z1=Math.ceil(cam.z+h/2/S);
- for(let x=x0;x<=x1;x++){if(S<8&&x%16)continue;g.strokeStyle=gv(x%16?'--grid':'--cline');g.beginPath();g.moveTo(sx(x),0);g.lineTo(sx(x),h);g.stroke()}
- for(let z=z0;z<=z1;z++){if(S<8&&z%16)continue;g.strokeStyle=gv(z%16?'--grid':'--cline');g.beginPath();g.moveTo(0,sz(z));g.lineTo(w,sz(z));g.stroke()}
+ /* passo da grade: 1 bloco de perto, 16 ao afastar e 64 bem longe, para não virar borrão */
+ const gst=S<1.2?64:S<8?16:1,gmj=S<1.2?256:16;
+ for(let x=x0;x<=x1;x++){if(x%gst)continue;g.strokeStyle=gv(x%gmj?'--grid':'--cline');g.beginPath();g.moveTo(sx(x),0);g.lineTo(sx(x),h);g.stroke()}
+ for(let z=z0;z<=z1;z++){if(z%gst)continue;g.strokeStyle=gv(z%gmj?'--grid':'--cline');g.beginPath();g.moveTo(0,sz(z));g.lineTo(w,sz(z));g.stroke()}
  /* no modo de criação, os eixos verdes mostram a origem e a direção do comprimento (X) */
  if(CEDIT){g.save();g.lineWidth=2;g.strokeStyle='#36d07a';
   g.beginPath();g.moveTo(0,sz(0));g.lineTo(w,sz(0));g.stroke();
@@ -3607,6 +3723,17 @@ function draw2d(){const d=devicePixelRatio||1,w=c2.clientWidth,h=c2.clientHeight
   g.strokeStyle=gv('--acc');g.lineWidth=2;for(const c of top.values())g.strokeRect(sx(X+c.x)+1,sz(Z+c.z)+1,S-2,S-2);
   g.strokeStyle='#2b7fff';g.strokeRect(sx(X)+.5,sz(Z)+.5,S-1,S-1);g.lineWidth=1;
   g.fillStyle=gv('--cink');g.fillText(d.name+' · '+r+'°',sx(X)+S+6,sz(Z)+S/2)}}
+ /* prévia do terreno importado: contorno, pontos cotados e a extensão em blocos */
+ if(cur&&tool==='tplace'&&TPEND){const C=tpendPath();
+  if(C){const dx=Math.round(cur[0]),dz=Math.round(cur[1]);
+   g.globalAlpha=.22;g.fillStyle=gv('--acc');g.beginPath();g.moveTo(sx(C[0][0]),sz(C[0][1]));
+   for(let i=1;i<C.length;i++)g.lineTo(sx(C[i][0]),sz(C[i][1]));g.closePath();g.fill();
+   g.globalAlpha=1;g.strokeStyle=gv('--acc');g.lineWidth=2;g.stroke();g.lineWidth=1;
+   const T=TPEND.el.tp||[],st=Math.max(1,Math.ceil(T.length/1200));
+   g.fillStyle=gv('--acc');g.globalAlpha=.75;
+   for(let i=0;i<T.length;i+=st)g.fillRect(sx(T[i][0]+dx)-1,sz(T[i][1]+dz)-1,2,2);
+   g.globalAlpha=1;g.fillStyle=gv('--cink');
+   g.fillText(TPEND.w+'×'+TPEND.h+' blocos · '+T.length+' pontos',sx(cur[0])+12,sz(cur[1])-10)}}
  if(cur&&tool==='block'){const x=Math.floor(cur[0]),z=Math.floor(cur[1]);g.globalAlpha=.55;g.fillStyle=MATS[blockOf(P,DEF.block.mat)][1];g.fillRect(sx(x),sz(z),S,S);g.globalAlpha=1;g.strokeStyle=gv('--acc');g.lineWidth=2;g.strokeRect(sx(x),sz(z),S,S);g.lineWidth=1;
   g.fillStyle=gv('--cink');g.fillText('Y '+Math.round(lvl().elev+(+DEF.block.off||0)),sx(x)+S+6,sz(z)+S/2)}
  if(cur&&tool==='trap'){const x=Math.floor(cur[0]),z=Math.floor(cur[1]),X=sx(x),Z=sz(z),d=DIR4[DEF.trap.fc]||DIR4.north;
@@ -3657,6 +3784,7 @@ c2.onpointerup=e=>{if(BOX){const x0=Math.min(BOX.a[0],BOX.b[0])-.5,x1=Math.max(B
 function toolClick(q,p,e){
  if(ATTP){attPick(PK3===undefined?pickAtt(p):PK3);return}
  if(tool==='anchor'){gAnc(pickAt(p));return}
+ if(tool==='tplace'){topoPlaceAt(q);return}
  if(tool==='tpt'){topoPt(q,Y3);return}
  if(tool==='move'){if(!sel){sel=pickAt(p);render()}else if(!pts){pts=q;render()}else{const a=pts,w=P.els.find(x=>x.id===sel);pts=null;if(w&&(q[0]!==a[0]||q[1]!==a[1]))mutate(()=>moveEl(w,q[0]-a[0],q[1]-a[1]));else render()}return}
  if(tool==='stair'){stairClick(q);return}
@@ -3676,7 +3804,7 @@ function toolClick(q,p,e){
     w.dir=dirIdx(DOORC[(w.dir||0)][0],hgFromVec(h,[uu[0]*sg,uu[1]*sg]));nb.dir=dirIdx(DOORC[(nb.dir||0)][0],hgFromVec(h,[-uu[0]*sg,-uu[1]*sg]))}}
   P.els.push(w);sel=w.id})}}}
 c2.onpointerleave=()=>{if(EHOV||EHOVR){EHOV=EHOVR=HCEL=null;draw2d()}};
-c2.onwheel=e=>{e.preventDefault();const p=w2(e);cam.s=Math.min(120,Math.max(3,cam.s*(e.deltaY<0?1.15:1/1.15)));const q=w2(e);cam.x+=p[0]-q[0];cam.z+=p[1]-q[1];ui();draw2d()};
+c2.onwheel=e=>{e.preventDefault();const p=w2(e);cam.s=Math.min(ZMAX,Math.max(ZMIN,cam.s*(e.deltaY<0?1.15:1/1.15)));const q=w2(e);cam.x+=p[0]-q[0];cam.z+=p[1]-q[1];ui();draw2d()};
 /* ===== VISTA 3D ===== */
 let R,sc,ca,meshes=[],geos=[],grid,o=null;const v3=$('#v3');
 if(window.THREE){o={th:.9,ph:1,r:26,t:new THREE.Vector3(6,2,5)};R=new THREE.WebGLRenderer({antialias:true,alpha:true});v3.appendChild(R.domElement);sc=new THREE.Scene();ca=new THREE.PerspectiveCamera(50,1,.1,2000);
@@ -3749,7 +3877,7 @@ function build3(){if(!R)return;ovClear();IT3=[];EDC.clear();meshes.forEach(x=>{s
   arr.forEach((q,i)=>{m.makeTranslation(q.v.x+.5,q.v.y+.5,q.v.z+.5);if(q.ry)m.multiply(r.makeRotationY(q.ry));im.setMatrixAt(i,m);
    c.set(tx?'#ffffff':vc(q.v));if(gh)c.lerp(wh,.25);im.setColorAt(i,c)});
   im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;sc.add(im);meshes.push(im)}
- IT3=it;topo3();grid.position.set(0,W3(),0);ax3();hd3();td3();hi3()}
+ IT3=it;topo3();grid3();ax3();hd3();td3();hi3()}
 function draw3d(){if(!R)return;const w=v3.clientWidth||1,h=v3.clientHeight||1;R.setPixelRatio(devicePixelRatio);R.setSize(w,h);ca.aspect=w/h;ca.updateProjectionMatrix();
  ca.position.set(o.t.x+o.r*Math.sin(o.ph)*Math.cos(o.th),o.t.y+o.r*Math.cos(o.ph),o.t.z+o.r*Math.sin(o.ph)*Math.sin(o.th));ca.lookAt(o.t);ca.updateMatrixWorld();R.render(sc,ca);fbPlace()}
 v3.oncontextmenu=e=>e.preventDefault();
@@ -3769,6 +3897,25 @@ const orbit=(dx,dy)=>{const k=NAVI?-.01:.01;o.th+=dx*k;o.ph=Math.min(3.09,Math.m
  pan3=(dx,dy)=>{const k=o.r*.0016,r2=new THREE.Vector3().setFromMatrixColumn(ca.matrixWorld,0),u=new THREE.Vector3().setFromMatrixColumn(ca.matrixWorld,1);o.t.addScaledVector(r2,-dx*k).addScaledVector(u,dy*k)},
  zoom3=dy=>{o.r=Math.max(2,Math.min(600,o.r*(1+dy*.007)))};
 function W3(){return Math.round(lvl().elev)+(DEF[tool]?Math.round(+DEF[tool].off||0):0)}
+/* A grade da vista 3D acompanha o que existe no projeto: um recorte de mundo de 400 blocos
+   não cabe numa grade fixa de 64, e desenhar fora dela dá a impressão de estar fora do mundo.
+   O tamanho vai para a potência de dois que cobre o modelo com folga, e o passo cresce junto
+   para o número de linhas continuar constante. */
+function grid3(){if(!sc)return;
+ let a=1e9,b=-1e9,c=1e9,d=-1e9;
+ if(B&&B.vox)for(const v of B.vox.values()){if(v.x<a)a=v.x;if(v.x>b)b=v.x;if(v.z<c)c=v.z;if(v.z>d)d=v.z}
+ if(b<a){a=0;b=32;c=0;d=32}
+ const cx=Math.round((a+b)/2),cz=Math.round((c+d)/2),
+  ext=Math.max(b-a,d-c)+24,
+  sz=Math.min(4096,Math.max(64,Math.pow(2,Math.ceil(Math.log2(Math.max(64,ext)))))),
+  st=Math.max(1,Math.pow(2,Math.ceil(Math.log2(sz/128)))),
+  key=sz+'|'+st+'|'+cx+'|'+cz;
+ if(grid&&(grid.userData||{}).k!==key){try{sc.remove(grid);grid.geometry&&grid.geometry.dispose&&grid.geometry.dispose();
+   grid.material&&grid.material.dispose&&grid.material.dispose()}catch(e){}grid=null}
+ if(!grid){grid=new THREE.GridHelper(sz,Math.round(sz/st),0x888888,0x888888);
+  if(grid.material){grid.material.transparent=true;grid.material.opacity=.3;grid.material.color&&grid.material.color.set(GCOL)}
+  grid.userData=grid.userData||{};grid.userData.k=key;sc.add(grid)}
+ grid.position&&grid.position.set(cx,W3(),cz)}
 /* bloco avulso assenta na face (como no jogo); os demais elementos seguem o topo, mas acompanham a face lateral para desenhar sobre ela */
 function cell3(c){return tool!=='block'&&c.face&&c.out[1]!==c.in[1]+1?c.in:c.out}
 function MDL(c){return !!DEF[c]}
@@ -3916,7 +4063,8 @@ function g3up(c){g3init();if(!GH)return;C3=c;
  if(!c||!MDL(tool)){GH.visible=GL.visible=false;cpg3(null);dgv3(null);return}
  const k=cell3(c);GH.position.set(k[0]+.5,k[1]+.5,k[2]+.5);GH.visible=tool!=='comp';
  if(tool==='comp')cpg3(defOf(DEF.comp.def),((+DEF.comp.rot||0)%360+360)%360,k);else cpg3(null);
- const dg=tool==='comp'||tool==='block'?null:draftCells([k[0]+.5,k[2]+.5],k[1]);dgv3(dg&&dg.cells);
+ if(tool==='tplace'&&TPEND){dgv3(tpendCells(k[0]+.5,k[2]+.5,k[1]));cpg3(null)}
+ else{const dg=tool==='comp'||tool==='block'?null:draftCells([k[0]+.5,k[2]+.5],k[1]);dgv3(dg&&dg.cells)}
  GH.material.color.set(tool==='block'?MATS[blockOf(P,DEF.block.mat)][1]:'#ff8a3d');GH.material.opacity=tool==='block'?.6:.22;
  const q=[k[0]+.5,k[2]+.5],seq=(tool==='stair'||DMETH[tool])?RP:(pts?[pts]:[]);
  let L=null;
@@ -3992,12 +4140,16 @@ UIREADY=true;libLoad();libAdopt(P);B=build(P);fit();applyTheme();if(window.index
 MCPATH=LS.g('mc:file:'+P.id)||'';
 /* abre na tela inicial — a não ser que o programa tenha sido chamado por um clique duplo
    num .mcad, caso em que o projeto entra direto, sem piscar a tela do meio */
-if(window.mcDesktop)window.mcDesktop.pendente().then(r=>{r?welFile(r.texto,r.caminho):welOpen()}).catch(()=>welOpen());
+/* a ponte pode ser de uma versão anterior à desta página (atualização automática): se faltar
+   alguma função dela, a tela inicial abre do mesmo jeito em vez de travar o programa */
+if(window.mcDesktop&&typeof window.mcDesktop.pendente==='function')
+ try{window.mcDesktop.pendente().then(r=>{r?welFile(r.texto,r.caminho):welOpen()}).catch(()=>welOpen())}catch(e){welOpen()}
+else if(window.mcDesktop)welOpen();
 else welOpen();
 /* ===== APLICATIVO DESKTOP =====
    Dentro do Electron, o menu nativo e o clique duplo num .mcad chegam por esta ponte.
    No navegador o objeto não existe e o bloco inteiro fica inerte. */
-(function(){const D=window.mcDesktop;if(!D)return;
+(function(){const D=window.mcDesktop;if(!D||typeof D.ao!=='function')return;
  D.ao('abrir-projeto',async()=>{const r=await D.escolherAbrir();if(r)welFile(r.texto,r.caminho)});
  D.ao('abrir-arquivo',d=>{if(d)welFile(d.texto,d.caminho)});
  D.ao('salvar-projeto',()=>projSave(false));

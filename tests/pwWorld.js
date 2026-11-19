@@ -50,7 +50,7 @@ const GH=(x,z)=>Math.round(64+8*Math.sin(x/19)+6*Math.cos(z/13)+3*Math.sin((x+z)
   WOPT.tol=.5;await wImpScan();return '6) fidelidade:\n'+o.join('\n')}));
 
  // ---- 7. criar o terreno ----
- console.log(await pg.evaluate(()=>{WSEL={x0:0,z0:0,x1:63,z1:63};WOPT.org='zero';wImpGo();
+ console.log(await pg.evaluate(()=>{WSEL={x0:0,z0:0,x1:63,z1:63};WOPT.org='zero';wImpGo();if(TPEND)topoPlaceAt([TPEND.ox,TPEND.oz]);
   const t=P.els.find(e=>e.cat==='topo'),q=tinOf(t),ty=typeOf(P,t.ty);
   const F=WPRE.F,at=(x,z)=>F.g[(z-F.z0)*F.w+(x-F.x0)];
   let mx=0;for(let z=2;z<62;z+=3)for(let x=2;x<62;x+=3){const y=at(x,z),e=tinZ(q,x+.5,z+.5);

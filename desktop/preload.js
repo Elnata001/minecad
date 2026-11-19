@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('mcDesktop',{
  escolherAbrir:()=>ipcRenderer.invoke('escolher-abrir'),
  escolherSalvar:(nome,texto)=>ipcRenderer.invoke('escolher-salvar',{nome,texto}),
  salvarEm:(caminho,texto)=>ipcRenderer.invoke('salvar-em',{caminho,texto}),
+ /* gravar qualquer arquivo gerado pelo programa (schematic, .zip, comandos, .mcad):
+    abre a caixa de diálogo nativa em vez do download do navegador */
+ salvarBinario:(nome,dados,bin)=>ipcRenderer.invoke('salvar-binario',{nome,dados,bin}),
  associar:()=>ipcRenderer.invoke('associar'),
  sobre:()=>ipcRenderer.invoke('sobre'),
  pendente:()=>ipcRenderer.invoke('pendente'),

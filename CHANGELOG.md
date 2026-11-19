@@ -1,5 +1,38 @@
 # Histórico
 
+## mCAD 27 — v27.1.1
+**O terreno virou um elemento de verdade.** Os pontos cotados, as curvas de nível e as
+plataformas sempre pertenceram a um elemento de terreno, mas mover ou girar o elemento
+levava só o contorno: a superfície continuava amarrada às cotas antigas, e o terreno passava
+a ler pontos que estavam em outro lugar. Agora a transformação vale para os dados de entrada
+também — move-se o terreno e a topografia vai junto, sem deixar superfície para trás. Pelo
+mesmo motivo, um ponto cotado, uma plataforma ou uma curva de nível desenhados fora de
+qualquer terreno deixaram de cair no primeiro terreno do projeto: o ponto solto cria um
+terreno próprio e os outros dois avisam qual terreno selecionar.
+
+**Terreno importado entra onde você clicar.** Criar terreno, tanto no levantamento em CSV
+quanto no recorte do mundo, não larga mais a superfície nas coordenadas de origem do arquivo
+— quase sempre longe do projeto. A importação passa a funcionar como componentes, grupos e
+blocos: uma prévia com o contorno e os pontos cotados acompanha o cursor, o clique assenta o
+terreno centrado ali, e Esc cancela. Para quem quer o recorte exatamente onde ele estava no
+mundo, a barra traz um botão com as coordenadas de origem.
+
+**Área de modelagem maior.** O zoom da planta ia só até 3 pixels por bloco, o que deixava
+um recorte grande sem caber na tela nem com Enquadrar projeto; o piso caiu para 0,25 e a
+grade passa a mudar de passo — 1 bloco de perto, 16 ao afastar, 64 bem longe. A grade da
+vista 3D era fixa em 64×64 blocos e ficava para trás de qualquer terreno importado: agora
+acompanha a extensão do modelo, com o espaçamento crescendo junto, e fica centrada no que
+existe em vez de na origem.
+
+**Exportar voltou a funcionar fora do claude.ai.** O schematic em `.zip`, os comandos, o
+PNG e o PDF da folha e o CSV e o XLSX das tabelas só tinham um caminho de gravação: a
+capacidade de download do claude.ai. No aplicativo de desktop e na versão do Pages não havia
+nada — daí o "Download indisponível neste ambiente". Agora há um caminho só, que escolhe
+conforme o lugar: no aplicativo abre a caixa de diálogo nativa do Windows e grava onde você
+escolher, no claude.ai segue pela capacidade de download e no navegador comum baixa pelo
+próprio link. O `.zip` passou a ser escrito pelo próprio programa, sem biblioteca externa,
+então o schematic sai também sem internet.
+
 ## Manual — novembro de 2026
 **O repositório ganhou manual.** `MANUAL.md` traz 23 páginas ilustradas, da primeira parede à
 exportação para o jogo, e a mesma coisa como página em `docs/manual/`, publicada junto com o

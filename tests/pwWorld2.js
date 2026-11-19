@@ -12,7 +12,7 @@ const {chromium}=require('playwright'),fs=require('fs');
   return 'recorte cheio 128×128: '+WPRE.F.n+' colunas · '+WPRE.V.length+' pontos · erro '+WPRE.err.toFixed(2)+' · '+Math.round(performance.now()-t0)+' ms'}));
  await pg.waitForTimeout(400);
  const dlg=await pg.$('#dlg');await dlg.screenshot({path:'/tmp/wimp_dlg.png'});
- console.log(await pg.evaluate(()=>{const t0=performance.now();wImpGo();
+ console.log(await pg.evaluate(()=>{const t0=performance.now();wImpGo();if(TPEND)topoPlaceAt([TPEND.ox,TPEND.oz]);
   const t=P.els.find(e=>e.cat==='topo'),q=tinOf(t);
   view='plan';cam.s=6;cam.x=64;cam.z=64;render();
   const t1=performance.now();

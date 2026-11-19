@@ -9,7 +9,7 @@ const {chromium}=require('playwright'),fs=require('fs');
   return 'aba inicial: '+TIMPT+' · título: '+document.querySelector('#dlg h3').textContent}));
  await pg.setInputFiles('#tif','/tmp/w/pontos.csv');
  await pg.evaluate(()=>tImpRead());await pg.waitForTimeout(300);
- console.log(await pg.evaluate(()=>{const p=tImpPts();tImpGo();
+ console.log(await pg.evaluate(()=>{const p=tImpPts();tImpGo();if(TPEND)topoPlaceAt([TPEND.ox,TPEND.oz]);
   const t=P.els.find(e=>e.cat==='topo'),q=tinOf(t);
   return 'CSV: '+p.length+' pontos lidos · terreno com '+t.tp.length+' pontos e '+q.T.length+' triângulos'}));
  // aba do mundo

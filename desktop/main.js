@@ -128,6 +128,22 @@ ipcMain.handle('escolher-salvar',async(ev,{nome,texto})=>{const r=await dialog.s
  if(r.canceled||!r.filePath)return null;
  await fsp.writeFile(r.filePath,texto,'utf8');return r.filePath});
 
+/* Qualquer arquivo que o programa gere — schematic em .zip, comandos, .mcad — passa por aqui.
+   No navegador isso seria um download; num aplicativo de desktop o certo é a caixa de diálogo
+   nativa, que também é o que faltava para o schematic e o .zip saírem. */
+const FILTROS={zip:[{name:'Arquivo compactado',extensions:['zip']}],
+ schem:[{name:'Esquema do WorldEdit',extensions:['schem']}],
+ txt:[{name:'Texto',extensions:['txt']}],
+ mcad:[{name:'Projeto do mCAD',extensions:['mcad']}],
+ nbt:[{name:'Estrutura do Minecraft',extensions:['nbt']}]};
+ipcMain.handle('salvar-binario',async(ev,{nome,dados,bin})=>{
+ const ext=String(nome||'').split('.').pop().toLowerCase();
+ const r=await dialog.showSaveDialog(win,{title:'Salvar arquivo',defaultPath:nome||'arquivo',
+  filters:(FILTROS[ext]||[{name:ext.toUpperCase(),extensions:[ext]}]).concat([{name:'Todos os arquivos',extensions:['*']}])});
+ if(r.canceled||!r.filePath)return null;
+ await fsp.writeFile(r.filePath,bin?Buffer.from(dados,'base64'):dados,bin?undefined:'utf8');
+ return r.filePath});
+
 /* ---- uma instância só; o segundo clique reaproveita a janela ---- */
 if(!app.requestSingleInstanceLock())app.quit();
 else{

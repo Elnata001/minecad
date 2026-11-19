@@ -27,7 +27,7 @@ const {chromium}=require('playwright'),fs=require('fs');
   TIMP={sep:'auto',dec:'auto',cx:1,cy:2,cz:3,sc:1,hdr:true,name:'Levantamento',
    rows:[['Ponto','X','Y','Z'],['P01','0,00','0,00','102,50'],['P02','10,00','0,00','103,20'],['P03','10,00','10,00','104,10'],['P04','0,00','10,00','103,00'],['P05','5,00','5,00','106,00']]};
   const ps=tImpPts();o.push('11. CSV com decimal vírgula: '+ps.length+' pontos · '+JSON.stringify(ps[0])+' … cota máx '+Math.max.apply(null,ps.map(p=>p[2])));
-  tImpGo();const ti=P.els[P.els.length-1],qi=tinOf(ti);
+  tImpGo();if(TPEND)topoPlaceAt([TPEND.ox,TPEND.oz]);const ti=P.els[P.els.length-1],qi=tinOf(ti);
   o.push('    terreno importado: '+ti.name+' · '+ti.tp.length+' pontos · perímetro '+(ti.pts||[]).length+' vértices · '+qi.T.length+' triângulos');
   // 10. undo/redo
   const n0=P.els.length;undo();const n1=P.els.length;redo();
