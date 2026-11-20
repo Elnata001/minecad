@@ -13,6 +13,11 @@ on:
         description: 'Tag da release onde anexar o .jar (deixe vazio para só compilar)'
         required: false
         default: ''
+      despejar:
+        description: 'Escrever o .jar em base64 no log (para rede que não baixa artefatos)'
+        required: false
+        type: boolean
+        default: false
 
 # só o necessário para anexar o .jar à release quando a tag é criada
 permissions:
@@ -62,6 +67,16 @@ jobs:
             mcad-connect/gradlew
             mcad-connect/gradlew.bat
             mcad-connect/gradle/wrapper/**
+
+      # Rede que bloqueia o armazenamento de artefatos do Actions ainda consegue ler o log.
+      # Cada linha sai marcada com JARB64:, para separar do resto do log.
+      - name: Despejar o .jar no log
+        if: success() && inputs.despejar
+        run: |
+          jar=$(ls build/libs/*.jar | grep -v sources | head -1)
+          echo "JARNOME:$(basename "$jar")"
+          echo "JARSHA:$(sha256sum "$jar" | cut -d' ' -f1)"
+          base64 -w 200 "$jar" | sed 's/^/JARB64:/'
 
       # Numa tag, o .jar do mod entra na mesma release do instalador do Windows.
       - name: Anexar o .jar à release
