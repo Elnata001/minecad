@@ -1,0 +1,54 @@
+name: notas de release
+
+# O texto de cada release mora em docs/releases/<tag>.md, versionado junto com o código.
+# Este fluxo publica esse texto na release correspondente — a API do GitHub só aceita
+# editar release a partir de um fluxo, não de fora.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag da release (ex.: v27.2.1)'
+        required: true
+      limpar_jars:
+        description: 'Apagar da release os .jar do mod que não sejam o mais novo'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publicar o texto
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          arquivo="docs/releases/${TAG}.md"
+          test -f "$arquivo" || { echo "não achei $arquivo"; exit 1; }
+          gh release edit "$TAG" --notes-file "$arquivo"
+          echo "texto de $TAG publicado a partir de $arquivo"
+
+      # Dois .jar do mesmo mod na mesma release levam quem baixar os dois a um jogo que
+      # não abre. Fica só o de maior versão.
+      - name: Deixar só o .jar mais novo do mod
+        if: inputs.limpar_jars
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          jars=$(gh release view "$TAG" --json assets \
+                 -q '.assets[].name | select(startswith("mcad-connect-") and endswith(".jar"))' | sort -V)
+          manter=$(echo "$jars" | tail -1)
+          echo "mantendo: $manter"
+          for j in $jars; do
+            [ "$j" = "$manter" ] && continue
+            echo "apagando: $j"
+            gh release delete-asset "$TAG" "$j" --yes
+          done
