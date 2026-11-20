@@ -1344,7 +1344,8 @@ function ccPanel(){
  else if(CCERR)L='<p class="m">'+esc(CCERR)+'</p>';
  else if(CCAP===null)L='<p class="m">Procurando capturas…</p>';
  else if(!CCAP.length)L='<p class="m">Nenhuma captura ainda. No jogo, abra o inventário, clique em '
-   +'<b>mCAD</b>, marque os dois cantos da área e confirme — a captura aparece aqui.</p>';
+   +'<b>mCAD</b>, escolha o tamanho da área e clique em <b>Capturar em volta de mim</b> — a captura '
+   +'aparece aqui.</p>';
  else L='<div class="lst">'+CCAP.map((c,i)=>
    `<div class="li${CCSEL===i?' on':''}" data-a="ccsel:${i}"><b>${esc(c.rotulo||c.nome)}</b>`
    +`<span class="m">${esc(c.detalhe||'')}</span></div>`).join('')+'</div>';
