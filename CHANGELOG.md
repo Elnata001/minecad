@@ -16,6 +16,14 @@ enquanto a lista rolava por baixo, como se seguisse o cursor. O mecanismo saiu.
 
 **A aba de importação agora se chama só mCAD Connect.**
 
+**mCAD Connect 0.1.2, depois do primeiro teste no jogo.** O botão **mCAD** só existia no
+inventário da sobrevivência: o do criativo é outra tela e não herda daquela, de modo que o modo
+onde se constrói era o único sem o botão. As duas telas passam a recebê-lo, e ele recua para a
+esquerda do painel se não houver espaço à direita. E o menu saía em inglês para quem joga em
+português de Portugal — o Minecraft não cai de `pt_pt` para `pt_br` —, o que agora tem arquivo de
+idioma próprio. O aviso da aba mCAD Connect, no mCAD, também descrevia um fluxo que não existe
+("marque os dois cantos da área"); o mod captura em volta do jogador, no tamanho escolhido.
+
 ## mCAD 27 — v27.2.0
 **O mCAD Connect, o mod que liga o jogo ao programa.** Mod de cliente para o Minecraft 26.3,
 em Fabric, com um botão **mCAD** à direita do painel do inventário e um menu montado com os
