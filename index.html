@@ -81,6 +81,8 @@ html:root[data-theme=light]{--bg:#f1f2ee;--panel:#fff;--ink:#1d1f1c;--mut:#6b6f6
 #cfb{position:absolute;z-index:12;top:10px;left:50%;transform:translateX(-50%);display:none;align-items:flex-end;gap:8px;background:var(--panel);border:1px solid var(--acc);border-radius:12px;box-shadow:0 8px 28px #0008;padding:6px 8px;max-width:min(96%,860px);flex-wrap:nowrap}
 #cfb label{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;gap:2px;margin:0;font-size:11px;color:var(--mut)}#cfb input{height:28px;width:150px}#cfb button{height:28px;white-space:nowrap}#cfb .m{max-width:220px;line-height:1.2}
 #fb{position:absolute;z-index:8;display:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px #0008;padding:6px 8px;max-width:min(94%,980px)}
+#askpl{position:absolute;z-index:12;top:10px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--acc);border-radius:12px;box-shadow:0 8px 28px #0008;padding:8px 12px;max-width:min(96%,560px)}
+#askpl[hidden]{display:none}#askpl .m{margin:4px 0 6px}#askpl .row{flex-wrap:wrap}
 .fbt{cursor:grab;font-size:12px;color:var(--mut);padding:0 4px 5px;user-select:none;display:flex;gap:8px;align-items:center}.fbt:active{cursor:grabbing}.fbt:before{content:"⠿";opacity:.6}.fbh{color:var(--ink)}
 .fbr{display:flex;gap:8px;align-items:stretch}.fbs{display:flex;gap:10px;align-items:flex-end;overflow-x:auto;padding:2px 2px 6px;min-width:0;flex:1;scrollbar-width:thin;scrollbar-color:var(--line) transparent}.fbs>*{flex:none}
 .fbs label{flex-direction:column;align-items:stretch;gap:2px;font-size:11px;color:var(--mut);margin:0}.fbs label input{width:118px}.fbs label .sxd{width:150px}.fbs .m{white-space:normal;width:230px}.fbs .row{margin:0}.fbs .chips{display:flex;gap:6px;align-items:center}
@@ -148,7 +150,7 @@ dialog{position:relative}dialog h3{padding-right:38px}
 .dmb[data-dmo]{position:relative}.dmb[data-dmo]:after{content:"";position:absolute;right:3px;bottom:3px;border:3.5px solid transparent;border-right-color:currentColor;border-bottom-color:currentColor;opacity:.5}.dmb.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 </style></head><body>
 <div id="app"><header id="top"><b class="brand"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEqUlEQVR4Xu1XMWwcRRR9f2Z2985nR8aJjY2CrFiJFDmAkFKAZJBCSYVEQQESCFGEEkqkSCgNNRUFBBoCBQUFBUoVEQRKYTkFkRMiIYwE2FEc3xn7zne3OzMf/dldxwhp98Al/MI++/Zm3n///ff/Af/1oH9LwNMfLU6ZBmbZ6XkoLLDnk2CcBHACio8PJvsv3njh56t155u6B0IwCARe+uSxdyihJZ/yIyDMeYspZRCTIYAI8AB7hrcAx+7JM9/Mbqyeu3u76o7RABTB4FfjVnQ6ZQdihAthwWzDKzj2JDgCYAaT5scBVAJQlQww6F2GOvvhWQEqLNzL9qzjjDObWR7YAe+5Hu3aHd21u5oonKegQMzyWmV1DFczQOCLkg9WQoYMkCKlU5+iaZo0lxzFZDSF2eYcDEW4eveKJB6QKiYlJBwKwLOfnp6zPp6liB+N7kx97dDpZ5xipvEwLjzxHh6KpxCpGC0zgV97vzwAQAIBirSXQlVGJQMuMz+S8keSVoTB/Ob73vu+g8XLJ17HfGsB22kHQz+Ezzz2bA9ECvCBLDCTgqu7HtUAGNwiJh60U29U9NaYbrUXxk9haeY53Um3oMnklJOCUVEovpOrCUSiASVVOwQDRJSC0NTQes/27GsLbzafmnkGqRsgVgkcFymK4khBkYhfQn6TrrtcoqYLuOATzpEzLTPujiXTEBFu9H8Pl5YRpF8eJ7bAXH12EZUPMcGahiRC3w/t8PMe7Y7HaPDy1nVcWf8KY6YFzy6UIWdAgblgnZUieaMmKgEQyEkjEZG+vb5+fjY6vuojS5fXLnnPPrTbfiZFCYR9MSNhwNbdXlcChqTH8PBHcBHdH9o3lj/77RLWdn/yiUogIPJ6S88JAzqw8U80UNmGubtLS7mgqi8/vqwaE02MRxNI/fBAfrnk/6qBAs9hSsCgXOYMI4kmeiyNVRxy3O+AIsR8gigLDRAOKLQiqjVQdgHlLeXZ2VJXQn/5WoQnDGgRYSiAYGZNOoysyqjuAlDehvmZ8jPoSv74OwNlCQonYKXypw8BAMThCGYuTIWyUviOZQ7L4MlDTEgHEQpCUU/5meqoFiGXDBSuxmVOJLM/lEBAODHgwgvCzMxBKFkW6qJmIQkMlGUQKmxZYw8PQwaJbiJSUche5sEDI2KNETRQCYCJSEWkCJgsNFAsGATrM7TTrWDJ2+kWNgf38EfagVaGgwRFAyNEHQPbLvVrTLgZWGVyYr0N3cCdnVW8vfwGurYbPEFE2dRjxYQMVjTSMKoEoGP1fH8n7q6cXwmZM+XDSSxYBtKQB8FtZCbI/3Jd5BUb1QcqAXz3ys2OHLb4xWJ866Vb6cEdj4QPko8zy8VFS4gfCQINzyMtvNUP5esdpqeni8w5Y5bVN38nDB2lgt5D68ncsCxuJOujG2Ua1i6lB3XEoMgkRrmel7mbefAOGG1mfx+KN13kNrnl77Ox2zaxbdozx+p0OBJN185dCwxYnX3bw+ADdzTbcJHf8bHvsnYDn9ihJ7LaectMGVil5PSQtd6rA1C7Nu9H8e1o4frEqTHfPEPALqV6CKKeAnUpVT1FUa/fafRzvfwfo8WfueVByde9Y0IAAAAASUVORK5CYII=" alt="" width="22" height="22">mCAD</b><nav id="menus"></nav><span class="m" id="pname"></span><div id="qt"></div></header>
-<section id="pp"><div class="pph"></div><div class="pps"></div></section><div id="tools"></div><div id="etools"></div><aside id="nav"></aside><main id="vp"><canvas id="c2"></canvas><canvas id="c3"></canvas><canvas id="c4"></canvas><div id="v3"></div><div id="dims"></div><div id="tbl"></div><div id="fb"><div class="fbs"></div><div class="fbmw"></div></div><div id="cfb"></div></main><aside id="props"></aside><footer id="st"></footer></div>
+<section id="pp"><div class="pph"></div><div class="pps"></div></section><div id="tools"></div><div id="etools"></div><aside id="nav"></aside><main id="vp"><canvas id="c2"></canvas><canvas id="c3"></canvas><canvas id="c4"></canvas><div id="v3"></div><div id="dims"></div><div id="tbl"></div><div id="fb"><div class="fbs"></div><div class="fbmw"></div></div><div id="cfb"></div><div id="askpl" hidden></div></main><aside id="props"></aside><footer id="st"></footer></div>
 <div id="dd" hidden></div><dialog id="dlg"></dialog><div id="wel" hidden></div><input type="file" id="wfile" accept=".mcad,.json,application/json" hidden>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -2169,6 +2171,7 @@ function info(w){const r=[],ok=w.cat==='wall'||w.cat==='column',[y0,y1]=ok?wallT
 const viewPanel=tot=>{const l=lvl(),L=P.levels.map(x=>[x.id,x.name]);
  return `<h4>Vista — ${view==='plan'?'Planta':view==='3d'?'3D':'Projeto'}</h4><label>Nível da vista${dd(L,lv,'data-a="lv"')}</label>`
  +(view==='plan'?`<label>Altura de corte (blocos acima do nível)<input type="number" min="1" step="1" data-vr="c" value="${Math.max(1,Math.round(l.vrc)||2)}"></label><label>Profundidade (até o nível)${dd(L,lvOf(P,l.vrd)?l.vrd:lv,'data-vr="d"')}</label><p class="m">A planta mostra do nível de profundidade até a altura de corte; escadas e coberturas do nível aparecem inteiras.</p>`:'')
+ +(view==='sec'?`<p class="m">A fachada e o corte também modelam. O clique insere no plano do que está sendo visto: na célula vazia, na profundidade do vizinho mais próximo; sobre um bloco, encostado nele. Porta e componente entram na parede clicada. As ferramentas de traçado em planta pedem a planta num aviso sobre a vista. O botão direito desloca.</p>`:'')
  +(((P.hid||{})[vkey()]||[]).length?`<div class="row"><span class="m">${((P.hid||{})[vkey()]||[]).length} elemento(s) oculto(s) nesta vista</span><button data-a="unhide">Reexibir</button></div>`:'')
  +`<span class="chip">Blocos no projeto: ${tot}</span><span class="chip">Células compartilhadas: ${B.shared}</span><span class="chip">Clique direito: ocultar e selecionar semelhantes</span>`};
 const elPanel=w=>`<h4>${CATS[w.cat].l} - ${esc(w.name)}</h4>${w.cat==='comp'?`<div class="row"><button data-a="comp">Abrir biblioteca…</button></div>`:''}${w.cat==='topo'?`<div class="row"><button data-a="vis">Visualização ▾</button><button data-a="tedit">Editar superfície</button><button data-a="tfeat:${w.id}">Plataformas e curvas…</button></div>`:''}<label>Nome<input type="text" data-k="name" value="${esc(w.name)}"></label>${fields(w.cat,w,'data-k',0,0,isGrp(w)?['def']:null)}${w.cat==='wall'||w.cat==='window'?'<p class="m">Espaço alterna o lado externo (linha azul).</p>':''}`;
@@ -2383,6 +2386,14 @@ function annDraw(sx,sz,S){g.textAlign='left';
  for(const v of P.views){if(v.lv!==lv)continue;const mx=sx((v.x1+v.x2)/2),mz=sz((v.z1+v.z2)/2);g.strokeStyle=g.fillStyle='#7b3fe4';g.lineWidth=2;g.setLineDash([10,4]);g.beginPath();g.moveTo(sx(v.x1),sz(v.z1));g.lineTo(sx(v.x2),sz(v.z2));g.stroke();g.setLineDash([]);
   g.beginPath();g.moveTo(mx,mz);g.lineTo(mx+v.L[0]*22,mz+v.L[1]*22);g.stroke();g.font='12px system-ui,sans-serif';g.fillText(v.name,mx+v.L[0]*26+4,mz+v.L[1]*26)}g.lineWidth=1}
 function svDef(){const E={N:[0,1],S:[0,-1],E:[-1,0],W:[1,0]},N={N:'Norte',S:'Sul',E:'Leste',W:'Oeste'};if(!SV)return null;if(E[SV.id])return{name:'Fachada '+N[SV.id],L:E[SV.id]};const v=P.views.find(x=>x.id===SV.id);return v?{name:v.name,L:v.L,cut:1,tc:v.tc,ua:v.ua,ub:v.ub}:null}
+/* quantas camadas de profundidade cada célula da vista guarda. Uma só não basta: escada, laje,
+   cerca e porta deixam vazios por onde se vê o que está atrás. Seis cobre o que aparece na
+   prática sem guardar o modelo inteiro em memória. */
+const SECD=6;
+const secFull=R=>R.length===1&&R[0][2]>=1&&R[0][3]>=1;
+/* A fachada e o corte também são pranchetas de modelagem, não só de leitura. Para o clique saber
+   onde caiu, o desenho guarda aqui a transformação da vista e o mapa de células. */
+let SEC=null,SECH=null,SECK=null,SECT=null,SBOX=null;
 /* forma da célula numa vista ortográfica, em frações do bloco [x, y a partir da base, largura, altura]:
    laje ocupa meia altura, escada é meia altura mais um quarto do lado do facing, porta é uma lâmina de 3/16. */
 function secRects(v,lx,lz){const su=d=>-lz*d[0]+lx*d[1];
@@ -2397,17 +2408,28 @@ function secRects(v,lx,lz){const su=d=>-lz*d[0]+lx*d[1];
    for(const[by,bh]of bars)o.push([q>0?.5:0,by,.5,bh])}
   o.push([.5-W/2,0,W,1]);return o}}
  return[[0,0,1,1]]}
-function drawSec(){const c=$('#c3'),g3=c.getContext('2d'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight,st=getComputedStyle(document.documentElement),V=svDef();c.width=w*d;c.height=h*d;g3.setTransform(d,0,0,d,0,0);g3.fillStyle=st.getPropertyValue('--cv');g3.fillRect(0,0,w,h);g3.fillStyle=st.getPropertyValue('--cink');g3.font='13px system-ui,sans-serif';
+function drawSec(){SEC=null;const c=$('#c3'),g3=c.getContext('2d'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight,st=getComputedStyle(document.documentElement),V=svDef();c.width=w*d;c.height=h*d;g3.setTransform(d,0,0,d,0,0);g3.fillStyle=st.getPropertyValue('--cv');g3.fillRect(0,0,w,h);g3.fillStyle=st.getPropertyValue('--cink');g3.font='13px system-ui,sans-serif';
  if(!V){g3.fillText('Vista não encontrada.',12,22);return}
  const[lx,lz]=V.L,best=new Map();let a=1e9,b=-1e9,y0=1e9,y1=-1e9,t0=1e9;
- const hid=hidSet();for(const v of B.vox.values()){if(hid.has(v.o))continue;const u=-lz*v.x+lx*v.z,t=v.x*lx+v.z*lz;if(V.cut&&(t<V.tc||u<V.ua||u>V.ub))continue;const k=u+','+v.y,o=best.get(k);if(!o||t<o.t)best.set(k,{u,y:v.y,t,v});a=Math.min(a,u);b=Math.max(b,u);y0=Math.min(y0,v.y);y1=Math.max(y1,v.y);t0=Math.min(t0,t)}
+ const hid=hidSet();for(const v of B.vox.values()){if(hid.has(v.o))continue;const u=-lz*v.x+lx*v.z,t=v.x*lx+v.z*lz;if(V.cut&&(t<V.tc||u<V.ua||u>V.ub))continue;const k=u+','+v.y;let L=best.get(k);if(!L)best.set(k,L=[]);
+  /* a célula guarda uma pilha em ordem de profundidade, e não só o bloco mais à frente: escada,
+     laje e cerca não preenchem a célula inteira, e pelo vazio delas tem de aparecer o que está
+     atrás — era o buraco que parecia um bloco faltando abaixo da cobertura. */
+  let i=L.length;while(i&&L[i-1].t>t)i--;
+  if(i<SECD){L.splice(i,0,{u,y:v.y,t,v});if(L.length>SECD)L.pop()}
+  a=Math.min(a,u);b=Math.max(b,u);y0=Math.min(y0,v.y);y1=Math.max(y1,v.y);t0=Math.min(t0,t)}
  if(!SV.cam&&best.size)SV.cam={u:(a+b+1)/2,y:(y0+y1+1)/2,s:Math.max(3,Math.min(40,w/(b-a+5),h/(y1-y0+5)))};const cm=SV.cam;if(!cm){g3.fillText(V.name+': sem elementos nesta vista.',12,22);return}
  const S=cm.s,X=u=>(u-cm.u)*S+w/2,Y=y=>h/2-(y-cm.y)*S,tc=V.cut?V.tc:t0;
- for(const o of best.values()){const cut=V.cut&&o.t===V.tc,X0=X(o.u),Y0=Y(o.y+1),R=secRects(o.v,lx,lz);
-  for(const[fx,fy,fw,fh]of R){const rx=fx*S,ry=(1-fy-fh)*S,rw=fw*S+.5,rh=fh*S+.5;
-   fillCell(g3,o.v,X0,Y0,S,0,rx,ry,rw,rh);
-   if(!cut){g3.fillStyle='rgba(0,0,0,'+Math.min(.4,(o.t-tc)*.025)+')';g3.fillRect(X0+rx,Y0+ry,rw,rh)}
-   g3.strokeStyle=cut?'#000':'rgba(0,0,0,.18)';g3.lineWidth=cut?1.5:1;if(S>8)g3.strokeRect(X0+rx+.5,Y0+ry+.5,rw-1,rh-1)}}
+ SEC={V,lx,lz,S,cu:cm.u,cy:cm.y,w,h,cells:best,t0,tc};
+ for(const L of best.values()){
+  /* da frente para trás até o primeiro bloco que ocupa a célula toda: o que vier atrás dele não
+     aparece por vazio nenhum, então não precisa ser desenhado. */
+  let n=L.length;for(let i=0;i<L.length;i++){L[i].R=secRects(L[i].v,lx,lz);if(secFull(L[i].R)){n=i+1;break}}
+  for(let i=n-1;i>=0;i--){const o=L[i],cut=V.cut&&o.t===V.tc,X0=X(o.u),Y0=Y(o.y+1);
+   for(const[fx,fy,fw,fh]of o.R){const rx=fx*S,ry=(1-fy-fh)*S,rw=fw*S+.5,rh=fh*S+.5;
+    fillCell(g3,o.v,X0,Y0,S,0,rx,ry,rw,rh);
+    if(!cut){g3.fillStyle='rgba(0,0,0,'+Math.min(.4,(o.t-tc)*.025)+')';g3.fillRect(X0+rx,Y0+ry,rw,rh)}
+    g3.strokeStyle=cut?'#000':'rgba(0,0,0,.18)';g3.lineWidth=cut?1.5:1;if(S>8)g3.strokeRect(X0+rx+.5,Y0+ry+.5,rw-1,rh-1)}}}
  /* terreno: o corte mostra o perfil real da superfície no plano, e a fachada, a silhueta do terreno */
  for(const t of topoEls()){if(hid.has(t.id))continue;const q=tinOf(t);if(!q.T.length)continue;
   let t0b=1e9,t1b=-1e9;
@@ -2431,12 +2453,115 @@ function drawSec(){const c=$('#c3'),g3=c.getContext('2d'),d=devicePixelRatio||1,
    g3.strokeStyle='#6b5a3a';g3.lineWidth=V.cut?2:1.4;g3.stroke()}}
  g3.lineWidth=1;
  g3.setLineDash([6,4]);g3.strokeStyle='#7b3fe4';g3.fillStyle='#7b3fe4';g3.lineWidth=1;for(const l of P.levels){g3.beginPath();g3.moveTo(0,Y(l.elev));g3.lineTo(w,Y(l.elev));g3.stroke();g3.fillText(l.name+'  +'+l.elev,8,Y(l.elev)-4)}g3.setLineDash([]);
+ /* destaque dos elementos: verde firme no selecionado, verde leve no que está sob o cursor —
+    a mesma leitura da planta, para quem modela pela vista reconhecer o que vai pegar */
+ {const ss=new Set(selSet()),hv=hovId();
+  const cel=ids=>{const cols=new Set();if(!ids.size)return cols;
+   for(const v of B.vox.values()){if(!ids.has(v.o))continue;const u=-lz*v.x+lx*v.z,t=v.x*lx+v.z*lz;
+    if(V.cut&&(t<V.tc||u<V.ua||u>V.ub))continue;cols.add(u+','+v.y)}return cols};
+  const edg=(cols,al)=>{if(!cols.size)return;g3.globalAlpha=al;g3.strokeStyle=HICOL;g3.lineWidth=2;g3.beginPath();
+   for(const k of cols){const[u,y]=k.split(',').map(Number),xa=X(u),xb=X(u+1),ya=Y(y+1),yb=Y(y);
+    if(!cols.has((u-1)+','+y)){g3.moveTo(xa,ya);g3.lineTo(xa,yb)}
+    if(!cols.has((u+1)+','+y)){g3.moveTo(xb,ya);g3.lineTo(xb,yb)}
+    if(!cols.has(u+','+(y+1))){g3.moveTo(xa,ya);g3.lineTo(xb,ya)}
+    if(!cols.has(u+','+(y-1))){g3.moveTo(xa,yb);g3.lineTo(xb,yb)}}
+   g3.stroke();g3.globalAlpha=1;g3.lineWidth=1};
+  const pin=(cols,fa,ea)=>{if(!cols.size)return;g3.save();g3.globalAlpha=fa;g3.fillStyle=HICOL;
+   for(const k of cols){const[u,y]=k.split(',').map(Number);g3.fillRect(X(u),Y(y+1),S,S)}
+   edg(cols,ea);g3.restore();g3.lineWidth=1};
+  if(ss.size)pin(cel(ss),HISEL,HISELL);
+  if(hv&&!ss.has(hv))pin(cel(new Set([hv])),HIHOV,HIHOVL)}
+ if(SBOX){const u0=Math.min(SBOX.a[0],SBOX.b[0]),u1=Math.max(SBOX.a[0],SBOX.b[0])+1,
+   ya=Math.max(SBOX.a[1],SBOX.b[1])+1,yb=Math.min(SBOX.a[1],SBOX.b[1]);
+  g3.strokeStyle='#2b7fff';g3.fillStyle='rgba(43,127,255,.12)';g3.lineWidth=1.5;g3.setLineDash([5,4]);
+  g3.fillRect(X(u0),Y(ya),(u1-u0)*S,(ya-yb)*S);g3.strokeRect(X(u0),Y(ya),(u1-u0)*S,(ya-yb)*S);
+  g3.setLineDash([]);g3.lineWidth=1}
+ /* célula de destino da próxima inserção */
+ if(SECH&&tool!=='sel'&&!SECNO[tool]){g3.save();g3.strokeStyle='#ff8a3d';g3.lineWidth=2;
+  g3.strokeRect(X(SECH[0])+1,Y(SECH[1]+1)+1,S-2,S-2);g3.restore();g3.lineWidth=1}
  g3.fillStyle=st.getPropertyValue('--cink');g3.font='bold 14px system-ui,sans-serif';g3.fillText(V.name+(V.cut?'  (corte)':''),12,22)}
+/* ---------- modelar pela fachada e pelo corte ----------
+   A vista ortográfica tem dois eixos: u, que corre ao longo da vista, e y, a cota. O terceiro, a
+   profundidade, não aparece — e é dele que vem toda a regra abaixo. Uma célula da tela vira uma
+   célula do modelo pela profundidade do bloco que está ali; numa célula vazia, pela do vizinho
+   mais próximo, e, se não houver nenhum, pelo plano do corte. */
+const SECXZ=(u,t)=>[SEC.lx*t-SEC.lz*u,SEC.lz*t+SEC.lx*u];
+/* ferramentas cujo traçado é um caminho visto de cima: na fachada falta o eixo que elas pedem */
+const SECNO={wall:1,floor:1,roof:1,fence:1,curtain:1,beam:1,window:1,stair:1,
+ topo:1,pad:1,tbl:1,tpt:1,tplace:1,cut:1,dim:1,txt:1,ln:1,tag:1};
+const SECANN=['cut','dim','txt','ln','tag'];
+const secWhy=t=>SECANN.includes(t)
+ ?'Corte, cota, texto, linha de detalhe e identificador são anotações de planta: pertencem a uma vista de planta, não à fachada.'
+ :'O traçado desta ferramenta é um caminho visto de cima. Na fachada e no corte falta o eixo da profundidade, então escolha a planta onde o elemento deve ser desenhado.';
+function secAt(ev){if(!SEC||!SV||!SV.cam)return null;const r=c3.getBoundingClientRect();
+ const u=Math.floor((ev.clientX-r.left-SEC.w/2)/SEC.S+SEC.cu),
+  y=Math.floor(SEC.cy+(SEC.h/2-(ev.clientY-r.top))/SEC.S);
+ return{u,y,L:SEC.cells.get(u+','+y)||null}}
+/* profundidade de uma célula vazia: a do vizinho mais próximo que tenha bloco — quem modela pela
+   vista está construindo encostado no que vê. Sem vizinho, o plano do corte (ou a face da frente). */
+function secDepth(u,y){const C=SEC.cells;
+ for(let r=1;r<=3;r++)for(let du=-r;du<=r;du++)for(let dy=-r;dy<=r;dy++){
+  if(Math.max(Math.abs(du),Math.abs(dy))!==r)continue;
+  const L=C.get((u+du)+','+(y+dy));if(L)return L[0].t}
+ return SEC.V.cut?SEC.V.tc:SEC.t0}
+/* célula do modelo para a célula da tela: no bloco, a inserção de bloco encosta à frente dele; as
+   outras ferramentas usam o próprio bloco, que é quem hospeda porta e componente — como no 3D */
+function secCell(u,y){const L=SEC.cells.get(u+','+y);
+ if(!L)return{t:secDepth(u,y),id:null};
+ return{t:tool==='block'?L[0].t-1:L[0].t,id:L[0].v.o}}
+function secBox(bx,e){const{V,lx,lz}=SEC,u0=Math.min(bx.a[0],bx.b[0]),u1=Math.max(bx.a[0],bx.b[0]),
+ y0=Math.min(bx.a[1],bx.b[1]),y1=Math.max(bx.a[1],bx.b[1]),ids=new Set(e.ctrlKey?selSet():[]),hid=hidSet();
+ for(const v of B.vox.values()){if(hid.has(v.o))continue;
+  const u=-lz*v.x+lx*v.z,t=v.x*lx+v.z*lz;
+  if(V.cut&&(t<V.tc||u<V.ua||u>V.ub))continue;
+  if(GED&&!gMem(v.o))continue;
+  if(u>=u0&&u<=u1&&v.y>=y0&&v.y<=y1)ids.add(v.o)}
+ if(e.shiftKey)for(const id of[...ids])if(selSet().includes(id))ids.delete(id);
+ SELS=[...ids];sel=SELS[SELS.length-1]||null;selA=null;render()}
+function secClick(e){const a=secAt(e);if(!a)return;const id=a.L?a.L[0].v.o:null;
+ if(tool==='sel'){const h=GED&&!gMem(id)?null:id;
+  if(h&&(e.ctrlKey||e.shiftKey)){if(!SELS.length&&sel)SELS=[sel];
+   if(e.shiftKey){SELS=SELS.filter(x=>x!==h);sel=SELS[SELS.length-1]||null}
+   else{if(!SELS.includes(h))SELS.push(h);sel=h}}
+  else{sel=h;SELS=h?[h]:[]}
+  selA=null;render();return}
+ if(SECNO[tool]){toast('Escolha uma planta no aviso acima para desenhar.');ui();return}
+ const c=secCell(a.u,a.y);let t=c.t;
+ /* mover são dois cliques: o segundo reusa a profundidade do primeiro, senão o elemento andaria
+    também para dentro ou para fora da vista, que é o que o usuário não está vendo */
+ if(tool==='move'){if(pts===null)SECT=t;else if(SECT!==null)t=SECT}
+ const[x,z]=SECXZ(a.u,t),q=[x+.5,z+.5];
+ PK3=c.id;Y3=a.y;
+ try{toolClick(q,q,e)}finally{PK3=undefined;Y3=null}
+ if(!pts)SECT=null;
+ if(tool==='block'){DEF.block.off=a.y-Math.round(lvl().elev);ui()}
+ if(view==='sec')drawSec()}
 const c3=$('#c3');let d3=null;
-c3.onpointerdown=e=>{c3.setPointerCapture(e.pointerId);d3={x:e.clientX,y:e.clientY}};
-c3.onpointermove=e=>{if(!d3||!SV||!SV.cam)return;SV.cam.u-=(e.clientX-d3.x)/SV.cam.s;SV.cam.y+=(e.clientY-d3.y)/SV.cam.s;d3.x=e.clientX;d3.y=e.clientY;drawSec()};
-c3.onpointerup=()=>{d3=null};
+c3.oncontextmenu=e=>e.preventDefault();
+c3.onpointerdown=e=>{c3.setPointerCapture(e.pointerId);const a=secAt(e);
+ d3={x:e.clientX,y:e.clientY,b:e.button,mv:0,a0:a?[a.u,a.y]:null}};
+c3.onpointermove=e=>{
+ if(d3&&d3.b!==0){if(SV&&SV.cam){SV.cam.u-=(e.clientX-d3.x)/SV.cam.s;SV.cam.y+=(e.clientY-d3.y)/SV.cam.s}
+  d3.x=e.clientX;d3.y=e.clientY;d3.mv+=9;drawSec();return}
+ if(d3){d3.mv+=Math.abs(e.clientX-d3.x)+Math.abs(e.clientY-d3.y);d3.x=e.clientX;d3.y=e.clientY;
+  if(tool==='sel'&&d3.mv>6&&d3.a0&&!SBOX)SBOX={a:d3.a0,b:d3.a0.slice()};
+  if(SBOX){const a=secAt(e);if(a)SBOX.b=[a.u,a.y];drawSec();return}}
+ const a=secAt(e),k=a?a.u+','+a.y:null;
+ if(k!==SECK){SECK=k;SECH=a?[a.u,a.y]:null;
+  hovSet(HOVT.includes(tool)&&a&&a.L?a.L[0].v.o:null);ui();drawSec()}};
+c3.onpointerleave=()=>{if(d3)return;SECK=null;SECH=null;if(EHOV||EHOVR){EHOV=EHOVR=null}drawSec()};
+c3.onpointerup=e=>{const dg=d3;d3=null;
+ if(SBOX){const bx=SBOX;SBOX=null;secBox(bx,e);return}
+ if(!dg)return;
+ if(dg.b===2&&dg.mv<=5){const a=secAt(e);cmOpen(e.clientX,e.clientY,a&&a.L?a.L[0].v.o:null);return}
+ if(dg.b!==0||dg.mv>5)return;
+ secClick(e)};
 c3.onwheel=e=>{e.preventDefault();if(SV&&SV.cam){SV.cam.s=Math.min(80,Math.max(3,SV.cam.s*(e.deltaY<0?1.15:1/1.15)));drawSec()}};
+/* a mensagem que troca de vista sem obrigar a ida ao navegador de projeto */
+function secAskPlan(){const t=TOOLS.find(x=>x[0]===tool),nm=t?t[1].replace(/\s*\(.*$/,''):'Esta ferramenta';
+ return `<b>${esc(nm)} precisa de uma planta</b><p class="m">${secWhy(tool)} A ferramenta continua ativa na planta escolhida.</p>`
+  +'<div class="row">'+P.levels.map(l=>`<button data-a="plan:${l.id}">${esc(l.name)} &nbsp;+${l.elev}</button>`).join('')
+  +'<button data-a="tool:sel">Cancelar</button></div>'}
 /* folhas: reúnem vistas geradas ao vivo do modelo (plantas, fachadas, cortes), tabela de blocos e textos, com carimbo; exportam PDF e PNG */
 let SHT=null;
 const SHo=()=>SHT&&P.sheets.find(x=>x.id===SHT.id);
@@ -2449,12 +2574,12 @@ function shPanel(){const S=SHo(),add=[['','Adicionar à folha…'],...P.levels.m
  <h4>Conteúdo</h4>${S.items.map((it,i)=>`<div class="row"><span>${esc(shCap(it))}</span><button data-a="shup:${i}">↑</button><button data-a="shrm:${i}">×</button></div>`).join('')||'<p class="m">Folha vazia.</p>'}<label>Adicionar${dd(add,'',`data-sha="1"`)}</label>
  <h4>Exportar</h4><div class="row"><button data-a="shpdf">PDF</button><button data-a="shpng">Imagem PNG</button></div><p class="m" id="shmsg"></p>`}
 /* captura uma vista renderizando-a brevemente em tamanho W×H com tema claro, sem alterar seleção nem câmera do usuário */
-function capture(kind,ref,W,H){const rt=document.documentElement,th=rt.dataset.theme,stl=rt.getAttribute('style')||'',sv={sel,selA,lv,cam,SK,pts,tool,DM,SV},el=kind==='plan'?c2:c3,d0=el.style.display;
+function capture(kind,ref,W,H){const rt=document.documentElement,th=rt.dataset.theme,stl=rt.getAttribute('style')||'',sv={sel,selA,lv,cam,SK,pts,tool,DM,SV,SEC},el=kind==='plan'?c2:c3,d0=el.style.display;
  rt.dataset.theme='light';rt.style.setProperty('--cv','#ffffff');rt.style.setProperty('--cink','#1d1f1c');rt.style.setProperty('--cline','#d6d9d2');rt.style.setProperty('--grid','#e6e7e1');sel=selA=null;SK=null;pts=null;tool='sel';DM=[];el.style.display='block';el.style.width=W+'px';el.style.height=H+'px';
  try{if(kind==='plan'){lv=ref;let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const v of B.vox.values()){a=Math.min(a,v.x);b=Math.max(b,v.x+1);c=Math.min(c,v.z);d=Math.max(d,v.z+1)}
    cam=b<a?{x:6,z:5,s:20}:{x:(a+b)/2,z:(c+d)/2,s:Math.max(3,Math.min(60,W/(b-a+6),H/(d-c+6)))};draw2d()}else{SV={id:ref,cam:null};drawSec()}
   const o2=document.createElement('canvas');o2.width=el.width;o2.height=el.height;o2.getContext('2d').drawImage(el,0,0);return o2}
- finally{el.style.display=d0;el.style.width=el.style.height='';rt.setAttribute('style',stl);if(th===undefined)delete rt.dataset.theme;else rt.dataset.theme=th;({sel,selA,lv,cam,SK,pts,tool,DM,SV}=sv)}}
+ finally{el.style.display=d0;el.style.width=el.style.height='';rt.setAttribute('style',stl);if(th===undefined)delete rt.dataset.theme;else rt.dataset.theme=th;({sel,selA,lv,cam,SK,pts,tool,DM,SV,SEC}=sv)}}
 function capTable(W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),s0=[TB.lv,TB.mt];TB.lv=TB.mt='';const rows=rowsBlocks().sort((a,b)=>b.blk-a.blk);[TB.lv,TB.mt]=s0;
  const fs=Math.max(10,Math.min(26,H/(Math.min(rows.length,30)+3))),n=Math.max(1,Math.floor(H/(fs*1.5))-2);x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#000';x.font=`bold ${fs}px sans-serif`;x.fillText('Bloco',6,fs*1.3);x.textAlign='right';x.fillText('Qtd.',W-6,fs*1.3);
  x.font=`${fs}px sans-serif`;rows.slice(0,n).forEach((r,i)=>{const y=fs*(2.7+i*1.5);x.textAlign='left';x.fillText(r.bloco+(r.cnt==='Item'?' (item)':''),6,y);x.textAlign='right';x.fillText(String(r.blk),W-6,y)});
@@ -2501,7 +2626,7 @@ const IC=Object.fromEntries(Object.entries({sel:'<path d="M6 3l12 9-5.5 1.3L15 2
  m_arc:'<path d="M3 18a9 9 0 0 1 18 0"/><circle cx="3" cy="18" r="1.4"/><circle cx="21" cy="18" r="1.4"/><circle cx="12" cy="9" r="1.4"/>',
  m_bez:'<path d="M3 18C7 4 17 20 21 6"/><circle cx="3" cy="18" r="1.4"/><circle cx="21" cy="6" r="1.4"/>'}).map(([k,v])=>[k,svg(v)]));
 function dd(arr,cur,attrs){const it=arr.find(a=>String(a[0])===String(cur))||arr[0]||['',''];return `<div class="sxd" ${attrs} data-v="${esc(it[0])}" data-o="${esc(JSON.stringify(arr))}"><span class="sxt">${esc(it[1])}</span><svg class="ddc" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>`}
-let SXP=null,SXO=null,NAVH='',TLH='',QTH='',FBP=null,FBH='';
+let SXP=null,SXO=null,NAVH='',TLH='',QTH='',FBP=null,FBH='',APH='';
 /* tema: escuro/claro para a interface e uma cor própria para a área de modelagem, usada na planta, nos cortes e no 3D */
 let THEME=LS.g('mc:theme')||'dark',CVC=LS.g('mc:cv')||'';
 const CVD={dark:'#23251f',light:'#fafaf8'},cvHex=()=>CVC||CVD[THEME]||'#fafaf8';
@@ -2563,7 +2688,7 @@ function fbSync(){const pp=$('#pp'),fb=$('#fb'),h=$('#props').innerHTML;if(SELS.
  pp.style.display=PPV?'flex':'none';pp.classList.toggle('dis',!live);if(live)pp.removeAttribute('inert');else pp.setAttribute('inert','');
  const ae2=document.activeElement,dig2=ae2&&pp.contains(ae2)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae2.tagName);
  if(k!==PPH&&!dig2&&!$('#sxp.open')){PPH=k;pp.querySelector('.pph').innerHTML=m?m[1]:'';pp.querySelector('.pps').innerHTML=html.replace(/<h4>.*?<\/h4>/g,'')}
- if(SK||!w||(view!=='plan'&&view!=='3d')){fb.style.display='none';return}
+ if(SK||!w||(view!=='plan'&&view!=='3d'&&view!=='sec')){fb.style.display='none';return}
  /* sem Editar forma (o pilar, por exemplo) não há o que revelar ao passar o cursor: o botão fica sempre visível */
  const grp=isGrp(w),cmp=w.cat==='comp'&&!grp&&!!defOf(w.def),tpo=w.cat==='topo';
  const pen=skAble(w)?`<button class="fbm" data-a="sk" title="Editar forma">${IC.pencil}</button>`
@@ -2578,7 +2703,11 @@ function fbSync(){const pp=$('#pp'),fb=$('#fb'),h=$('#props').innerHTML;if(SELS.
   fs.innerHTML=fh;fs.style.display=fh?'':'none';fm.innerHTML=mv;fm.style.display=mv?'':'none'}
  fb.style.display='flex';fbPlace()}
 function fbPlace(){const fb=$('#fb');if(fb.style.display==='none')return;const v=$('#vp'),W=v.clientWidth,Hh=v.clientHeight,bw=fb.offsetWidth,bh=fb.offsetHeight,q=B.bb[sel];let x=(W-bw)/2,y=10;
- if(q){let ax,ay;if(view==='plan'){ax=(((q.x0+q.x1+1)/2)-cam.x)*cam.s+W/2;ay=(q.z0-cam.z)*cam.s+Hh/2}else if(window.THREE&&ca){const p=new THREE.Vector3((q.x0+q.x1+1)/2,q.y1+1,(q.z0+q.z1+1)/2).project(ca);ax=(p.x*.5+.5)*W;ay=(-p.y*.5+.5)*Hh}
+ if(q){let ax,ay;if(view==='plan'){ax=(((q.x0+q.x1+1)/2)-cam.x)*cam.s+W/2;ay=(q.z0-cam.z)*cam.s+Hh/2}
+  else if(view==='sec'){if(SEC){const{lx,lz}=SEC;let u0=1e9,u1=-1e9;
+   for(const c of[[q.x0,q.z0],[q.x1+1,q.z0],[q.x0,q.z1+1],[q.x1+1,q.z1+1]]){const u=-lz*c[0]+lx*c[1];if(u<u0)u0=u;if(u>u1)u1=u}
+   ax=((u0+u1)/2-SEC.cu)*SEC.S+W/2;ay=Hh/2-(q.y1+1-SEC.cy)*SEC.S}}
+  else if(window.THREE&&ca){const p=new THREE.Vector3((q.x0+q.x1+1)/2,q.y1+1,(q.z0+q.z1+1)/2).project(ca);ax=(p.x*.5+.5)*W;ay=(-p.y*.5+.5)*Hh}
   if(ax!==undefined){x=ax-bw/2;y=ay-bh-12}}
  fb.style.left=Math.max(4,Math.min(x,W-bw-4))+'px';fb.style.top=Math.max(4,Math.min(y,Hh-bh-4))+'px'}
 /* a barra de ferramentas rola sozinha: o botão em foco sai do contêiner (position:fixed) para esticar sem ser cortado */
@@ -3306,16 +3435,31 @@ function ui(){
  if(nh!==NAVH&&!dig&&!$('#sxp.open')){nv.innerHTML=nh;NAVH=nh}
  
  const w=tool==='sel'?P.els.find(e=>e.id===sel):null,tot=Object.values(B.qty).reduce((a,b)=>a+b,0);
- if(view==='sheet'&&SHo())$('#props').innerHTML=shPanel();else if(TED)$('#props').innerHTML=tedPanel();else if(SK)$('#props').innerHTML=skPanel();else if(tool==='tplace')$('#props').innerHTML=tplacePanel();else if(tool==='move')$('#props').innerHTML=movePanel();else if(DEF[tool])$('#props').innerHTML=toolPanel();else if(tool!=='sel')$('#props').innerHTML=annPanel();else if(!w&&selA&&annSel())$('#props').innerHTML=annSel();else if(!w)$('#props').innerHTML=viewPanel(tot);
- else $('#props').innerHTML=elPanel(w);
+ const ph=view==='sheet'&&SHo()?shPanel():TED?tedPanel():SK?skPanel():tool==='tplace'?tplacePanel():tool==='move'?movePanel():DEF[tool]?toolPanel():tool!=='sel'?annPanel():(!w&&selA&&annSel())?annSel():!w?viewPanel(tot):elPanel(w);
+ $('#props').innerHTML=ph;
+ /* Numa fachada ou corte, a ferramenta que precisa da grade vista de cima pede a planta sobre a
+    própria vista. A mensagem não pode morar no painel de propriedades, que fica fechado por
+    padrão: ela tem de aparecer onde o usuário está olhando, com as plantas ali para escolher. */
+ {const ap=$('#askpl'),pede=view==='sec'&&tool!=='sel'&&!!SECNO[tool];
+  if(pede){const h2=secAskPlan();if(h2!==APH){ap.innerHTML=h2;APH=h2}}else if(APH){ap.innerHTML='';APH=''}
+  ap.hidden=!pede}
  const cf=$('#cfb');cf.style.display=CEDIT||GED||TED?'flex':'none';
  if(CEDIT||GED||TED){const ch=CEDIT?cBar():GED?gBar():tedBar();if(ch!==CFH&&!cf.contains(document.activeElement)){cf.innerHTML=ch;CFH=ch}}else if(CFH){cf.innerHTML='';CFH=''}
  $('#st').textContent=stText();fbSync();vpSync()}
+/* o que a barra de estado mostra numa fachada ou corte: a célula sob o cursor, já convertida para
+   as coordenadas do modelo, e o que o clique vai fazer ali */
+function secStatus(){let s2='';
+ if(SEC&&SECH){const c=secCell(SECH[0],SECH[1]),[x,z]=SECXZ(SECH[0],c.t);
+  s2+='X '+x+' · Y '+SECH[1]+' · Z '+z+' · '}
+ s2+=tool==='sel'?'Clique seleciona; arrastar seleciona uma área; botão direito desloca a vista · '
+  :SECNO[tool]?'Esta ferramenta precisa de uma planta: escolha uma no aviso sobre a vista · '
+  :'Clique insere no plano da vista; botão direito desloca a vista · ';
+ return s2}
 /* consulta de cota pelo serviço central: o mesmo que as outras ferramentas usam */
 const stTopo=()=>{const p=view==='plan'?cur:(C3?[cell3(C3)[0]+.5,cell3(C3)[2]+.5]:null);
  if(!p||!topoEls().length)return'';const y=topoZ(p[0],p[1]);
  return y===null?'':'Terreno Y '+fmt(y)+' · '};
-function stText(){return (SELS.length>1?SELS.length+' selecionados · ':'')+stTopo()+(SCBUF?'Atalho: '+SCBUF+'… · ':'')+(view==='plan'?`X ${cur?Math.floor(cur[0]):'–'} · Y ${cur?Math.floor(cur[1]):'–'} · Escala ${Math.round(cam.s)} px/bloco · `:view==='3d'?(C3?`X ${cell3(C3)[0]} · Y ${cell3(C3)[1]} · Z ${cell3(C3)[2]} · `:'')+(tool==='sel'?'Arraste um elemento selecionado para movê-lo (Alt = altura) · ':'Clique no modelo ou na grade para inserir · ')+NAVS[NAVP][1].replace(/ · botão direito.*/,'')+' · '+'PgUp/PgDn sobe e desce a seleção · ':'')+`Nível: ${lvl().name} (Y ${lvl().elev}) · Grade 1×1 · ${Object.values(B.qty).reduce((a2,b2)=>a2+b2,0)} blocos`+(pts?' · Clique para o próximo ponto; Esc conclui':'')+(view==='3d'&&MSGS.e?' · '+MSGS.e:'')+(()=>{const dg=cur&&view==='plan'?draftCells(cur):(view==='3d'&&C3?draftCells([cell3(C3)[0]+.5,cell3(C3)[2]+.5],cell3(C3)[1]):null);return dg&&dg.n?' · '+dg.n+' módulo(s) de '+dg.dim:''})()+(PACKOLD?' · Pacote de texturas lido por uma versão anterior: recarregue o arquivo em Visualizar › Texturas':'')}
+function stText(){return (SELS.length>1?SELS.length+' selecionados · ':'')+stTopo()+(SCBUF?'Atalho: '+SCBUF+'… · ':'')+(view==='sec'?secStatus():'')+(view==='plan'?`X ${cur?Math.floor(cur[0]):'–'} · Y ${cur?Math.floor(cur[1]):'–'} · Escala ${Math.round(cam.s)} px/bloco · `:view==='3d'?(C3?`X ${cell3(C3)[0]} · Y ${cell3(C3)[1]} · Z ${cell3(C3)[2]} · `:'')+(tool==='sel'?'Arraste um elemento selecionado para movê-lo (Alt = altura) · ':'Clique no modelo ou na grade para inserir · ')+NAVS[NAVP][1].replace(/ · botão direito.*/,'')+' · '+'PgUp/PgDn sobe e desce a seleção · ':'')+`Nível: ${lvl().name} (Y ${lvl().elev}) · Grade 1×1 · ${Object.values(B.qty).reduce((a2,b2)=>a2+b2,0)} blocos`+(pts?' · Clique para o próximo ponto; Esc conclui':'')+(view==='3d'&&MSGS.e?' · '+MSGS.e:'')+(()=>{const dg=cur&&view==='plan'?draftCells(cur):(view==='3d'&&C3?draftCells([cell3(C3)[0]+.5,cell3(C3)[2]+.5],cell3(C3)[1]):null);return dg&&dg.n?' · '+dg.n+' módulo(s) de '+dg.dim:''})()+(PACKOLD?' · Pacote de texturas lido por uma versão anterior: recarregue o arquivo em Visualizar › Texturas':'')}
 /* ===== BIBLIOTECA DE COMPONENTES ===== */
 let CEDIT=null,CPG='comp';/* página da biblioteca: componentes ou grupos */
 const C=(x,y,z,m,o)=>Object.assign({x,y,z,m},o||{});
@@ -4253,7 +4397,7 @@ v3.onpointerup=e=>{const dg=drag;drag=null;
  g3up(ray3(e));draw3d()};
 v3.onwheel=e=>{e.preventDefault();o.r=Math.max(2,Math.min(600,o.r*(e.deltaY>0?1.1:.9)));draw3d()};
 /* ===== ORQUESTRAÇÃO ===== */
-function render(){syncT(P);ui();calcDims();const p=view==='plan';$('#dims').style.display=p?'block':'none';c2.style.display=p?'block':'none';v3.style.display=view==='3d'?'block':'none';$('#c3').style.display=view==='sec'?'block':'none';$('#c4').style.display=view==='sheet'?'block':'none';$('#tbl').style.display=view==='table'?'block':'none';if(p)draw2d();else if(view==='3d'){build3();draw3d()}else if(view==='sec')drawSec();else if(view==='sheet')drawSheet();else tbRender()}
+function render(){syncT(P);if(view!=='sec'){SECH=null;SECK=null}ui();calcDims();const p=view==='plan';$('#dims').style.display=p?'block':'none';c2.style.display=p?'block':'none';v3.style.display=view==='3d'?'block':'none';$('#c3').style.display=view==='sec'?'block':'none';$('#c4').style.display=view==='sheet'?'block':'none';$('#tbl').style.display=view==='table'?'block':'none';if(p)draw2d();else if(view==='3d'){build3();draw3d()}else if(view==='sec')drawSec();else if(view==='sheet')drawSheet();else tbRender()}
 new ResizeObserver(()=>{if(view==='plan')draw2d();else if(view==='3d')draw3d();else if(view==='sec')drawSec();else if(view==='sheet')drawSheet()}).observe($('#vp'));
 /* a biblioteca de blocos é registrada depois do primeiro build: recalcula o modelo com ela carregada */
 UIREADY=true;libLoad();libAdopt(P);B=build(P);fit();applyTheme();if(window.indexedDB)packLoad();

@@ -69,6 +69,8 @@ cobertura de quatro águas, escada em L, grupos de blocos e terreno modelado.
 
 > Repare como as camadas do terreno acompanham o relevo: isso é a mesma conversão em blocos que vai para o jogo, não um desenho à parte.
 
+> A fachada e o corte também modelam: clicar insere no plano do que está sendo visto, e a porta entra na parede clicada. As ferramentas cujo traçado é um caminho visto de cima — parede, piso, cobertura, cerca — pedem a planta num aviso sobre a própria vista, com as plantas do projeto ali para escolher.
+
 ## 11. O mesmo projeto, em volume
 
 ![Vista 3D — O mesmo projeto, em volume](docs/manual/img/11-tresd.webp)

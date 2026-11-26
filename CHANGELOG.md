@@ -1,5 +1,27 @@
 # Histórico
 
+## mCAD 27 — v27.3.0
+**A fachada e o corte viraram prancheta de modelagem.** As vistas ortográficas só serviam para
+olhar: nelas o clique não fazia nada. Agora respondem como a planta e o 3D. Clicar seleciona e
+arrastar seleciona uma área; o botão direito abre o menu de contexto e desloca a vista; Del exclui;
+a barra de propriedades do elemento aparece ali, ancorada nele. A inserção cai no plano do que está
+sendo visto: numa célula vazia, na profundidade do vizinho mais próximo; sobre um bloco, encostada
+nele — e, no corte, no plano de corte quando não há vizinho. Porta e componente entram na parede
+clicada, que é o caso em que modelar pela fachada é mais direto do que pela planta.
+
+**A ferramenta que precisa da planta diz isso, e leva até ela.** Parede, piso, cobertura, cerca,
+viga, janela, escada, parede-cortina e as anotações têm por traçado um caminho visto de cima, e na
+fachada falta justamente o eixo da profundidade. Em vez de recusar calado, um aviso sobre a vista
+explica o motivo e lista as plantas do projeto como botões: escolher uma troca de vista com a
+ferramenta já ativa, sem passar pelo navegador de projeto.
+
+**O buraco abaixo da cobertura.** Cada célula da fachada guardava só o bloco mais à frente. Quando
+esse bloco era escada, laje, cerca ou porta — formas que não preenchem a célula inteira —, o vazio
+dela aparecia na cor do fundo, e o desenho ficava com um bloco faltando logo abaixo de cada degrau
+do telhado. A célula passa a guardar uma pilha em ordem de profundidade e a desenhar do fundo para
+a frente, parando no primeiro bloco que fecha a célula: pelo vazio da escada vê-se a empena atrás,
+como no jogo.
+
 ## mCAD 27 — v27.2.1
 **Textura nítida na planta.** As texturas têm 16 píxeis de lado e, ampliadas para 120 píxeis
 por bloco, o navegador as interpolava: o bloco virava borrão. A vista 3D já pedia nitidez ao
