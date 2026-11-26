@@ -1,5 +1,30 @@
 # Histórico
 
+## mCAD 27 — v27.3.1
+**A porta na fachada e no corte usa a textura da metade certa.** Cada célula da vista era pintada
+com a textura lateral do bloco, sem dizer qual face estava à mostra. A porta tem textura própria
+para a metade de cima e espelha o desenho conforme a dobradiça — e ver a porta por trás espelha de
+novo. Sem isso as duas metades saíam iguais, com a cara da metade de baixo, e a porta parecia
+cortada ao meio. Era a mesma falha que a vista 3D já tinha corrigido, e a regra agora é a mesma
+nas duas.
+
+**Painel de vidro, cerca e muro deixaram de ser pintados duas vezes.** As formas vazadas eram
+montadas com os braços partindo do meio da célula, por cima do poste. Em material opaco a
+sobreposição não aparecia; no vidro, a faixa do meio levava duas demãos e saía mais escura — a
+listra que parecia um painel fora do lugar. Os braços passam a começar na borda do poste. Com os
+retângulos sem sobreposição, a conta de quanto a célula está coberta ficou exata: o painel ligado
+dos dois lados cobre a célula inteira de novo, e nada atrás dele aparece por engano.
+
+**Alçapão com a forma certa na vista.** Fechado, é a lâmina de 3/16 no topo ou na base; aberto,
+fica de pé no lado da dobradiça. Antes era desenhado como um cubo inteiro.
+
+**O aplicativo avisa quando há versão nova.** O atualizador baixava e trocava a versão em
+silêncio, e quem estava com o programa aberto só descobria no reinício seguinte. Agora o estado da
+atualização chega à janela: enquanto baixa, um aviso discreto no canto; quando termina, o aviso
+oferece **Instalar e reiniciar**, e a hora de fazer isso fica com o usuário, que pode salvar o que
+está aberto antes. Em **Ajuda › Procurar atualizações…** dá para conferir na hora, com resposta
+também quando já se está na versão mais recente.
+
 ## mCAD 27 — v27.3.0
 **A fachada e o corte viraram prancheta de modelagem.** As vistas ortográficas só serviam para
 olhar: nelas o clique não fazia nada. Agora respondem como a planta e o 3D. Clicar seleciona e

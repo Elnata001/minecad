@@ -117,6 +117,33 @@ ipcMain.handle('associar',async()=>{const ok=await associarMcad();
   detail:ok?'O clique duplo num arquivo .mcad passa a abrir o '+NOME+'. Se o Windows ainda abrir outro programa, clique com o botão direito no arquivo, escolha “Abrir com” › “Escolher outro aplicativo” e marque o '+NOME+' como padrão.'
           :'Tente novamente com o programa aberto normalmente, sem privilégios especiais.'});
  return ok});
+/* ---- atualização ----
+   Antes o atualizador baixava e trocava a versão em silêncio, e quem estava com o programa
+   aberto só descobria no reinício seguinte. Agora o estado da atualização chega à janela, que
+   avisa e deixa a hora de instalar com o usuário. */
+let ATU={estado:'ocioso',versao:null,pct:0,erro:''},AUP=null;
+const atuSet=o=>{ATU=Object.assign({},ATU,o);enviar('atualizacao',Object.assign({versaoAtual:app.getVersion()},ATU))};
+function atualizador(){if(AUP)return AUP;
+ try{const{autoUpdater}=require('electron-updater');
+  /* a numeração recomeçou em 27.1.0 com o nome mCAD 27, abaixo das versões antigas do
+     MineCAD: sem isto o atualizador recusaria a troca por considerá-la um retrocesso */
+  autoUpdater.allowDowngrade=true;autoUpdater.autoDownload=true;autoUpdater.autoInstallOnAppQuit=true;
+  autoUpdater.on('checking-for-update',()=>atuSet({estado:'procurando',erro:''}));
+  autoUpdater.on('update-available',i=>atuSet({estado:'baixando',versao:(i&&i.version)||null,pct:0,erro:''}));
+  autoUpdater.on('update-not-available',()=>atuSet({estado:'atual',versao:null,erro:''}));
+  autoUpdater.on('download-progress',q=>atuSet({estado:'baixando',pct:Math.round((q&&q.percent)||0)}));
+  autoUpdater.on('update-downloaded',i=>atuSet({estado:'pronta',versao:(i&&i.version)||null,pct:100,erro:''}));
+  autoUpdater.on('error',e=>atuSet({estado:'erro',erro:String((e&&e.message)||e||'erro')}));
+  AUP=autoUpdater}catch(e){AUP=null}
+ return AUP}
+ipcMain.handle('atu-estado',()=>Object.assign({versaoAtual:app.getVersion()},ATU));
+ipcMain.handle('atu-procurar',async()=>{const u=atualizador();
+ if(!u){atuSet({estado:'erro',erro:'atualizador indisponível nesta instalação'});return Object.assign({versaoAtual:app.getVersion()},ATU)}
+ try{await u.checkForUpdates()}catch(e){atuSet({estado:'erro',erro:String((e&&e.message)||e||'erro')})}
+ return Object.assign({versaoAtual:app.getVersion()},ATU)});
+/* instalar fecha o programa: sai do manipulador antes de chamar, ou o Electron reclama */
+ipcMain.handle('atu-instalar',()=>{if(!AUP||ATU.estado!=='pronta')return false;
+ setImmediate(()=>{try{AUP.quitAndInstall(false,true)}catch(e){}});return true});
 ipcMain.handle('sobre',async()=>{dialog.showMessageBox(win,{type:'info',title:'Sobre',
  message:NOME+' '+app.getVersion(),
  detail:'BIM simplificado para projetar arquitetura de Minecraft.\n\nElectron '+process.versions.electron+' · Chromium '+process.versions.chrome});
@@ -195,11 +222,7 @@ else{
   abrirAoIniciar=mcadDeArgv(process.argv);
   menu();criarJanela();
   if(app.isPackaged&&assocPendente())associarMcad().catch(()=>{});
-  if(app.isPackaged){try{const{autoUpdater}=require('electron-updater');
-    /* a numeração recomeçou em 27.1.0 com o nome mCAD 27, abaixo das versões antigas do
-       MineCAD: sem isto o atualizador recusaria a troca por considerá-la um retrocesso */
-    autoUpdater.allowDowngrade=true;
-    autoUpdater.autoDownload=true;autoUpdater.checkForUpdatesAndNotify()}catch(e){}}
+  if(app.isPackaged){const u=atualizador();if(u)Promise.resolve().then(()=>u.checkForUpdates()).catch(()=>{})}
  });
  app.on('window-all-closed',()=>app.quit());
  app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)criarJanela()});

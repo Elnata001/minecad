@@ -19,10 +19,14 @@ contextBridge.exposeInMainWorld('mcDesktop',{
  connectLer:nome=>ipcRenderer.invoke('connect-ler',{nome}),
  connectGravar:(nome,dados)=>ipcRenderer.invoke('connect-gravar',{nome,dados}),
  connectAbrirPasta:()=>ipcRenderer.invoke('connect-abrir-pasta'),
+ /* atualização do programa: estado, procura manual e instalação */
+ atuEstado:()=>ipcRenderer.invoke('atu-estado'),
+ atuProcurar:()=>ipcRenderer.invoke('atu-procurar'),
+ atuInstalar:()=>ipcRenderer.invoke('atu-instalar'),
  associar:()=>ipcRenderer.invoke('associar'),
  sobre:()=>ipcRenderer.invoke('sobre'),
  pendente:()=>ipcRenderer.invoke('pendente'),
  /* comandos vindos do menu nativo */
- ao:(canal,fn)=>{const ok=['abrir-projeto','salvar-projeto','salvar-como','tela-inicial','desfazer','refazer','abrir-arquivo'];
+ ao:(canal,fn)=>{const ok=['abrir-projeto','salvar-projeto','salvar-como','tela-inicial','desfazer','refazer','abrir-arquivo','atualizacao'];
   if(ok.includes(canal))ipcRenderer.on(canal,(ev,dado)=>fn(dado))}
 });

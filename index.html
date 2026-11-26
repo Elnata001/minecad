@@ -81,6 +81,8 @@ html:root[data-theme=light]{--bg:#f1f2ee;--panel:#fff;--ink:#1d1f1c;--mut:#6b6f6
 #cfb{position:absolute;z-index:12;top:10px;left:50%;transform:translateX(-50%);display:none;align-items:flex-end;gap:8px;background:var(--panel);border:1px solid var(--acc);border-radius:12px;box-shadow:0 8px 28px #0008;padding:6px 8px;max-width:min(96%,860px);flex-wrap:nowrap}
 #cfb label{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;gap:2px;margin:0;font-size:11px;color:var(--mut)}#cfb input{height:28px;width:150px}#cfb button{height:28px;white-space:nowrap}#cfb .m{max-width:220px;line-height:1.2}
 #fb{position:absolute;z-index:8;display:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px #0008;padding:6px 8px;max-width:min(94%,980px)}
+#upd{position:fixed;right:14px;bottom:36px;z-index:70;background:var(--panel);border:1px solid var(--acc);border-radius:12px;box-shadow:0 10px 30px #0009;padding:10px 12px;max-width:320px}
+#upd[hidden]{display:none}#upd .m{margin:4px 0 8px}
 #askpl{position:absolute;z-index:12;top:10px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--acc);border-radius:12px;box-shadow:0 8px 28px #0008;padding:8px 12px;max-width:min(96%,560px)}
 #askpl[hidden]{display:none}#askpl .m{margin:4px 0 6px}#askpl .row{flex-wrap:wrap}
 .fbt{cursor:grab;font-size:12px;color:var(--mut);padding:0 4px 5px;user-select:none;display:flex;gap:8px;align-items:center}.fbt:active{cursor:grabbing}.fbt:before{content:"⠿";opacity:.6}.fbh{color:var(--ink)}
@@ -151,7 +153,7 @@ dialog{position:relative}dialog h3{padding-right:38px}
 </style></head><body>
 <div id="app"><header id="top"><b class="brand"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEqUlEQVR4Xu1XMWwcRRR9f2Z2985nR8aJjY2CrFiJFDmAkFKAZJBCSYVEQQESCFGEEkqkSCgNNRUFBBoCBQUFBUoVEQRKYTkFkRMiIYwE2FEc3xn7zne3OzMf/dldxwhp98Al/MI++/Zm3n///ff/Af/1oH9LwNMfLU6ZBmbZ6XkoLLDnk2CcBHACio8PJvsv3njh56t155u6B0IwCARe+uSxdyihJZ/yIyDMeYspZRCTIYAI8AB7hrcAx+7JM9/Mbqyeu3u76o7RABTB4FfjVnQ6ZQdihAthwWzDKzj2JDgCYAaT5scBVAJQlQww6F2GOvvhWQEqLNzL9qzjjDObWR7YAe+5Hu3aHd21u5oonKegQMzyWmV1DFczQOCLkg9WQoYMkCKlU5+iaZo0lxzFZDSF2eYcDEW4eveKJB6QKiYlJBwKwLOfnp6zPp6liB+N7kx97dDpZ5xipvEwLjzxHh6KpxCpGC0zgV97vzwAQAIBirSXQlVGJQMuMz+S8keSVoTB/Ob73vu+g8XLJ17HfGsB22kHQz+Ezzz2bA9ECvCBLDCTgqu7HtUAGNwiJh60U29U9NaYbrUXxk9haeY53Um3oMnklJOCUVEovpOrCUSiASVVOwQDRJSC0NTQes/27GsLbzafmnkGqRsgVgkcFymK4khBkYhfQn6TrrtcoqYLuOATzpEzLTPujiXTEBFu9H8Pl5YRpF8eJ7bAXH12EZUPMcGahiRC3w/t8PMe7Y7HaPDy1nVcWf8KY6YFzy6UIWdAgblgnZUieaMmKgEQyEkjEZG+vb5+fjY6vuojS5fXLnnPPrTbfiZFCYR9MSNhwNbdXlcChqTH8PBHcBHdH9o3lj/77RLWdn/yiUogIPJ6S88JAzqw8U80UNmGubtLS7mgqi8/vqwaE02MRxNI/fBAfrnk/6qBAs9hSsCgXOYMI4kmeiyNVRxy3O+AIsR8gigLDRAOKLQiqjVQdgHlLeXZ2VJXQn/5WoQnDGgRYSiAYGZNOoysyqjuAlDehvmZ8jPoSv74OwNlCQonYKXypw8BAMThCGYuTIWyUviOZQ7L4MlDTEgHEQpCUU/5meqoFiGXDBSuxmVOJLM/lEBAODHgwgvCzMxBKFkW6qJmIQkMlGUQKmxZYw8PQwaJbiJSUche5sEDI2KNETRQCYCJSEWkCJgsNFAsGATrM7TTrWDJ2+kWNgf38EfagVaGgwRFAyNEHQPbLvVrTLgZWGVyYr0N3cCdnVW8vfwGurYbPEFE2dRjxYQMVjTSMKoEoGP1fH8n7q6cXwmZM+XDSSxYBtKQB8FtZCbI/3Jd5BUb1QcqAXz3ys2OHLb4xWJ866Vb6cEdj4QPko8zy8VFS4gfCQINzyMtvNUP5esdpqeni8w5Y5bVN38nDB2lgt5D68ncsCxuJOujG2Ua1i6lB3XEoMgkRrmel7mbefAOGG1mfx+KN13kNrnl77Ox2zaxbdozx+p0OBJN185dCwxYnX3bw+ADdzTbcJHf8bHvsnYDn9ihJ7LaectMGVil5PSQtd6rA1C7Nu9H8e1o4frEqTHfPEPALqV6CKKeAnUpVT1FUa/fafRzvfwfo8WfueVByde9Y0IAAAAASUVORK5CYII=" alt="" width="22" height="22">mCAD</b><nav id="menus"></nav><span class="m" id="pname"></span><div id="qt"></div></header>
 <section id="pp"><div class="pph"></div><div class="pps"></div></section><div id="tools"></div><div id="etools"></div><aside id="nav"></aside><main id="vp"><canvas id="c2"></canvas><canvas id="c3"></canvas><canvas id="c4"></canvas><div id="v3"></div><div id="dims"></div><div id="tbl"></div><div id="fb"><div class="fbs"></div><div class="fbmw"></div></div><div id="cfb"></div><div id="askpl" hidden></div></main><aside id="props"></aside><footer id="st"></footer></div>
-<div id="dd" hidden></div><dialog id="dlg"></dialog><div id="wel" hidden></div><input type="file" id="wfile" accept=".mcad,.json,application/json" hidden>
+<div id="dd" hidden></div><div id="upd" hidden></div><dialog id="dlg"></dialog><div id="wel" hidden></div><input type="file" id="wfile" accept=".mcad,.json,application/json" hidden>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";var UIREADY=false;
@@ -1776,7 +1778,10 @@ if(window.mcDesktop){const D=window.mcDesktop,A=MENUS.Arquivo;
  A.splice(2,0,['Abrir projeto… (Ctrl+O)',()=>D.escolherAbrir().then(r=>{if(r)welFile(r.texto,r.caminho)})],
   ['Salvar (Ctrl+S)',()=>projSave(false)],['Salvar como… (Ctrl+Shift+S)',()=>projSave(true)]);
  A.push(['Associar os arquivos .mcad a este programa',()=>D.associar&&D.associar()]);
- MENUS.Ajuda.push(['Sobre…',()=>D.sobre&&D.sobre()]);}
+ MENUS.Ajuda.push(['Procurar atualizações…',updCheck],['Sobre…',()=>D.sobre&&D.sobre()]);
+ /* o estado pode já ter mudado antes de a página escutar: pergunta uma vez ao abrir */
+ if(D.atuEstado)D.atuEstado().then(updShow).catch(()=>{});
+ if(D.ao)D.ao('atualizacao',updShow);}
 $('#menus').innerHTML=Object.keys(MENUS).map(n=>`<button data-a="menu:${n}">${n}</button>`).join('');
 function dlgProjects(){const d=$('#dlg');d.innerHTML='<h3>Projetos salvos no navegador</h3>'+(idx().map(i=>`<div class="row"><span>${esc(i.name)}</span><button data-a="open:${i.id}">Abrir</button><button data-a="dup:${i.id}">Duplicar</button><button data-a="rm:${i.id}">Excluir</button></div>`).join('')||'<p class="m">Nenhum projeto salvo.</p>')+'<button data-a="close">Fechar</button>';if(!d.open)d.showModal()}
 /* ===== TELA INICIAL =====
@@ -1898,6 +1903,29 @@ function dlgFile(){const d=$('#dlg'),tex=PACKN&&Object.keys(PACK).length;
  +'<p class="m" id="fxm2">O projeto atual continua salvo; o importado é aberto ao lado dele, em Arquivo › Projetos salvos.</p>'
  +'<div class="row"><button data-a="close">Fechar</button></div>';
  if(!d.open)d.showModal()}
+/* ---- aviso de versão nova (só no aplicativo de desktop) ----
+   O atualizador baixa sozinho; quem decide a hora de instalar é o usuário, porque instalar
+   reinicia o programa e pode pegar alguém no meio de um projeto. */
+let UPD=null,UPDX=false,UPDH='';
+function updShow(st){if(!st)return;const antes=UPD&&UPD.estado;UPD=st;if(st.estado!==antes)UPDX=false;updPaint()}
+function updPaint(){const e=$('#upd');if(!e)return;const st=UPD;
+ const mostra=!!st&&!UPDX&&(st.estado==='pronta'||st.estado==='baixando');
+ e.hidden=!mostra;if(!mostra){e.innerHTML='';UPDH='';return}
+ const v=st.versao?' '+st.versao:'';
+ const h=st.estado==='pronta'
+  ?`<b>mCAD 27${esc(v)} disponível</b><p class="m">A atualização já foi baixada. Instalar fecha e reabre o programa — salve o que estiver aberto antes.</p>`
+   +'<div class="row"><button data-a="updgo">Instalar e reiniciar</button><button data-a="updno">Agora não</button></div>'
+  :`<b>Baixando a atualização${esc(v)}</b><p class="m">${st.pct||0}% — o aviso volta quando ela estiver pronta para instalar.</p>`
+   +'<div class="row"><button data-a="updno">Ocultar</button></div>';
+ if(h!==UPDH){e.innerHTML=h;UPDH=h}}
+function updCheck(){const D=window.mcDesktop;
+ if(!D||!D.atuProcurar){toast('Procurar atualizações vale no aplicativo de desktop; no navegador a página já abre sempre na última versão.');return}
+ toast('Procurando atualizações…','ok');
+ D.atuProcurar().then(st=>{updShow(st);if(!st)return;
+  if(st.estado==='atual')toast('Você já está na versão mais recente'+(st.versaoAtual?' ('+st.versaoAtual+')':'')+'.','ok');
+  else if(st.estado==='erro')toast('Não foi possível procurar atualizações: '+st.erro);
+  else if(st.estado==='baixando')toast('Versão '+(st.versao||'nova')+' encontrada — baixando.','ok')})
+  .catch(e=>toast('Não foi possível procurar atualizações.'))}
 function act(s,val){const[k,a]=s.split(/:(.*)/);
  if(SK&&!k.startsWith('sk')){
   if(k==='tool'){
@@ -1923,6 +1951,8 @@ function act(s,val){const[k,a]=s.split(/:(.*)/);
  else if(k==='cpg'){CPG=a;CFLT='';dlgComp()}
  else if(k==='askok'){const f=ASK&&ASK.fn,v=$('#askv')?$('#askv').value:'';ASK=null;$('#dlg').close();if(f)f(v)}
  else if(k==='askno'){const f=ASK&&ASK.no;ASK=null;$('#dlg').close();if(f)f()}
+ else if(k==='updno'){UPDX=true;updPaint()}
+ else if(k==='updgo'){const D=window.mcDesktop;if(D&&D.atuInstalar)D.atuInstalar().then(ok=>{if(!ok)toast('A atualização ainda não terminou de baixar.')}).catch(()=>toast('Não foi possível iniciar a instalação.'))}
  else if(k==='ttypes')dlgTopoTypes();
  else if(['ttnew','ttdup','ttdel','ttadd','ttrm','ttup','ttdn'].includes(k))ttAct(k,a);
  else if(k==='vis')vpOpen();else if(k==='einfo')dlgElInfo(a);
@@ -2390,7 +2420,10 @@ function svDef(){const E={N:[0,1],S:[0,-1],E:[-1,0],W:[1,0]},N={N:'Norte',S:'Sul
    cerca e porta deixam vazios por onde se vê o que está atrás. Seis cobre o que aparece na
    prática sem guardar o modelo inteiro em memória. */
 const SECD=6;
-const secFull=R=>R.length===1&&R[0][2]>=1&&R[0][3]>=1;
+/* A célula está coberta quando os retângulos somam a área dela inteira. Vale porque secRects
+   devolve retângulos que não se sobrepõem — quem acrescentar uma forma nova precisa manter isso,
+   senão a soma mente e, em bloco translúcido, a parte sobreposta sai pintada duas vezes. */
+const secFull=R=>{let a=0;for(const r of R)a+=r[2]*r[3];return a>=.999};
 /* A fachada e o corte também são pranchetas de modelagem, não só de leitura. Para o clique saber
    onde caiu, o desenho guarda aqui a transformação da vista e o mapa de células. */
 let SEC=null,SECH=null,SECK=null,SECT=null,SBOX=null;
@@ -2402,12 +2435,24 @@ function secRects(v,lx,lz){const su=d=>-lz*d[0]+lx*d[1];
   if(!q)return[[0,0,1,1]];
   return top?[[0,.5,1,.5],[q>0?.5:0,0,.5,.5]]:[[0,0,1,.5],[q>0?.5:0,.5,.5,.5]]}
  if(v.d&&v.dw){const q=su(v.dw.pd);if(!q)return[[0,0,1,1]];return[[q>0?1-.1875:0,0,.1875,1]]}
+ if(v.td){const td=v.td;/* alçapão: folha deitada no topo ou na base; aberto, de pé no lado da dobradiça */
+  if(!td.op)return[[0,td.hf==='bottom'?0:.8125,1,.1875]];
+  const q=su(DIR4[td.fc]||[0,-1]);if(!q)return[[0,0,1,1]];
+  return[[q>0?1-.1875:0,0,.1875,1]]}
  {const k=MATS[v.m][2]||'';if('fmw'.includes(k)&&k){const cn=conn4(v),W=k==='f'?.25:k==='m'?.5:.125,o=[],
    bars=k==='f'?[[.375,.1875],[.75,.1875]]:k==='m'?[[0,.875]]:[[0,1]];
+  /* o braço começa na borda do poste, não no meio da célula: sobrepor os dois pintava a faixa do
+     meio duas vezes e, no vidro, essa faixa saía mais escura — a tal listra fora do lugar */
   for(const[d,dx,dz]of NBR){const q=su([dx,dz]);if(!q||!cn[d])continue;
-   for(const[by,bh]of bars)o.push([q>0?.5:0,by,.5,bh])}
+   for(const[by,bh]of bars)o.push([q>0?.5+W/2:0,by,.5-W/2,bh])}
   o.push([.5-W/2,0,W,1]);return o}}
  return[[0,0,1,1]]}
+/* Que face do bloco a vista ortográfica mostra. Quase todo bloco mostra o lado, e o lado é o
+   padrão; a porta é a exceção: a metade de cima tem textura própria e a dobradiça espelha o
+   desenho — e ver a porta por trás espelha de novo. É a mesma regra que o 3D já seguia. */
+function secFace(v,lx,lz){if(!(v.d&&v.dw))return 0;
+ const atras=(v.dw.pd[0]*lx+v.dw.pd[1]*lz)>0,esp=(v.dw.hinge==='right')!==atras;
+ return 'd'+(v.dw.half==='upper'?'t':'')+(esp?'r':'')}
 function drawSec(){SEC=null;const c=$('#c3'),g3=c.getContext('2d'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight,st=getComputedStyle(document.documentElement),V=svDef();c.width=w*d;c.height=h*d;g3.setTransform(d,0,0,d,0,0);g3.fillStyle=st.getPropertyValue('--cv');g3.fillRect(0,0,w,h);g3.fillStyle=st.getPropertyValue('--cink');g3.font='13px system-ui,sans-serif';
  if(!V){g3.fillText('Vista não encontrada.',12,22);return}
  const[lx,lz]=V.L,best=new Map();let a=1e9,b=-1e9,y0=1e9,y1=-1e9,t0=1e9;
@@ -2426,8 +2471,9 @@ function drawSec(){SEC=null;const c=$('#c3'),g3=c.getContext('2d'),d=devicePixel
      aparece por vazio nenhum, então não precisa ser desenhado. */
   let n=L.length;for(let i=0;i<L.length;i++){L[i].R=secRects(L[i].v,lx,lz);if(secFull(L[i].R)){n=i+1;break}}
   for(let i=n-1;i>=0;i--){const o=L[i],cut=V.cut&&o.t===V.tc,X0=X(o.u),Y0=Y(o.y+1);
+   const fc=secFace(o.v,lx,lz);
    for(const[fx,fy,fw,fh]of o.R){const rx=fx*S,ry=(1-fy-fh)*S,rw=fw*S+.5,rh=fh*S+.5;
-    fillCell(g3,o.v,X0,Y0,S,0,rx,ry,rw,rh);
+    fillCell(g3,o.v,X0,Y0,S,fc,rx,ry,rw,rh);
     if(!cut){g3.fillStyle='rgba(0,0,0,'+Math.min(.4,(o.t-tc)*.025)+')';g3.fillRect(X0+rx,Y0+ry,rw,rh)}
     g3.strokeStyle=cut?'#000':'rgba(0,0,0,.18)';g3.lineWidth=cut?1.5:1;if(S>8)g3.strokeRect(X0+rx+.5,Y0+ry+.5,rw-1,rh-1)}}}
  /* terreno: o corte mostra o perfil real da superfície no plano, e a fachada, a silhueta do terreno */

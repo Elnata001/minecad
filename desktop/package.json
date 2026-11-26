@@ -1,7 +1,7 @@
 {
   "name": "minecad",
   "productName": "mCAD 27",
-  "version": "27.3.0",
+  "version": "27.3.1",
   "description": "mCAD — BIM simplificado para projetar arquitetura de Minecraft",
   "author": "Elnata001",
   "main": "main.js",
